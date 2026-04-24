@@ -1,12 +1,11 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from app.core.config import settings
+
 from app.core.auth import create_token
+from app.core.config import settings
+from app.modules.auth.schemas import LoginIn
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-class LoginIn(BaseModel):
-    password: str
 
 @router.post("/login")
 async def login(data: LoginIn):

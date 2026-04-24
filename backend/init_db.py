@@ -2,7 +2,7 @@ import asyncio, sys
 sys.path.insert(0, "/app")
 from sqlalchemy import select
 from app.core.database import engine, Base, AsyncSessionLocal
-import app.models as M
+import app.shared.models as M
 
 async def init():
     print("Criando tabelas...")
