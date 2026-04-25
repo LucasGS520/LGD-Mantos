@@ -9,7 +9,7 @@ async def init():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with AsyncSessionLocal() as s:
-        for name in ["Camisetas Oversized","Camisetas Peruanas","Moletons","Calças","Acessórios"]:
+        for name in ["Camisetas Oversized", "Camisetas Peruanas", "Moletons", "Calças", "Acessórios"]:
             r = await s.execute(select(M.Category).where(M.Category.name==name))
             if not r.scalar_one_or_none():
                 s.add(M.Category(name=name))

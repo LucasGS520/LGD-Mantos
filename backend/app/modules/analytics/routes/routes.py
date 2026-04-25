@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import verify_token
 from app.core.database import get_db
-from backend.app.modules.analytics.services.services import AnalyticsService
+from app.modules.analytics.services.services import AnalyticsService
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 

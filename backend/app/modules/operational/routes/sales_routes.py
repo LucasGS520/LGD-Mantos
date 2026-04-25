@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth import verify_token
 from app.core.database import get_db
 from app.modules.operational import repositories as repo
-from backend.app.modules.operational.services.sales_service import SalesService
+from app.modules.operational.services.sales_service import SalesService
 from app.shared.schemas.operations import SaleIn, SaleOut
 
 router = APIRouter(tags=["operational"])

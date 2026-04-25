@@ -6,9 +6,9 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.ai.routes import router as ai_router
-from backend.app.modules.analytics.routes.routes import router as analytics_router
+from app.modules.analytics.routes.routes import router as analytics_router
 from app.modules.auth.routes import router as auth_router
-from backend.app.modules.marketing.routes.routes import router as marketing_router
+from app.modules.marketing.routes.routes import router as marketing_router
 from app.modules.operational.routes import router as operational_router
 
 app = FastAPI(title="LGD Mantos", version="2.0", docs_url="/api/docs")

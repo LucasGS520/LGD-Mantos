@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.ai.service import AIService
-from backend.app.modules.marketing.schemas.schemas import MarketingRequest, ProductDescriptionRequest
+from app.modules.marketing.schemas.schemas import MarketingRequest, ProductDescriptionRequest
 
 
 class MarketingService:

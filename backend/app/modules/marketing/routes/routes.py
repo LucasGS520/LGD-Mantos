@@ -3,12 +3,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import verify_token
 from app.core.database import get_db
-from backend.app.modules.marketing.schemas.schemas import (
+from app.modules.marketing.schemas.schemas import (
     MarketingRequest,
     MarketingResponse,
     ProductDescriptionRequest,
 )
-from backend.app.modules.marketing.services.services import MarketingService
+from app.modules.marketing.services.services import MarketingService
 
 router = APIRouter(prefix="/marketing", tags=["marketing"])
 
