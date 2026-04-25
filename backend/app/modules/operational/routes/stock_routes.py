@@ -20,6 +20,6 @@ async def stock_alerts(db: AsyncSession = Depends(get_db), _=Depends(verify_toke
     return await StockService.stock_alerts(db)
 
 
-@router.get("/stock/history/{variant_id}")
+@router.get("/stock/history/{variant_id}", response_model=list[StockMoveOut])
 async def stock_history(variant_id: str, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
     return await repo.list_stock_history(db, variant_id)

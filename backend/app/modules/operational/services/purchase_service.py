@@ -9,6 +9,10 @@ from app.shared.schemas.operations import POIn
 class PurchaseService:
     @staticmethod
     async def create_purchase(db: AsyncSession, data: POIn) -> PurchaseOrder:
+        supplier = await repo.get_supplier(db, data.supplier_id)
+        if not supplier:
+            raise HTTPException(404, "Fornecedor nao encontrado")
+
         purchase = PurchaseOrder(
             supplier_id=data.supplier_id,
             order_date=data.order_date,

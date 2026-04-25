@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
 
 class StockMoveIn(BaseModel):
     variant_id: str
-    movement_type: str
+    movement_type: Literal["entrada", "saida", "ajuste", "devolucao"]
     quantity: int
     unit_cost: Optional[float] = None
     notes: Optional[str] = None
@@ -83,6 +83,15 @@ class POItemIn(BaseModel):
     unit_cost: float
 
 
+class POItemOut(BaseModel):
+    id: str
+    variant_id: str
+    quantity: int
+    unit_cost: float
+
+    model_config = {"from_attributes": True}
+
+
 class POIn(BaseModel):
     supplier_id: str
     order_date: str
@@ -97,5 +106,6 @@ class POOut(BaseModel):
     status: str
     notes: Optional[str] = None
     created_at: datetime
+    items: list[POItemOut] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}

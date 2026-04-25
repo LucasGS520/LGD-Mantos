@@ -1,6 +1,7 @@
 import os
 import shutil
 import uuid
+from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +16,7 @@ from app.shared.schemas.catalog import (
     VariantIn,
 )
 
-UPLOAD_DIR = "/app/app/static/uploads"
+UPLOAD_DIR = str(Path(__file__).resolve().parents[3] / "static" / "uploads")
 
 
 class CatalogService:
