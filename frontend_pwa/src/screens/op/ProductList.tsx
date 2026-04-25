@@ -44,7 +44,7 @@ export default function ProductList() {
       <div style={{ padding: '0 18px 12px', flexShrink: 0 }}>
         <SearchBar placeholder="Buscar por nome ou SKU…" value={search} onChange={setSearch} />
         <div style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto' }} className="lgd-scroll">
-          {categories.map((c, i) => (
+          {categories.map(c => (
             <div key={c} onClick={() => setActiveCategory(c)} style={{
               padding: '7px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer',
               background: activeCategory === c ? 'var(--gold-500)' : 'var(--bg-2)',
@@ -52,7 +52,6 @@ export default function ProductList() {
               border: activeCategory === c ? '1px solid var(--gold-500)' : '1px solid var(--line-1)',
             }}>{c}</div>
           ))}
-          {i => i}
         </div>
       </div>
 
