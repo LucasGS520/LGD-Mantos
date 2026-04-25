@@ -1,10 +1,18 @@
+# Backend HTTP e servidor ASGI.
 fastapi==0.115.5
 uvicorn[standard]==0.32.1
+
+# Banco de dados assíncrono e configuração por ambiente.
 sqlalchemy[asyncio]==2.0.36
 asyncpg==0.30.0
 pydantic-settings==2.6.1
+
+# Autenticação, uploads e cliente HTTP externo para IA.
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.20
 aiofiles==24.1.0
 httpx==0.28.1
+
+# Suporte a imagens e app mobile Kivy.
 pillow==11.0.0
+kivy==2.3.1

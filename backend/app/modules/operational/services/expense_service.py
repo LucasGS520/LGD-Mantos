@@ -1,3 +1,5 @@
+"""Serviços de negócio para despesas operacionais."""
+
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,8 +9,12 @@ from app.shared.schemas.operations import ExpenseIn
 
 
 class ExpenseService:
+    """Cria e remove despesas usadas nos controles financeiros."""
+
     @staticmethod
     async def create_expense(db: AsyncSession, data: ExpenseIn) -> Expense:
+        """Registra uma despesa operacional."""
+
         expense = Expense(**data.model_dump())
         db.add(expense)
         await db.flush()
@@ -16,6 +22,8 @@ class ExpenseService:
 
     @staticmethod
     async def delete_expense(db: AsyncSession, expense_id: str) -> dict:
+        """Remove uma despesa existente pelo identificador."""
+
         expense = await repo.get_expense(db, expense_id)
         if not expense:
             raise HTTPException(404, "Despesa nao encontrada")

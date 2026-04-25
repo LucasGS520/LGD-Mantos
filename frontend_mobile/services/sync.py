@@ -1,3 +1,5 @@
+"""Sincronização de comandos criados offline pelo app mobile."""
+
 from datetime import datetime
 
 from services.api_client import ApiError, ConnectionApiError
@@ -10,11 +12,17 @@ _MAX_ATTEMPTS = 3
 
 
 class SyncService:
+    """Processa a fila offline e reenvia comandos elegíveis para a API."""
+
     def __init__(self, api, queue):
+        """Recebe o cliente de API e a fila local compartilhados pelo app."""
+
         self.api = api
         self.queue = queue
 
     def sync(self) -> dict:
+        """Tenta enviar pendências e classifica cada item como concluído ou rejeitado."""
+
         pending = self.queue.get_pending()
         if not pending:
             return {"processed": 0, "done": 0, "rejected": 0, "skipped": 0}
@@ -37,9 +45,11 @@ class SyncService:
                 self.queue.mark_done(item["local_id"])
                 done_count += 1
             except ConnectionApiError:
+                # Falha de conexão mantém o item pendente para próxima tentativa.
                 self.queue.increment_attempts(item["local_id"])
                 skipped_count += 1
             except ApiError as exc:
+                # Erros de validação da API rejeitam o item para evitar repetição infinita.
                 self.queue.mark_rejected(item["local_id"], str(exc))
                 rejected_count += 1
 

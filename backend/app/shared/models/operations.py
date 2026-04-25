@@ -1,3 +1,5 @@
+"""Modelos ORM das operações de estoque, venda, despesa e compra."""
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, Text
@@ -8,6 +10,8 @@ from app.shared.models.common import now, uid
 
 
 class StockMovement(Base):
+    """Registro histórico de entrada, saída, ajuste ou devolução de estoque."""
+
     __tablename__ = "stock_movements"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
@@ -25,6 +29,8 @@ class StockMovement(Base):
 
 
 class Sale(Base):
+    """Venda realizada em um canal, composta por um ou mais itens."""
+
     __tablename__ = "sales"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
@@ -37,6 +43,8 @@ class Sale(Base):
 
 
 class SaleItem(Base):
+    """Item individual de uma venda, vinculado a uma variante de produto."""
+
     __tablename__ = "sale_items"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
@@ -51,6 +59,8 @@ class SaleItem(Base):
 
 
 class Expense(Base):
+    """Despesa financeira usada nos cálculos de resultado da loja."""
+
     __tablename__ = "expenses"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
@@ -63,6 +73,8 @@ class Expense(Base):
 
 
 class PurchaseOrder(Base):
+    """Pedido de compra feito a um fornecedor."""
+
     __tablename__ = "purchase_orders"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
@@ -75,11 +87,14 @@ class PurchaseOrder(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
+    # O cascade remove itens quando o pedido é excluído pelo ORM.
     supplier = relationship("Supplier", back_populates="purchase_orders")
     items = relationship("PurchaseOrderItem", back_populates="order", cascade="all, delete-orphan")
 
 
 class PurchaseOrderItem(Base):
+    """Item comprado dentro de um pedido de compra."""
+
     __tablename__ = "purchase_order_items"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)

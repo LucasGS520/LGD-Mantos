@@ -1,3 +1,10 @@
+"""Tela operacional do app mobile.
+
+Reúne cadastro de produtos, vendas, fotos, fornecedores, compras, despesas e
+movimentações de estoque em subtelas Kivy. Também usa cache e fila offline para
+operações críticas quando a API não está disponível.
+"""
+
 from datetime import date as _today_date
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
@@ -17,6 +24,8 @@ _VALID_MOV_TYPES = {"entrada", "saida", "ajuste", "devolucao"}
 
 
 def _req(value: str, field: str) -> str:
+    """Valida um campo obrigatório de texto e retorna o valor sem espaços."""
+
     v = value.strip()
     if not v:
         raise ValueError(f"Campo obrigatorio: {field}")
@@ -24,6 +33,8 @@ def _req(value: str, field: str) -> str:
 
 
 def _num(value: str, field: str, cast=float):
+    """Valida um campo numérico e converte usando o tipo informado."""
+
     v = value.strip()
     if not v:
         raise ValueError(f"Campo obrigatorio: {field}")
@@ -34,13 +45,17 @@ def _num(value: str, field: str, cast=float):
 
 
 class OperationalScreen(BoxLayout):
+    """Tela principal do módulo operacional no aplicativo Kivy."""
+
     def __init__(self, api, queue: OfflineQueue, **kwargs):
+        """Monta subnavegação, áreas de lista e dependências de cache/fila."""
+
         super().__init__(orientation="vertical", padding=8, spacing=4, **kwargs)
         self.api = api
         self.cache = LocalCache()
         self.queue = queue
 
-        # Shared list containers
+        # Containers reutilizados pelas seções que renderizam listas roláveis.
         self.products_box = BoxLayout(orientation="vertical", spacing=4, size_hint_y=None)
         self.products_box.bind(minimum_height=self.products_box.setter("height"))
         self.suppliers_box = BoxLayout(orientation="vertical", spacing=4, size_hint_y=None)
@@ -50,7 +65,7 @@ class OperationalScreen(BoxLayout):
         self.expenses_box = BoxLayout(orientation="vertical", spacing=4, size_hint_y=None)
         self.expenses_box.bind(minimum_height=self.expenses_box.setter("height"))
 
-        # Header
+        # Cabeçalho com status geral e aviso de pendências offline.
         self.add_widget(Label(text="Operacional", font_size=20, size_hint_y=None, height=30))
         self.status = Label(text="", size_hint_y=None, height=26)
         self.pending_label = Label(text="", size_hint_y=None, height=20, font_size=11,
@@ -58,7 +73,7 @@ class OperationalScreen(BoxLayout):
         self.add_widget(self.status)
         self.add_widget(self.pending_label)
 
-        # Sub-navigation + content
+        # Cada aba operacional é uma Screen interna dentro desta tela.
         sub_nav = BoxLayout(size_hint_y=None, height=36, spacing=2)
         self.sub_content = ScreenManager()
 
@@ -83,10 +98,14 @@ class OperationalScreen(BoxLayout):
     # ------------------------------------------------------------------ helpers
 
     def _update_pending_label(self):
+        """Atualiza o indicador de comandos ainda pendentes na fila offline."""
+
         count = len(self.queue.get_pending())
         self.pending_label.text = f"{count} pendencia(s) offline" if count else ""
 
     def _scroll_section(self, inner_box):
+        """Envolve um container vertical em ScrollView para listas longas."""
+
         scroll = ScrollView()
         scroll.add_widget(inner_box)
         return scroll
@@ -94,9 +113,11 @@ class OperationalScreen(BoxLayout):
     # ------------------------------------------------------------------ produtos
 
     def _build_produtos(self):
+        """Cria a aba de produtos, vendas rápidas e upload de fotos."""
+
         root = BoxLayout(orientation="vertical", spacing=6)
 
-        # Produto form
+        # Formulário mínimo para criar produto com variante única inicial.
         pf = BoxLayout(orientation="vertical", spacing=4, size_hint_y=None, height=196)
         self.sku = TextInput(hint_text="SKU *", multiline=False)
         self.name = TextInput(hint_text="Nome do produto *", multiline=False)
@@ -108,7 +129,7 @@ class OperationalScreen(BoxLayout):
             pf.add_widget(w)
         root.add_widget(pf)
 
-        # Venda form
+        # Registro rápido de venda por id de variante.
         sf = BoxLayout(orientation="vertical", spacing=4, size_hint_y=None, height=196)
         self.sale_variant_id = TextInput(hint_text="ID da variante *", multiline=False)
         self.sale_qty = TextInput(hint_text="Quantidade *", multiline=False, input_filter="int")
@@ -120,7 +141,7 @@ class OperationalScreen(BoxLayout):
             sf.add_widget(w)
         root.add_widget(sf)
 
-        # Upload de foto
+        # Upload usa caminho local informado pelo operador do app.
         uf = BoxLayout(orientation="vertical", spacing=4, size_hint_y=None, height=126)
         self.photo_product_id = TextInput(hint_text="ID do produto para foto *", multiline=False)
         self.photo_path = TextInput(hint_text="Caminho do arquivo de imagem *", multiline=False)
@@ -131,7 +152,7 @@ class OperationalScreen(BoxLayout):
             uf.add_widget(w)
         root.add_widget(uf)
 
-        # Acoes
+        # Ações de consulta da aba de produtos.
         actions = BoxLayout(size_hint_y=None, height=38, spacing=6)
         refresh = Button(text="Atualizar lista")
         refresh.bind(on_press=lambda *_: self.load())
@@ -145,6 +166,8 @@ class OperationalScreen(BoxLayout):
         return root
 
     def load(self):
+        """Carrega produtos usando cache imediato e atualização pela API."""
+
         data, _ = self.cache.get(_CACHE_KEY)
         if data is not None:
             self._render_products(data)
@@ -155,6 +178,8 @@ class OperationalScreen(BoxLayout):
         Clock.schedule_once(lambda _: self._load_products(), 0.1)
 
     def _load_products(self):
+        """Busca produtos no backend e atualiza cache/lista."""
+
         try:
             products = self.api.get("/products")
             self.cache.set(_CACHE_KEY, products, _CACHE_TTL)
@@ -165,6 +190,8 @@ class OperationalScreen(BoxLayout):
                 self.status.text = str(exc)
 
     def _render_products(self, products):
+        """Renderiza produtos e variantes em linhas textuais compactas."""
+
         self.products_box.clear_widgets()
         if not products:
             self.products_box.add_widget(
@@ -181,6 +208,8 @@ class OperationalScreen(BoxLayout):
                     size_hint_y=None, height=24))
 
     def load_alerts(self):
+        """Carrega variantes em estoque baixo e substitui a lista de produtos."""
+
         try:
             alerts = self.api.get("/stock/alerts")
             self.products_box.clear_widgets()
@@ -196,6 +225,8 @@ class OperationalScreen(BoxLayout):
             self.status.text = str(exc)
 
     def create_product(self, *_):
+        """Cria produto ou salva o comando offline quando não houver conexão."""
+
         try:
             payload = {
                 "sku": _req(self.sku.text, "SKU"),
@@ -214,6 +245,7 @@ class OperationalScreen(BoxLayout):
             self.cache.invalidate(_CACHE_KEY)
             self.load()
         except ConnectionApiError:
+            # Produto é elegível para fila offline porque não depende de leitura imediata.
             self.queue.enqueue("create_product", payload)
             self.status.text = "Salvo offline. Sera enviado ao reconectar."
             self.sku.text = self.name.text = self.cost.text = self.price.text = ""
@@ -222,6 +254,8 @@ class OperationalScreen(BoxLayout):
             self.status.text = str(exc)
 
     def create_sale(self, *_):
+        """Registra venda ou guarda o comando offline para sincronização posterior."""
+
         try:
             payload = {
                 "channel": "loja",
@@ -242,6 +276,7 @@ class OperationalScreen(BoxLayout):
             self.cache.invalidate(_CACHE_KEY)
             self.load()
         except ConnectionApiError:
+            # A venda offline será reenviada na próxima sincronização.
             self.queue.enqueue("create_sale", payload)
             self.status.text = "Salvo offline. Sera enviado ao reconectar."
             self.sale_variant_id.text = self.sale_qty.text = self.sale_price.text = self.sale_cost.text = ""
@@ -250,6 +285,8 @@ class OperationalScreen(BoxLayout):
             self.status.text = str(exc)
 
     def upload_photo(self, *_):
+        """Valida campos de upload e agenda o envio da foto."""
+
         try:
             product_id = _req(self.photo_product_id.text, "ID do produto")
             file_path = _req(self.photo_path.text, "Caminho da imagem")
@@ -260,6 +297,8 @@ class OperationalScreen(BoxLayout):
         Clock.schedule_once(lambda _: self._do_upload(product_id, file_path), 0.1)
 
     def _do_upload(self, product_id, file_path):
+        """Executa upload de foto e mostra erro de API ou arquivo local."""
+
         try:
             self.api.upload(f"/products/{product_id}/photos", file_path)
             self.photo_status.text = "Foto adicionada."
@@ -270,6 +309,8 @@ class OperationalScreen(BoxLayout):
     # ------------------------------------------------------------------ fornecedores
 
     def _build_fornecedores(self):
+        """Cria a aba de fornecedores."""
+
         root = BoxLayout(orientation="vertical", spacing=6)
 
         form = BoxLayout(orientation="vertical", spacing=4, size_hint_y=None, height=196)
@@ -290,10 +331,14 @@ class OperationalScreen(BoxLayout):
         return root
 
     def load_suppliers(self):
+        """Agenda carregamento de fornecedores."""
+
         self.status.text = "Carregando fornecedores..."
         Clock.schedule_once(lambda _: self._load_suppliers(), 0.1)
 
     def _load_suppliers(self):
+        """Busca e renderiza fornecedores ativos."""
+
         try:
             suppliers = self.api.get("/suppliers")
             self.suppliers_box.clear_widgets()
@@ -309,6 +354,8 @@ class OperationalScreen(BoxLayout):
             self.status.text = str(exc)
 
     def create_supplier(self, *_):
+        """Cria um fornecedor com os dados preenchidos."""
+
         try:
             payload = {
                 "name": _req(self.sup_nome.text, "Nome"),
@@ -330,6 +377,8 @@ class OperationalScreen(BoxLayout):
     # ------------------------------------------------------------------ compras
 
     def _build_compras(self):
+        """Cria a aba de compras e recebimento de pedidos."""
+
         root = BoxLayout(orientation="vertical", spacing=6)
 
         form = BoxLayout(orientation="vertical", spacing=4, size_hint_y=None, height=234)
@@ -359,10 +408,14 @@ class OperationalScreen(BoxLayout):
         return root
 
     def load_purchases(self):
+        """Agenda carregamento de compras."""
+
         self.status.text = "Carregando compras..."
         Clock.schedule_once(lambda _: self._load_purchases(), 0.1)
 
     def _load_purchases(self):
+        """Busca e renderiza pedidos de compra."""
+
         try:
             purchases = self.api.get("/purchases")
             self.purchases_box.clear_widgets()
@@ -378,6 +431,8 @@ class OperationalScreen(BoxLayout):
             self.status.text = str(exc)
 
     def create_purchase(self, *_):
+        """Cria um pedido de compra com um item informado na tela."""
+
         try:
             payload = {
                 "supplier_id": _num(self.po_supplier_id.text, "ID do fornecedor", int),
@@ -401,6 +456,8 @@ class OperationalScreen(BoxLayout):
             self.status.text = str(exc)
 
     def receive_purchase(self, *_):
+        """Confirma recebimento de uma compra e aciona entrada de estoque no backend."""
+
         try:
             po_id = _req(self.po_receive_id.text, "ID da compra")
         except ValueError as exc:
@@ -417,6 +474,8 @@ class OperationalScreen(BoxLayout):
     # ------------------------------------------------------------------ despesas
 
     def _build_despesas(self):
+        """Cria a aba de despesas operacionais."""
+
         root = BoxLayout(orientation="vertical", spacing=6)
 
         form = BoxLayout(orientation="vertical", spacing=4, size_hint_y=None, height=196)
@@ -445,10 +504,14 @@ class OperationalScreen(BoxLayout):
         return root
 
     def load_expenses(self):
+        """Agenda carregamento de despesas."""
+
         self.status.text = "Carregando despesas..."
         Clock.schedule_once(lambda _: self._load_expenses(), 0.1)
 
     def _load_expenses(self):
+        """Busca e renderiza despesas recentes."""
+
         try:
             expenses = self.api.get("/expenses")
             self.expenses_box.clear_widgets()
@@ -464,6 +527,8 @@ class OperationalScreen(BoxLayout):
             self.status.text = str(exc)
 
     def create_expense(self, *_):
+        """Registra uma despesa usando a data informada ou a data atual."""
+
         try:
             payload = {
                 "date": self.exp_date.text.strip() or str(_today_date.today()),
@@ -483,6 +548,8 @@ class OperationalScreen(BoxLayout):
             self.status.text = str(exc)
 
     def delete_expense(self, *_):
+        """Exclui uma despesa pelo identificador informado."""
+
         try:
             exp_id = _req(self.exp_delete_id.text, "ID da despesa")
         except ValueError as exc:
@@ -499,6 +566,8 @@ class OperationalScreen(BoxLayout):
     # ------------------------------------------------------------------ movimentacoes
 
     def _build_movimentacoes(self):
+        """Cria a aba de movimentações manuais de estoque."""
+
         root = BoxLayout(orientation="vertical", spacing=6)
 
         form = BoxLayout(orientation="vertical", spacing=4, size_hint_y=None, height=234)
@@ -517,6 +586,8 @@ class OperationalScreen(BoxLayout):
         return root
 
     def create_movement(self, *_):
+        """Registra entrada, saída, ajuste ou devolução de estoque."""
+
         try:
             mov_type = _req(self.mov_type.text, "Tipo")
             if mov_type not in _VALID_MOV_TYPES:

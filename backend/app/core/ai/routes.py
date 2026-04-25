@@ -1,3 +1,5 @@
+"""Rotas HTTP para interação direta com o assistente de IA."""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +13,8 @@ router = APIRouter(prefix="/ai", tags=["ai"])
 
 @router.post("/chat", response_model=AIResponse)
 async def ai_chat(req: AIRequest, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Recebe uma solicitação de chat e delega a geração ao serviço central."""
+
     return await AIService.generate(
         db=db,
         message=req.message,

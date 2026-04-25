@@ -1,3 +1,9 @@
+"""Entrada do aplicativo mobile LGD Mantos em Kivy.
+
+Configura sessão, cliente HTTP, fila offline, sincronização e navegação entre
+login, operacional, análise e marketing.
+"""
+
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
@@ -15,9 +21,13 @@ from storage.session import SessionStore
 
 
 class LGDMantosApp(App):
+    """Aplicação Kivy principal do LGD Mantos."""
+
     title = "LGD Mantos"
 
     def build(self):
+        """Monta dependências globais e escolhe a tela inicial conforme a sessão."""
+
         self.session = SessionStore()
         self.api = ApiClient(token=self.session.load_token())
         self.api.on_unauthorized = self._handle_unauthorized
@@ -27,12 +37,15 @@ class LGDMantosApp(App):
         self._build_screens()
         if self.session.is_valid():
             self.manager.current = "home"
+            # A sincronização inicial roda depois da UI estar pronta.
             Clock.schedule_once(lambda _: self.sync_service.sync(), 1.5)
         else:
             self.manager.current = "login"
         return self.manager
 
     def _build_screens(self):
+        """Registra as telas principais no gerenciador raiz."""
+
         login = Screen(name="login")
         login.add_widget(LoginScreen(self.api, self.session, self.show_home))
         self.manager.add_widget(login)
@@ -42,6 +55,8 @@ class LGDMantosApp(App):
         self.manager.add_widget(home)
 
     def _home_layout(self):
+        """Cria o layout autenticado com navegação entre módulos."""
+
         root = BoxLayout(orientation="vertical")
         nav = BoxLayout(size_hint_y=None, height=48, spacing=4)
         content = ScreenManager()
@@ -75,15 +90,21 @@ class LGDMantosApp(App):
         return root
 
     def show_home(self):
+        """Exibe a área autenticada após login e tenta sincronizar pendências."""
+
         self.manager.current = "home"
         Clock.schedule_once(lambda _: self.sync_service.sync(), 0.5)
 
     def logout(self):
+        """Encerra sessão local e retorna para a tela de login."""
+
         self.session.clear()
         self.api.set_token(None)
         self.manager.current = "login"
 
     def _handle_unauthorized(self):
+        """Reage a respostas 401 limpando sessão e protegendo a navegação."""
+
         self.session.clear()
         self.api.set_token(None)
         if self.manager.current != "login":

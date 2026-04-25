@@ -1,4 +1,6 @@
-"""Analytics currently returns compact mobile-friendly dictionaries.
+"""Schemas futuros para respostas analíticas.
 
-Typed response models can be introduced here once the mobile contracts settle.
+As rotas de analytics hoje retornam dicionários compactos e amigáveis ao app
+mobile. Modelos tipados podem ser introduzidos aqui quando esses contratos
+estiverem mais estáveis.
 """

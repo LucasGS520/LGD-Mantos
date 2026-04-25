@@ -1,3 +1,5 @@
+"""Cliente HTTP simples usado pelo app Kivy para conversar com a API FastAPI."""
+
 import json
 import mimetypes
 import os
@@ -9,28 +11,41 @@ from urllib.request import Request, urlopen
 
 
 class ApiError(Exception):
+    """Erro de API com resposta HTTP recebida ou detalhe conhecido."""
+
     pass
 
 
 class ConnectionApiError(ApiError):
-    """Raised when the network is unreachable (no HTTP response received)."""
+    """Erro usado quando o servidor não respondeu ou a conexão falhou."""
+
     pass
 
 
 class ApiClient:
+    """Encapsula autenticação, JSON, upload e tratamento de erros HTTP."""
+
     def __init__(self, base_url: str = "http://localhost:8000/api/v1", token: str | None = None):
+        """Inicializa o cliente com URL base e token opcional já salvo."""
+
         self.base_url = base_url.rstrip("/")
         self.token = token
         self.on_unauthorized = None  # callback: () -> None
 
     def set_token(self, token: str | None) -> None:
+        """Atualiza o token usado nas próximas chamadas autenticadas."""
+
         self.token = token
 
     def _log(self, event: str, result: str) -> None:
+        """Registra eventos simples no console para depuração operacional."""
+
         ts = datetime.now().strftime("%H:%M:%S")
         print(f"[EVENT] {event} | {result} | {ts}")
 
     def login(self, password: str) -> str:
+        """Autentica com senha e armazena o token retornado pela API."""
+
         try:
             data = self.request("POST", "/auth/login", {"password": password}, auth=False)
             token = data.get("token")
@@ -44,20 +59,30 @@ class ApiClient:
             raise
 
     def get(self, path: str, params: dict | None = None):
+        """Executa GET, adicionando query string quando parâmetros forem enviados."""
+
         if params:
             path = f"{path}?{urlencode(params)}"
         return self.request("GET", path)
 
     def post(self, path: str, payload: dict):
+        """Executa POST com payload JSON."""
+
         return self.request("POST", path, payload)
 
     def put(self, path: str, payload: dict):
+        """Executa PUT com payload JSON."""
+
         return self.request("PUT", path, payload)
 
     def delete(self, path: str):
+        """Executa DELETE autenticado."""
+
         return self.request("DELETE", path)
 
     def upload(self, path: str, file_path: str, field: str = "file"):
+        """Envia arquivo via multipart/form-data para endpoints de upload."""
+
         boundary = uuid.uuid4().hex
         filename = os.path.basename(file_path)
         mime_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
@@ -94,6 +119,8 @@ class ApiClient:
             raise ConnectionApiError("Sem conexao com o servidor.")
 
     def request(self, method: str, path: str, payload: dict | None = None, auth: bool = True):
+        """Executa requisição JSON e normaliza erros para a camada de telas."""
+
         body = None
         headers = {"Accept": "application/json"}
         if payload is not None:
@@ -110,6 +137,7 @@ class ApiClient:
         except HTTPError as exc:
             self._log("api_error", f"{exc.code} | {path}")
             if exc.code == 401:
+                # A tela principal registra um callback para voltar ao login.
                 if self.on_unauthorized:
                     self.on_unauthorized()
                 raise ApiError("Sessao expirada. Faca login novamente.")

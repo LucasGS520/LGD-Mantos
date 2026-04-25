@@ -1,3 +1,9 @@
+"""Rotina de inicialização do banco local.
+
+Cria as tabelas declaradas nos modelos SQLAlchemy e insere dados básicos de
+categoria e fornecedor quando eles ainda não existem.
+"""
+
 import asyncio, sys
 sys.path.insert(0, "/app")
 from sqlalchemy import select
@@ -5,10 +11,13 @@ from app.core.database import engine, Base, AsyncSessionLocal
 import app.shared.models as M
 
 async def init():
+    """Cria a estrutura inicial do banco e popula registros mínimos de apoio."""
+
     print("Criando tabelas...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with AsyncSessionLocal() as s:
+        # Os registros iniciais são idempotentes para permitir reexecutar o script.
         for name in ["Camisetas Oversized", "Camisetas Peruanas", "Moletons", "Calças", "Acessórios"]:
             r = await s.execute(select(M.Category).where(M.Category.name==name))
             if not r.scalar_one_or_none():

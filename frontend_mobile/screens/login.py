@@ -1,3 +1,5 @@
+"""Tela de login do aplicativo mobile."""
+
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -8,7 +10,11 @@ from services.api_client import ApiError
 
 
 class LoginScreen(BoxLayout):
+    """Coleta a senha de acesso e abre o app quando o login é aceito."""
+
     def __init__(self, api, session, on_login, **kwargs):
+        """Monta os campos e recebe callbacks/dependências da aplicação."""
+
         super().__init__(orientation="vertical", padding=24, spacing=12, **kwargs)
         self.api = api
         self.session = session
@@ -25,11 +31,15 @@ class LoginScreen(BoxLayout):
         self.add_widget(self.status)
 
     def submit(self, *_):
+        """Inicia o fluxo de login sem travar imediatamente a resposta visual da UI."""
+
         self.status.text = "Entrando..."
         self.button.disabled = True
         Clock.schedule_once(lambda _: self._login(), 0.1)
 
     def _login(self):
+        """Executa a autenticação, salva o token e informa erros na própria tela."""
+
         try:
             token = self.api.login(self.password.text)
             self.session.save_token(token)

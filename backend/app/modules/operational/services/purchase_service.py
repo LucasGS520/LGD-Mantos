@@ -1,3 +1,5 @@
+"""Serviços de negócio para pedidos de compra e recebimento."""
+
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,8 +9,12 @@ from app.shared.schemas.operations import POIn
 
 
 class PurchaseService:
+    """Cria compras de fornecedor e aplica entrada de estoque no recebimento."""
+
     @staticmethod
     async def create_purchase(db: AsyncSession, data: POIn) -> PurchaseOrder:
+        """Cria um pedido de compra em aberto com seus itens."""
+
         supplier = await repo.get_supplier(db, data.supplier_id)
         if not supplier:
             raise HTTPException(404, "Fornecedor nao encontrado")
@@ -28,6 +34,8 @@ class PurchaseService:
 
     @staticmethod
     async def receive_purchase(db: AsyncSession, purchase_id: str) -> dict:
+        """Marca a compra como recebida e soma os itens ao estoque."""
+
         purchase = await repo.get_purchase(db, purchase_id)
         if not purchase:
             raise HTTPException(404, "Compra nao encontrada")
@@ -38,6 +46,7 @@ class PurchaseService:
         for item in purchase.items:
             variant = await repo.get_variant(db, item.variant_id)
             if variant:
+                # Cada item recebido gera entrada de estoque com custo unitário.
                 variant.stock_quantity += item.quantity
                 db.add(
                     StockMovement(

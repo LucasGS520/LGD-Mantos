@@ -1,1 +1,1 @@
-"""Shared AI service and routes."""
+"""Serviço e rotas compartilhadas para recursos de IA do backend."""

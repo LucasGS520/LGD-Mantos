@@ -1,3 +1,5 @@
+"""Exporta as telas Kivy usadas pelo aplicativo mobile."""
+
 from screens.analytics import AnalyticsScreen
 from screens.login import LoginScreen
 from screens.marketing import MarketingScreen

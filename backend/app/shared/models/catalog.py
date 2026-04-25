@@ -1,3 +1,5 @@
+"""Modelos ORM do catálogo de produtos, fornecedores e variantes."""
+
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, Numeric, String, Text
@@ -8,6 +10,8 @@ from app.shared.models.common import now, uid
 
 
 class Category(Base):
+    """Categoria comercial usada para organizar produtos do catálogo."""
+
     __tablename__ = "categories"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
@@ -17,6 +21,8 @@ class Category(Base):
 
 
 class Supplier(Base):
+    """Fornecedor de produtos e compras da loja."""
+
     __tablename__ = "suppliers"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
@@ -28,11 +34,14 @@ class Supplier(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
+    # Relacionamentos deixam o fornecedor navegável a partir de produtos e compras.
     products = relationship("Product", back_populates="supplier")
     purchase_orders = relationship("PurchaseOrder", back_populates="supplier")
 
 
 class Product(Base):
+    """Produto principal vendido pela loja, identificado por SKU único."""
+
     __tablename__ = "products"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
@@ -49,12 +58,15 @@ class Product(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
 
+    # Um produto pode ter várias variantes, como tamanhos ou cores.
     category = relationship("Category", back_populates="products")
     supplier = relationship("Supplier", back_populates="products")
     variants = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
 
 
 class ProductVariant(Base):
+    """Variação vendável de um produto, com estoque próprio por tamanho/cor."""
+
     __tablename__ = "product_variants"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)

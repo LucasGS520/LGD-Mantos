@@ -1,1 +1,1 @@
-"""Operational module."""
+"""Módulo operacional: catálogo, estoque, vendas, compras e despesas."""

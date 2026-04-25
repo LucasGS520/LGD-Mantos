@@ -1,1 +1,1 @@
-"""Shared models, schemas, and utilities used by backend modules."""
+"""Modelos, schemas e utilitários compartilhados entre os módulos do backend."""

@@ -1,3 +1,5 @@
+"""Exporta os modelos ORM compartilhados para facilitar imports no backend."""
+
 from app.shared.models.catalog import Category, Product, ProductVariant, Supplier
 from app.shared.models.operations import (
     Expense,

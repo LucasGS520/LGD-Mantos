@@ -1,3 +1,5 @@
+"""Rotas HTTP para geração de conteúdo de marketing com IA."""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,6 +21,8 @@ async def product_description(
     db: AsyncSession = Depends(get_db),
     _=Depends(verify_token),
 ):
+    """Gera descrição comercial de produto."""
+
     return await MarketingService.product_description(db, data)
 
 
@@ -28,6 +32,8 @@ async def campaign_suggestion(
     db: AsyncSession = Depends(get_db),
     _=Depends(verify_token),
 ):
+    """Gera sugestão de campanha de marketing."""
+
     return await MarketingService.campaign_suggestion(db, data)
 
 
@@ -37,4 +43,6 @@ async def social_copy(
     db: AsyncSession = Depends(get_db),
     _=Depends(verify_token),
 ):
+    """Gera copy para publicação em redes sociais."""
+
     return await MarketingService.social_copy(db, data)

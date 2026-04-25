@@ -1,3 +1,5 @@
+"""Schemas Pydantic das operações de estoque, vendas, despesas e compras."""
+
 from datetime import datetime
 from typing import Literal, Optional
 
@@ -5,6 +7,8 @@ from pydantic import BaseModel, Field
 
 
 class StockMoveIn(BaseModel):
+    """Entrada para registrar uma movimentação de estoque."""
+
     variant_id: str
     movement_type: Literal["entrada", "saida", "ajuste", "devolucao"]
     quantity: int
@@ -13,6 +17,8 @@ class StockMoveIn(BaseModel):
 
 
 class StockMoveOut(BaseModel):
+    """Resposta pública de movimentação de estoque registrada."""
+
     id: str
     variant_id: str
     movement_type: str
@@ -25,6 +31,8 @@ class StockMoveOut(BaseModel):
 
 
 class SaleItemIn(BaseModel):
+    """Entrada de um item vendido em uma venda."""
+
     variant_id: str
     quantity: int
     unit_price: float
@@ -32,12 +40,16 @@ class SaleItemIn(BaseModel):
 
 
 class SaleIn(BaseModel):
+    """Entrada para registrar uma venda com seus itens."""
+
     channel: str = "loja"
     notes: Optional[str] = None
     items: list[SaleItemIn]
 
 
 class SaleItemOut(BaseModel):
+    """Resposta pública de um item de venda."""
+
     id: str
     variant_id: str
     quantity: int
@@ -48,6 +60,8 @@ class SaleItemOut(BaseModel):
 
 
 class SaleOut(BaseModel):
+    """Resposta pública de venda com total e itens."""
+
     id: str
     sold_at: datetime
     channel: str
@@ -59,6 +73,8 @@ class SaleOut(BaseModel):
 
 
 class ExpenseIn(BaseModel):
+    """Entrada para registrar uma despesa."""
+
     date: str
     category: str
     amount: float
@@ -67,6 +83,8 @@ class ExpenseIn(BaseModel):
 
 
 class ExpenseOut(BaseModel):
+    """Resposta pública de despesa registrada."""
+
     id: str
     date: str
     category: str
@@ -78,12 +96,16 @@ class ExpenseOut(BaseModel):
 
 
 class POItemIn(BaseModel):
+    """Entrada de item de pedido de compra."""
+
     variant_id: str
     quantity: int
     unit_cost: float
 
 
 class POItemOut(BaseModel):
+    """Resposta pública de item de pedido de compra."""
+
     id: str
     variant_id: str
     quantity: int
@@ -93,6 +115,8 @@ class POItemOut(BaseModel):
 
 
 class POIn(BaseModel):
+    """Entrada para criar um pedido de compra."""
+
     supplier_id: str
     order_date: str
     notes: Optional[str] = None
@@ -100,6 +124,8 @@ class POIn(BaseModel):
 
 
 class POOut(BaseModel):
+    """Resposta pública de pedido de compra com seus itens."""
+
     id: str
     supplier_id: str
     order_date: str

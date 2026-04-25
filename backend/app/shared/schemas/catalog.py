@@ -1,3 +1,5 @@
+"""Schemas Pydantic usados pelas rotas de catálogo."""
+
 from datetime import datetime
 from typing import Optional
 
@@ -5,17 +7,24 @@ from pydantic import BaseModel, Field
 
 
 class CategoryCreate(BaseModel):
+    """Entrada para criação de uma categoria."""
+
     name: str
 
 
 class CategoryOut(BaseModel):
+    """Resposta pública de uma categoria cadastrada."""
+
     id: str
     name: str
 
+    # Permite construir o schema diretamente a partir de instâncias SQLAlchemy.
     model_config = {"from_attributes": True}
 
 
 class SupplierCreate(BaseModel):
+    """Entrada para criação ou atualização de fornecedor."""
+
     name: str
     contact: Optional[str] = None
     phone: Optional[str] = None
@@ -24,6 +33,8 @@ class SupplierCreate(BaseModel):
 
 
 class SupplierOut(BaseModel):
+    """Resposta pública de fornecedor."""
+
     id: str
     name: str
     contact: Optional[str] = None
@@ -35,6 +46,8 @@ class SupplierOut(BaseModel):
 
 
 class VariantIn(BaseModel):
+    """Entrada para criação de variante de produto."""
+
     size: str
     color: str = "Unico"
     stock_quantity: int = 0
@@ -43,6 +56,8 @@ class VariantIn(BaseModel):
 
 
 class VariantOut(BaseModel):
+    """Resposta pública de uma variante, incluindo seu saldo de estoque."""
+
     id: str
     product_id: str
     size: str
@@ -55,6 +70,8 @@ class VariantOut(BaseModel):
 
 
 class ProductCreate(BaseModel):
+    """Entrada para cadastrar produto e suas variantes iniciais."""
+
     sku: str
     name: str
     description: Optional[str] = None
@@ -67,6 +84,8 @@ class ProductCreate(BaseModel):
 
 
 class ProductUpdate(BaseModel):
+    """Entrada parcial para atualizar dados editáveis de um produto."""
+
     name: Optional[str] = None
     description: Optional[str] = None
     category_id: Optional[str] = None
@@ -78,6 +97,8 @@ class ProductUpdate(BaseModel):
 
 
 class ProductOut(BaseModel):
+    """Resposta pública completa de produto, com fotos e variantes."""
+
     id: str
     sku: str
     name: str

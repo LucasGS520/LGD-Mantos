@@ -1,3 +1,9 @@
+"""Tela de análises do app mobile.
+
+Agrupa dashboard, rankings, visões por tamanho/canal, sugestões de compra e DRE
+em subtelas Kivy simples, consumindo as rotas `/analytics` do backend.
+"""
+
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -13,13 +19,19 @@ _CACHE_TTL = 300
 
 
 def _result_label():
+    """Cria um label com quebra automática para resultados textuais longos."""
+
     lbl = Label(text="Toque em Atualizar para carregar.", halign="left", valign="top")
     lbl.bind(size=lambda i, v: setattr(i, "text_size", v))
     return lbl
 
 
 class AnalyticsScreen(BoxLayout):
+    """Tela principal do módulo de análise no aplicativo Kivy."""
+
     def __init__(self, api, **kwargs):
+        """Monta subnavegação e agenda o carregamento inicial do dashboard."""
+
         super().__init__(orientation="vertical", padding=8, spacing=4, **kwargs)
         self.api = api
         self.cache = LocalCache()
@@ -54,6 +66,8 @@ class AnalyticsScreen(BoxLayout):
     # ------------------------------------------------------------------ dashboard
 
     def _build_dashboard(self):
+        """Cria a seção de dashboard com botão de atualização."""
+
         box = BoxLayout(orientation="vertical", spacing=6)
         refresh = Button(text="Atualizar dashboard", size_hint_y=None, height=40)
         refresh.bind(on_press=lambda *_: self.load())
@@ -64,6 +78,8 @@ class AnalyticsScreen(BoxLayout):
         return box
 
     def load(self):
+        """Mostra dashboard em cache imediatamente e atualiza em segundo momento."""
+
         data, _ = self.cache.get(_CACHE_KEY)
         if data is not None:
             self._render_dashboard(data)
@@ -74,6 +90,8 @@ class AnalyticsScreen(BoxLayout):
         Clock.schedule_once(lambda _: self._load_dashboard(), 0.1)
 
     def _load_dashboard(self):
+        """Busca o dashboard na API e atualiza cache/renderização."""
+
         try:
             data = self.api.get("/analytics/dashboard")
             self.cache.set(_CACHE_KEY, data, _CACHE_TTL)
@@ -84,6 +102,8 @@ class AnalyticsScreen(BoxLayout):
                 self.dash_content.text = str(exc)
 
     def _render_dashboard(self, data):
+        """Transforma o dicionário do backend em texto compacto para a tela."""
+
         self.dash_content.text = (
             f"Receita hoje: R$ {data['today_revenue']:.2f}\n"
             f"Vendas hoje: {data['today_count']}\n"
@@ -98,6 +118,8 @@ class AnalyticsScreen(BoxLayout):
     # ------------------------------------------------------------------ top produtos
 
     def _build_top_produtos(self):
+        """Cria a seção de ranking de produtos."""
+
         box = BoxLayout(orientation="vertical", spacing=6)
         self.top_status = Label(text="", size_hint_y=None, height=24, font_size=12)
         self.top_content = _result_label()
@@ -109,10 +131,14 @@ class AnalyticsScreen(BoxLayout):
         return box
 
     def _fetch_top_produtos(self):
+        """Agenda a busca do ranking de produtos."""
+
         self.top_status.text = "Buscando..."
         Clock.schedule_once(lambda _: self._load_top_produtos(), 0.1)
 
     def _load_top_produtos(self):
+        """Carrega e renderiza os produtos mais vendidos."""
+
         try:
             data = self.api.get("/analytics/top-products", {"days": 30})
             if not data:
@@ -131,6 +157,8 @@ class AnalyticsScreen(BoxLayout):
     # ------------------------------------------------------------------ por tamanho
 
     def _build_por_tamanho(self):
+        """Cria a seção de vendas por tamanho."""
+
         box = BoxLayout(orientation="vertical", spacing=6)
         self.size_status = Label(text="", size_hint_y=None, height=24, font_size=12)
         self.size_content = _result_label()
@@ -142,10 +170,14 @@ class AnalyticsScreen(BoxLayout):
         return box
 
     def _fetch_por_tamanho(self):
+        """Agenda a busca de vendas por tamanho."""
+
         self.size_status.text = "Buscando..."
         Clock.schedule_once(lambda _: self._load_por_tamanho(), 0.1)
 
     def _load_por_tamanho(self):
+        """Carrega e renderiza quantidades vendidas por tamanho."""
+
         try:
             data = self.api.get("/analytics/by-size", {"days": 30})
             if not data:
@@ -164,6 +196,8 @@ class AnalyticsScreen(BoxLayout):
     # ------------------------------------------------------------------ por canal
 
     def _build_por_canal(self):
+        """Cria a seção de vendas por canal."""
+
         box = BoxLayout(orientation="vertical", spacing=6)
         self.canal_status = Label(text="", size_hint_y=None, height=24, font_size=12)
         self.canal_content = _result_label()
@@ -175,10 +209,14 @@ class AnalyticsScreen(BoxLayout):
         return box
 
     def _fetch_por_canal(self):
+        """Agenda a busca de vendas por canal."""
+
         self.canal_status.text = "Buscando..."
         Clock.schedule_once(lambda _: self._load_por_canal(), 0.1)
 
     def _load_por_canal(self):
+        """Carrega e renderiza resultados agrupados por canal."""
+
         try:
             data = self.api.get("/analytics/by-channel", {"days": 30})
             if not data:
@@ -198,6 +236,8 @@ class AnalyticsScreen(BoxLayout):
     # ------------------------------------------------------------------ sugestoes de compra
 
     def _build_sugestoes(self):
+        """Cria a seção de sugestões de compra."""
+
         box = BoxLayout(orientation="vertical", spacing=6)
         self.sug_status = Label(text="", size_hint_y=None, height=24, font_size=12)
         self.sug_content = _result_label()
@@ -209,10 +249,14 @@ class AnalyticsScreen(BoxLayout):
         return box
 
     def _fetch_sugestoes(self):
+        """Agenda a busca de sugestões de reposição."""
+
         self.sug_status.text = "Buscando..."
         Clock.schedule_once(lambda _: self._load_sugestoes(), 0.1)
 
     def _load_sugestoes(self):
+        """Carrega e renderiza sugestões de compra vindas do backend."""
+
         try:
             data = self.api.get("/analytics/purchase-suggestions")
             if not data:
@@ -233,6 +277,8 @@ class AnalyticsScreen(BoxLayout):
     # ------------------------------------------------------------------ DRE
 
     def _build_dre(self):
+        """Cria a seção de DRE com filtros de mês e ano."""
+
         box = BoxLayout(orientation="vertical", spacing=6)
 
         row = BoxLayout(size_hint_y=None, height=38, spacing=6)
@@ -252,6 +298,8 @@ class AnalyticsScreen(BoxLayout):
         return box
 
     def _fetch_dre(self):
+        """Valida filtros e agenda a busca do DRE."""
+
         month = self.dre_month.text.strip()
         year = self.dre_year.text.strip()
         if not month or not year:
@@ -261,6 +309,8 @@ class AnalyticsScreen(BoxLayout):
         Clock.schedule_once(lambda _: self._load_dre(month, year), 0.1)
 
     def _load_dre(self, month, year):
+        """Carrega e renderiza o DRE do período solicitado."""
+
         try:
             data = self.api.get("/analytics/finance/dre", {"month": month, "year": year})
             self.dre_content.text = (

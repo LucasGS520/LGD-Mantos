@@ -1,3 +1,5 @@
+"""Exporta schemas Pydantic compartilhados entre rotas e serviços."""
+
 from app.shared.schemas.catalog import (
     CategoryCreate,
     CategoryOut,

@@ -1,3 +1,10 @@
+"""Serviço central de IA usado pelos módulos do backend.
+
+A IA recebe contexto resumido da loja e gera respostas textuais. Ela não
+executa alterações operacionais; qualquer ação sugerida precisa ser confirmada
+e registrada pelo usuário nas rotas normais do sistema.
+"""
+
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -23,6 +30,8 @@ Regras permanentes:
 
 
 class AIService:
+    """Constrói contexto de negócio e chama a API externa de IA."""
+
     @staticmethod
     async def generate(
         db: AsyncSession,
@@ -31,6 +40,8 @@ class AIService:
         module: str = "core",
         context_ids: list[str] | None = None,
     ) -> dict:
+        """Gera resposta de IA para uma mensagem, modo e módulo específicos."""
+
         if not settings.ANTHROPIC_API_KEY or settings.ANTHROPIC_API_KEY.startswith("sk-ant-sua"):
             return {
                 "response": "Configure sua ANTHROPIC_API_KEY no arquivo .env para usar o assistente de IA.",
@@ -42,6 +53,7 @@ class AIService:
         user_message = f"{context}\n\n---\nModulo: {module}\nModo: {mode}\nSolicitacao: {message}"
 
         try:
+            # A chamada externa é isolada aqui para manter os módulos sem dependência direta da API.
             async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.post(
                     "https://api.anthropic.com/v1/messages",
@@ -71,6 +83,8 @@ class AIService:
         module: str,
         context_ids: list[str],
     ) -> str:
+        """Monta um resumo textual com vendas, estoque e produtos relevantes."""
+
         now = datetime.now(timezone.utc)
         since = now - timedelta(days=30)
         parts = [f"CONTEXTO DO MODULO: {module}"]
@@ -104,6 +118,8 @@ class AIService:
 
     @staticmethod
     async def _top_variants(db: AsyncSession, since: datetime):
+        """Retorna as variantes mais vendidas para enriquecer análises e campanhas."""
+
         result = await db.execute(
             select(
                 Product.name,
@@ -123,6 +139,8 @@ class AIService:
 
     @staticmethod
     async def _low_stock(db: AsyncSession):
+        """Retorna produtos em estoque crítico para avisos no contexto da IA."""
+
         result = await db.execute(
             select(Product.name, ProductVariant.size, ProductVariant.color, ProductVariant.stock_quantity)
             .join(Product)
@@ -132,6 +150,8 @@ class AIService:
 
     @staticmethod
     async def _recent_products(db: AsyncSession, context_ids: list[str]):
+        """Lista produtos ativos recentes ou explicitamente referenciados."""
+
         query = select(Product).where(Product.is_active == True)
         if context_ids:
             query = query.where(Product.id.in_(context_ids))

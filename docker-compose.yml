@@ -1,5 +1,6 @@
 services:
   db:
+    # Banco principal usado por todos os módulos do backend.
     image: postgres:16-alpine
     container_name: lgd_db
     restart: unless-stopped
@@ -8,14 +9,17 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: lgdmantos123
     volumes:
+      # Mantém os dados do PostgreSQL entre reinicializações dos containers.
       - pgdata:/var/lib/postgresql/data
     healthcheck:
+      # O backend só sobe depois que o banco responder ao pg_isready.
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 8s
       timeout: 4s
       retries: 6
 
   backend:
+    # API FastAPI com reload para desenvolvimento local.
     build:
       context: .
       dockerfile: Dockerfile
@@ -28,11 +32,16 @@ services:
       db:
         condition: service_healthy
     volumes:
+      # Monta o código local para refletir alterações sem reconstruir a imagem.
       - ./backend:/app
+      # Preserva imagens enviadas pelo módulo operacional.
       - uploads_data:/app/app/static/uploads
+    # Inicializa tabelas/dados básicos antes de iniciar o servidor HTTP.
     command: >
       sh -c "python init_db.py && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
 
 volumes:
+  # Volume persistente do PostgreSQL.
   pgdata:
+  # Volume persistente para uploads de produtos.
   uploads_data:

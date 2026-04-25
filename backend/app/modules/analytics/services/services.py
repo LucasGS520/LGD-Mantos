@@ -1,3 +1,5 @@
+"""Serviços que transformam consultas analíticas em respostas para o app."""
+
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,8 +8,12 @@ from app.modules.analytics import repositories as repo
 
 
 class AnalyticsService:
+    """Monta indicadores, rankings, sugestões de compra e DRE."""
+
     @staticmethod
     async def dashboard(db: AsyncSession) -> dict:
+        """Retorna um resumo operacional e financeiro do dia, mês e estoque."""
+
         now = datetime.now(timezone.utc)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -20,6 +26,7 @@ class AnalyticsService:
         alerts = await repo.stock_alert_count(db)
         stock = await repo.stock_value(db)
 
+        # A série diária alimenta gráficos simples dos últimos 30 dias.
         daily = []
         for index in range(29, -1, -1):
             day = now - timedelta(days=index)
@@ -47,6 +54,8 @@ class AnalyticsService:
 
     @staticmethod
     async def top_products(db: AsyncSession, days: int) -> list[dict]:
+        """Lista produtos mais vendidos no intervalo escolhido."""
+
         since = datetime.now(timezone.utc) - timedelta(days=days)
         rows = await repo.top_products(db, since)
         return [
@@ -62,18 +71,24 @@ class AnalyticsService:
 
     @staticmethod
     async def sales_by_size(db: AsyncSession, days: int) -> list[dict]:
+        """Resume a venda por tamanho para apoiar compras e grade."""
+
         since = datetime.now(timezone.utc) - timedelta(days=days)
         rows = await repo.sales_by_size(db, since)
         return [{"size": row[0], "qty": int(row[1] or 0)} for row in rows]
 
     @staticmethod
     async def sales_by_channel(db: AsyncSession, days: int) -> list[dict]:
+        """Resume desempenho de vendas por canal comercial."""
+
         since = datetime.now(timezone.utc) - timedelta(days=days)
         rows = await repo.sales_by_channel(db, since)
         return [{"channel": row[0], "count": int(row[1]), "total": float(row[2] or 0)} for row in rows]
 
     @staticmethod
     async def purchase_suggestions(db: AsyncSession) -> list[dict]:
+        """Sugere reposição com base em vendas recentes e estoque mínimo."""
+
         since = datetime.now(timezone.utc) - timedelta(days=30)
         velocity = await repo.variant_velocity_30d(db, since)
         variants = await repo.active_variants(db)
@@ -81,6 +96,7 @@ class AnalyticsService:
         suggestions = []
         for variant in variants:
             sold = velocity.get(variant.id, 0)
+            # Sem venda recente, a variante não recebe previsão de dias restantes.
             days_left = (variant.stock_quantity / (sold / 30)) if sold > 0 else 999
             score = sold * 2 - variant.stock_quantity
             if score > 0 or variant.stock_quantity <= variant.min_stock_alert:
@@ -109,6 +125,8 @@ class AnalyticsService:
 
     @staticmethod
     async def dre(db: AsyncSession, month: int | None, year: int | None) -> dict:
+        """Calcula um DRE simplificado para o mês e ano informados."""
+
         now = datetime.now(timezone.utc)
         selected_month = month or now.month
         selected_year = year or now.year

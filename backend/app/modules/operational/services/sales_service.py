@@ -1,3 +1,5 @@
+"""Serviços de negócio para registro de vendas."""
+
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,11 +9,16 @@ from app.shared.schemas.operations import SaleIn
 
 
 class SalesService:
+    """Valida vendas, baixa estoque e cria histórico de movimentação."""
+
     @staticmethod
     async def create_sale(db: AsyncSession, data: SaleIn) -> Sale:
+        """Cria uma venda com itens e registra saídas de estoque correspondentes."""
+
         if not data.items:
             raise HTTPException(400, "Sem itens")
 
+        # Primeiro valida todos os itens; a baixa de estoque só acontece depois.
         total = 0.0
         pairs = []
         for item in data.items:
@@ -37,6 +44,7 @@ class SalesService:
                     unit_cost=item.unit_cost,
                 )
             )
+            # A venda sempre gera uma saída de estoque rastreável no histórico.
             variant.stock_quantity -= item.quantity
             db.add(
                 StockMovement(
