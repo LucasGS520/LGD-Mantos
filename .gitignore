@@ -29,6 +29,7 @@ ENV/
 
 # Editor and OS files
 .idea/
+.vscode/
 .DS_Store
 Thumbs.db
 
@@ -42,6 +43,29 @@ frontend_mobile/build/
 frontend_mobile/dist/
 frontend_mobile/bin/
 frontend_mobile/.gradle/
+
+# Frontend PWA / Node outputs
+frontend_pwa/node_modules/
+frontend_pwa/dist/
+frontend_pwa/build/
+frontend_pwa/.next/
+frontend_pwa/.nuxt/
+frontend_pwa/.vite/
+frontend_pwa/.cache/
+frontend_pwa/.parcel-cache/
+frontend_pwa/coverage/
+
+# Node package manager artifacts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local databases and generic runtime artifacts
+*.db
+*.sqlite
+*.sqlite3
+*.log
 
 # Documentos Auxiliares
 .auxiliares_docs/

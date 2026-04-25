@@ -17,6 +17,10 @@ para manutenção, onboarding e futuras decisões técnicas.
 - **asyncpg**: driver assíncrono usado pelo SQLAlchemy.
 - **Volumes Docker**: preservam dados do banco e uploads entre reinicializações.
 
+## Frontend
+
+- **React + Vite**: Criar uma versão web responsiva do frontend, totalmente alinhada com a estrutura e design do `frontend_mobile/` para ser acessada pelo navegador.
+
 ## Frontend Mobile
 
 - **Kivy**: interface mobile-first oficial do projeto.

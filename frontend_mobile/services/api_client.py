@@ -25,7 +25,7 @@ class ConnectionApiError(ApiError):
 class ApiClient:
     """Encapsula autenticação, JSON, upload e tratamento de erros HTTP."""
 
-    def __init__(self, base_url: str = "http://localhost:8000/api/v1", token: str | None = None):
+    def __init__(self, base_url: str = "https://lgd-mantos.onrender.com/api/v1", token: str | None = None):
         """Inicializa o cliente com URL base e token opcional já salvo."""
 
         self.base_url = base_url.rstrip("/")
