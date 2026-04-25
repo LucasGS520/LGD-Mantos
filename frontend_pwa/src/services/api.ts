@@ -1,11 +1,24 @@
 import { Session } from './session'
 
-const BASE = import.meta.env.VITE_API_URL as string
+const ENV_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.trim()
+const BASE = (ENV_BASE && ENV_BASE.length > 0
+  ? ENV_BASE
+  : 'https://lgd-mantos.onrender.com/api/v1').replace(/\/+$/, '')
 
 let _onUnauthorized: (() => void) | null = null
 
 export function setUnauthorizedHandler(fn: () => void): void {
   _onUnauthorized = fn
+}
+
+async function readJsonBody<T>(res: Response): Promise<T | null> {
+  const text = await res.text()
+  if (!text.trim()) return null
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    return null
+  }
 }
 
 async function req<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -28,15 +41,17 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
 
   if (!res.ok) {
     let msg = `Erro ${res.status}`
-    try {
-      const d = await res.json()
-      if (d.detail) msg = typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail)
-    } catch { /* ignore */ }
+    const d = await readJsonBody<{ detail?: unknown }>(res)
+    if (d?.detail) msg = typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail)
     throw new Error(msg)
   }
 
   if (res.status === 204) return undefined as T
-  return res.json() as Promise<T>
+  const data = await readJsonBody<T>(res)
+  if (data === null) {
+    throw new Error('Resposta inválida do servidor (sem JSON). Verifique a configuração da API.')
+  }
+  return data
 }
 
 export const api = {
@@ -58,7 +73,11 @@ export const api = {
       throw new Error('Sessão expirada')
     }
     if (!res.ok) throw new Error(`Erro ${res.status}`)
-    return res.json() as Promise<T>
+    const data = await readJsonBody<T>(res)
+    if (data === null) {
+      throw new Error('Resposta inválida do servidor (sem JSON). Verifique a configuração da API.')
+    }
+    return data
   },
 
   async login(password: string): Promise<string> {
@@ -73,7 +92,11 @@ export const api = {
       }
       throw new Error(`Erro ${res.status}`)
     }
-    const { token } = await res.json()
+    const payload = await readJsonBody<{ token?: string }>(res)
+    if (!payload?.token) {
+      throw new Error('Falha no login: resposta inválida da API. Confira VITE_API_URL.')
+    }
+    const { token } = payload
     Session.save(token)
     return token as string
   },
