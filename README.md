@@ -63,6 +63,33 @@ API:
 - Backend: `http://localhost:8000`
 - OpenAPI: `http://localhost:8000/api/docs`
 
+## Deploy no Render
+
+Erro comum de deploy:
+
+```txt
+socket.gaierror: [Errno -2] Name or service not known
+```
+
+Esse erro normalmente indica que o host definido em `DATABASE_URL` não existe
+no ambiente do Render (por exemplo, `@db:5432`, que funciona apenas no
+`docker-compose` local).
+
+Configuração recomendada no serviço Web do Render:
+
+```env
+DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@HOST:5432/DBNAME?sslmode=require
+APP_PASSWORD=<senha-forte>
+APP_SECRET=<secret-forte>
+ANTHROPIC_API_KEY=
+```
+
+Notas:
+
+- Use a URL do PostgreSQL criada no Render (Internal/External Database URL).
+- Se a URL vier como `postgres://...`, troque para `postgresql+asyncpg://...`.
+- Em produção no Render, mantenha `sslmode=require`.
+
 ## Rodar app Kivy
 
 Em outro terminal:
