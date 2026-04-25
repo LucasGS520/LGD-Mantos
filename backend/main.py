@@ -2,7 +2,6 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.ai.routes import router as ai_router
@@ -30,8 +29,5 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
 @app.get("/", include_in_schema=False)
-@app.get("/{full_path:path}", include_in_schema=False)
-async def spa(full_path: str = ""):
-    if full_path.startswith("api/"):
-        return {"detail": "Not Found"}
-    return FileResponse(os.path.join(static_dir, "index.html"))
+async def health():
+    return {"status": "ok", "service": "LGD Mantos API"}
