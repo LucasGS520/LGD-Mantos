@@ -1,8 +1,8 @@
 # LGD Mantos
 
-Sistema mobile-first de gestão operacional interna para a loja LGD Mantos.
+Sistema web-first de gestão operacional interna para a loja LGD Mantos.
 
-Este repositório reúne a API, o app mobile e a infraestrutura local necessários
+Este repositório reúne a API, o frontend web e a infraestrutura local necessários
 para centralizar produtos, estoque, vendas, compras, despesas, análises e apoio
 de IA em uma única base de dados.
 
@@ -10,17 +10,17 @@ de IA em uma única base de dados.
 
 - Backend: FastAPI
 - Banco: PostgreSQL
-- Frontend oficial: app mobile Kivy
+- Frontend oficial: PWA React (Vite)
 - Infra local: Docker Compose
 - IA: camada transversal em `backend/app/core/ai`
 
 Fluxo oficial:
 
 ```txt
-Kivy App -> API Client -> FastAPI -> PostgreSQL
+PWA React -> FastAPI -> PostgreSQL
 ```
 
-O app mobile nunca acessa o banco diretamente; toda leitura e escrita passa pela API.
+O frontend nunca acessa o banco diretamente; toda leitura e escrita passa pela API.
 
 ## Módulos
 
@@ -89,18 +89,6 @@ Notas:
 - Use a URL do PostgreSQL criada no Render (Internal/External Database URL).
 - Se a URL vier como `postgres://...`, troque para `postgresql+asyncpg://...`.
 - Em produção no Render, mantenha `sslmode=require`.
-
-## Rodar app Kivy
-
-Em outro terminal:
-
-```bash
-cd frontend_mobile
-python -m pip install -r requirements.txt
-python main.py
-```
-
-O app usa por padrão `http://localhost:8000/api/v1`.
 
 ## IA
 

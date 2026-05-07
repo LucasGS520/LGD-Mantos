@@ -40,6 +40,24 @@ services:
     command: >
       sh -c "python init_db.py && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
 
+  frontend_pwa:
+    # PWA React/Vite para validar o fluxo completo local com a API Docker.
+    image: node:20-alpine
+    container_name: lgd_pwa
+    restart: unless-stopped
+    working_dir: /app
+    depends_on:
+      - backend
+    environment:
+      # O browser no host acessa a API publicada em localhost:8000.
+      VITE_API_URL: http://localhost:8000/api/v1
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend_pwa:/app
+    command: >
+      sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+
 volumes:
   # Volume persistente do PostgreSQL.
   pgdata:

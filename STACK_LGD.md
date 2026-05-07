@@ -19,13 +19,8 @@ para manutenção, onboarding e futuras decisões técnicas.
 
 ## Frontend
 
-- **React + Vite**: Criar uma versão web responsiva do frontend, totalmente alinhada com a estrutura e design do `frontend_mobile/` para ser acessada pelo navegador.
-
-## Frontend Mobile
-
-- **Kivy**: interface mobile-first oficial do projeto.
-- **urllib padrão do Python**: cliente HTTP leve usado pelo app.
-- **Arquivos JSON locais**: sessão, cache e fila offline ficam no diretório do usuário.
+- **React + Vite**: frontend web responsivo oficial do projeto, acessado pelo navegador em qualquer dispositivo.
+- **PWA**: suporte a instalação e uso em mobile via navegador, sem app nativo.
 
 ## Infraestrutura Local
 

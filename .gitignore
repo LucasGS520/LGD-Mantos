@@ -36,11 +36,6 @@ Thumbs.db
 # Backend generated files
 backend/app/static/uploads/
 
-# Kivy / mobile build outputs
-frontend_mobile/.buildozer/
-frontend_mobile/.kivy/
-frontend_mobile/build/
-frontend_mobile/dist/
 frontend_mobile/bin/
 frontend_mobile/.gradle/
 
