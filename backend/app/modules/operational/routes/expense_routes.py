@@ -26,6 +26,13 @@ async def create_expense(data: ExpenseIn, db: AsyncSession = Depends(get_db), _=
     return await ExpenseService.create_expense(db, data)
 
 
+@router.put("/expenses/{eid}", response_model=ExpenseOut)
+async def update_expense(eid: str, data: ExpenseIn, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Atualiza uma despesa existente."""
+
+    return await ExpenseService.update_expense(db, eid, data)
+
+
 @router.delete("/expenses/{eid}")
 async def delete_expense(eid: str, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
     """Remove uma despesa existente."""

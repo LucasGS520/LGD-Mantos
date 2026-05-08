@@ -93,6 +93,7 @@ interface InputProps {
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void
 }
 export function Input({ label, value, placeholder, suffix, prefix, type = 'text', readOnly, error, hint, onChange }: InputProps) {
+  const isNumeric = type === 'number'
   return (
     <div>
       {label && <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6, letterSpacing: 0.2, textTransform: 'uppercase' }}>{label}</div>}
@@ -103,7 +104,8 @@ export function Input({ label, value, placeholder, suffix, prefix, type = 'text'
       }}>
         {prefix && <span style={{ color: 'var(--text-3)', fontSize: 14 }}>{prefix}</span>}
         <input
-          type={type}
+          type={isNumeric ? 'text' : type}
+          inputMode={isNumeric ? 'decimal' : undefined}
           value={onChange ? (value ?? '') : undefined}
           defaultValue={onChange ? undefined : value}
           placeholder={placeholder}

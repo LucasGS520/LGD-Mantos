@@ -50,7 +50,7 @@ class VariantIn(BaseModel):
 
     size: str
     color: str = "Unico"
-    stock_quantity: int = 0
+    stock_quantity: int = Field(default=0, ge=0)
     min_stock_alert: int = 3
     price_override: Optional[float] = None
 
@@ -72,7 +72,7 @@ class VariantOut(BaseModel):
 class ProductCreate(BaseModel):
     """Entrada para cadastrar produto e suas variantes iniciais."""
 
-    sku: str
+    sku: Optional[str] = None
     name: str
     description: Optional[str] = None
     category_id: Optional[str] = None

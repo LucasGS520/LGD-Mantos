@@ -4,7 +4,7 @@ import { Badge, Card, Btn, PhotoPlaceholder, Section, LoadingBody, ErrorBody } f
 import { AppBar, ScreenBody } from '../../components/Chrome'
 import { fmtBRL } from '../../fmt'
 import { api } from '../../services/api'
-import type { Product } from '../../services/types'
+import type { Product, Category, Supplier } from '../../services/types'
 import { useNav } from '../../nav'
 
 export default function ProductDetail() {
@@ -13,6 +13,19 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [catMap, setCatMap] = useState<Record<string, string>>({})
+  const [supMap, setSupMap] = useState<Record<string, string>>({})
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    api.get<Category[]>('/categories')
+      .then(cats => setCatMap(Object.fromEntries(cats.map(c => [c.id, c.name]))))
+      .catch(() => {})
+    api.get<Supplier[]>('/suppliers')
+      .then(sups => setSupMap(Object.fromEntries(sups.map(s => [s.id, s.name]))))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!productId) { back(); return }
@@ -24,16 +37,26 @@ export default function ProductDetail() {
       .finally(() => setLoading(false))
   }, [productId])
 
+  const handleDelete = async () => {
+    if (!product) return
+    setDeleting(true)
+    try {
+      await api.delete(`/products/${product.id}`)
+      back()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro ao remover produto')
+      setConfirmDelete(false)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const totalStock = product ? product.variants.reduce((s, v) => s + v.stock_quantity, 0) : 0
   const margin = product ? ((product.sale_price - product.cost_price) / product.sale_price * 100).toFixed(1) : '0'
 
   return (
     <>
-      <AppBar back title="Detalhe" action={
-        <button style={{ width: 38, height: 38, borderRadius: 12, border: '1px solid var(--line-2)', background: 'var(--bg-2)', display: 'grid', placeItems: 'center' }}>
-          <Ico.options size={18} stroke="var(--text-1)" />
-        </button>
-      } />
+      <AppBar back title="Detalhe" />
 
       {loading ? <LoadingBody /> : error ? <ErrorBody msg={error} onRetry={() => navigate('product-detail', { productId })} /> : product ? (
         <ScreenBody pad={0}>
@@ -48,8 +71,8 @@ export default function ProductDetail() {
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>{product.sku}</div>
             <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-1)', letterSpacing: -0.4, marginBottom: 8 }}>{product.name}</div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-              {product.category_id && <Badge tone="gold">{product.category_id}</Badge>}
-              {product.supplier_id && <Badge tone="neutral">{product.supplier_id}</Badge>}
+              {product.category_id && <Badge tone="gold">{catMap[product.category_id] ?? product.category_id}</Badge>}
+              {product.supplier_id && <Badge tone="neutral">{supMap[product.supplier_id] ?? product.supplier_id}</Badge>}
               <Badge tone="neutral">{totalStock} unidades</Badge>
             </div>
 
@@ -68,7 +91,7 @@ export default function ProductDetail() {
               </Card>
             </div>
 
-            <Section title={`Variantes · ${product.variants.length}`} action={<span style={{ fontSize: 12, fontWeight: 600, color: 'var(--gold-500)' }}>+ Adicionar</span>} top={4}>
+            <Section title={`Variantes · ${product.variants.length}`} top={4}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {product.variants.map(v => (
                   <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'var(--bg-1)', border: '1px solid var(--line-1)', borderRadius: 12 }}>
@@ -94,10 +117,20 @@ export default function ProductDetail() {
               </Section>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 22 }}>
-              <Btn kind="ghost" icon={Ico.edit} onClick={() => navigate('product-form', { productId: product.id })}>Editar</Btn>
-              <Btn kind="primary" icon={Ico.cart} onClick={() => navigate('sale-modal', { productId: product.id })}>Vender</Btn>
-            </div>
+            {confirmDelete ? (
+              <div style={{ marginTop: 22, padding: '14px 16px', borderRadius: 14, background: 'rgba(232,88,79,0.08)', border: '1px solid rgba(232,88,79,0.3)' }}>
+                <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12, textAlign: 'center' }}>Remover <strong>{product.name}</strong>? Esta ação desativa o produto.</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <Btn kind="ghost" onClick={() => setConfirmDelete(false)}>Cancelar</Btn>
+                  <Btn kind="danger" onClick={deleting ? undefined : handleDelete}>{deleting ? 'Removendo…' : 'Confirmar'}</Btn>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 22 }}>
+                <Btn kind="ghost" icon={Ico.edit} onClick={() => navigate('product-form', { productId: product.id })}>Editar</Btn>
+                <Btn kind="danger" icon={Ico.trash} onClick={() => setConfirmDelete(true)}>Remover</Btn>
+              </div>
+            )}
           </div>
         </ScreenBody>
       ) : null}

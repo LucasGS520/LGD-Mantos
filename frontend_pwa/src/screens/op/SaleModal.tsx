@@ -24,6 +24,7 @@ export default function SaleModal() {
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<CartItem[]>([])
   const [channel, setChannel] = useState('Loja')
+  const [discount, setDiscount] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPicker, setShowPicker] = useState(false)
@@ -53,20 +54,23 @@ export default function SaleModal() {
   }
 
   const subtotal = cart.reduce((s, i) => s + i.unitPrice * i.quantity, 0)
+  const discountAmt = Math.min(parseFloat(discount.replace(',', '.')) || 0, subtotal)
+  const total = subtotal - discountAmt
   const totalCost = cart.reduce((s, i) => s + i.variant.costPrice * i.quantity, 0)
-  const profit = subtotal - totalCost
+  const profit = total - totalCost
 
   const handleConfirm = async () => {
     if (cart.length === 0) return
     setSaving(true)
     setError(null)
     try {
+      const ratio = subtotal > 0 ? total / subtotal : 1
       await api.post('/sales', {
         channel,
         items: cart.map(i => ({
           variant_id: i.variant.id,
           quantity: i.quantity,
-          unit_price: i.unitPrice,
+          unit_price: parseFloat((i.unitPrice * ratio).toFixed(2)),
           unit_cost: i.variant.costPrice,
         })),
       })
@@ -157,11 +161,12 @@ export default function SaleModal() {
 
         <Section title="Resumo">
           <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line-1)', borderRadius: 12, padding: 14 }}>
-            {[
+            {([
               ['Subtotal', fmtBRL(subtotal), undefined],
+              discountAmt > 0 ? ['Desconto', `− ${fmtBRL(discountAmt)}`, '#F5847B'] : null,
               ['Custo total', fmtBRL(totalCost), 'var(--text-3)'],
               ['Lucro estimado', fmtBRL(profit), '#5DD49E'],
-            ].map(([l, v, c], i) => (
+            ] as ([string, string, string | undefined] | null)[]).filter(Boolean).map(([l, v, c], i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}>
                 <span style={{ color: 'var(--text-2)' }}>{l}</span>
                 <span className="tnum" style={{ fontWeight: 600, color: c || 'var(--text-1)' }}>{v}</span>
@@ -170,8 +175,22 @@ export default function SaleModal() {
             <div style={{ height: 1, background: 'var(--line-1)', margin: '8px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <span style={{ fontSize: 13, fontWeight: 700 }}>Total</span>
-              <span className="tnum" style={{ fontSize: 22, fontWeight: 800, color: 'var(--gold-300)' }}>{fmtBRL(subtotal)}</span>
+              <span className="tnum" style={{ fontSize: 22, fontWeight: 800, color: 'var(--gold-300)' }}>{fmtBRL(total)}</span>
             </div>
+          </div>
+        </Section>
+
+        <Section title="Desconto">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 46, padding: '0 14px', borderRadius: 12, background: 'var(--bg-4)', border: '1px solid var(--line-2)' }}>
+            <span style={{ color: 'var(--text-3)', fontSize: 14 }}>R$</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={discount}
+              onChange={e => setDiscount(e.target.value.replace(/[^0-9.,]/g, ''))}
+              placeholder="0,00  (opcional)"
+              style={{ flex: 1, background: 'transparent', border: 0, outline: 'none', color: 'var(--text-1)', fontSize: 15, fontWeight: 500 }}
+            />
           </div>
         </Section>
 

@@ -30,6 +30,12 @@ export interface Product {
   variants: Variant[]
 }
 
+// Categories
+export interface Category {
+  id: string
+  name: string
+}
+
 // Suppliers
 export interface Supplier {
   id: string

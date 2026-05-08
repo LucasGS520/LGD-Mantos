@@ -24,3 +24,10 @@ async def create_sale(data: SaleIn, db: AsyncSession = Depends(get_db), _=Depend
     """Registra uma venda e delega a baixa de estoque ao serviço."""
 
     return await SalesService.create_sale(db, data)
+
+
+@router.delete("/sales/{sid}")
+async def delete_sale(sid: str, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Remove uma venda e estorna o estoque dos itens correspondentes."""
+
+    return await SalesService.delete_sale(db, sid)

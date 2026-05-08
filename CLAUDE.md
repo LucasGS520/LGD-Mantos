@@ -2,16 +2,15 @@
 
 ## Sobre o Projeto *LGD Mantos*
 
-O projeto é uma aplicação web-first de gestão interna para operação, análise
+O projeto é uma aplicação de gestão interna para operação, análise
 e marketing da loja LGD Mantos. O sistema centraliza dados de produtos, estoque,
 compras, vendas e finanças, utilizando uma base única em PostgreSQL, backend
-FastAPI e cliente web responsivo em React (PWA). A IA atua como camada auxiliar transversal,
+FastAPI e cliente web responsivo em React (PWA). A IA deve ser nativa dentro desse sistema, atuando como camada auxiliar transversal,
 apoiando decisões operacionais, análises e geração de conteúdo, sem substituir
 o controle humano.
 
 O principal papel do sistema é centralizar rotinas que normalmente ficariam
 espalhadas em planilhas, anotações, WhatsApp ou controles manuais:
-
 - Cadastro e controle de produtos.
 - Gestão de estoque e movimentações.
 - Controle de fornecedores.

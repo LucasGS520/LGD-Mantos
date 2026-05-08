@@ -140,6 +140,15 @@ async def list_sales(db: AsyncSession, limit: int) -> list[Sale]:
     return list(result.scalars().all())
 
 
+async def get_sale(db: AsyncSession, sale_id: str) -> Sale | None:
+    """Busca uma venda com seus itens para estorno."""
+
+    result = await db.execute(
+        select(Sale).options(selectinload(Sale.items)).where(Sale.id == sale_id)
+    )
+    return result.scalar_one_or_none()
+
+
 async def list_expenses(db: AsyncSession) -> list[Expense]:
     """Lista despesas recentes para acompanhamento financeiro operacional."""
 

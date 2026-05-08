@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Ico } from '../../components/Icons'
-import { Btn, Tabs, Section, LoadingBody } from '../../components/UI'
+import { Btn, Section, LoadingBody } from '../../components/UI'
 import { AppBar, ScreenBody } from '../../components/Chrome'
 import { fmtBRL } from '../../fmt'
 import { api } from '../../services/api'
@@ -9,11 +9,15 @@ import { useNav } from '../../nav'
 
 interface OrderItem {
   variant: Variant & { productName: string }
-  qty: number
-  unitCost: number
+  qty: string
+  unitCost: string
 }
 
-const STATUS_TABS = ['Rascunho', 'Enviado', 'Recebido']
+const inputStyle: React.CSSProperties = {
+  height: 32, borderRadius: 8,
+  background: 'var(--bg-3)', border: '1px solid var(--line-2)',
+  color: 'var(--text-1)', fontSize: 13, textAlign: 'center', outline: 0,
+}
 
 export default function PurchaseForm() {
   const { back, params } = useNav()
@@ -22,7 +26,6 @@ export default function PurchaseForm() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [supplierId, setSupplierId] = useState('')
-  const [status, setStatus] = useState('Rascunho')
   const [notes, setNotes] = useState('')
   const [items, setItems] = useState<OrderItem[]>([])
   const [saving, setSaving] = useState(false)
@@ -43,22 +46,33 @@ export default function PurchaseForm() {
   const addItem = (product: Product, variant: Variant) => {
     setItems(prev => {
       const existing = prev.findIndex(i => i.variant.id === variant.id)
-      if (existing >= 0) return prev.map((i, j) => j === existing ? { ...i, qty: i.qty + 1 } : i)
-      return [...prev, { variant: { ...variant, productName: product.name }, qty: 1, unitCost: product.cost_price }]
+      if (existing >= 0) {
+        return prev.map((i, j) => j === existing
+          ? { ...i, qty: String(parseInt(i.qty || '0') + 1) }
+          : i)
+      }
+      return [...prev, {
+        variant: { ...variant, productName: product.name },
+        qty: '1',
+        unitCost: String(product.cost_price),
+      }]
     })
     setShowPicker(false)
   }
 
-  const updateItem = (variantId: string, key: 'qty' | 'unitCost', value: number) => {
-    if (key === 'qty' && value <= 0) {
+  const updateItem = (variantId: string, key: 'qty' | 'unitCost', value: string) => {
+    if (key === 'qty' && (value === '' || parseInt(value) <= 0)) {
       setItems(prev => prev.filter(i => i.variant.id !== variantId))
     } else {
       setItems(prev => prev.map(i => i.variant.id === variantId ? { ...i, [key]: value } : i))
     }
   }
 
-  const total = items.reduce((s, i) => s + i.qty * i.unitCost, 0)
-  const units = items.reduce((s, i) => s + i.qty, 0)
+  const parseQty = (s: string) => Math.max(1, parseInt(s) || 1)
+  const parseCost = (s: string) => parseFloat(s.replace(',', '.')) || 0
+
+  const total = items.reduce((s, i) => s + parseQty(i.qty) * parseCost(i.unitCost), 0)
+  const units = items.reduce((s, i) => s + parseQty(i.qty), 0)
 
   const selectedSupplier = suppliers.find(s => s.id === supplierId)
 
@@ -69,12 +83,12 @@ export default function PurchaseForm() {
     try {
       const body = {
         supplier_id: supplierId,
-        status: status.toLowerCase(),
+        order_date: new Date().toISOString().slice(0, 10),
         notes: notes.trim() || null,
         items: items.map(i => ({
           variant_id: i.variant.id,
-          quantity: i.qty,
-          unit_cost: i.unitCost,
+          quantity: parseQty(i.qty),
+          unit_cost: parseCost(i.unitCost),
         })),
       }
       if (purchaseId) {
@@ -120,10 +134,6 @@ export default function PurchaseForm() {
           )}
         </Section>
 
-        <Section title="Status" top={18}>
-          <Tabs items={STATUS_TABS} active={status} onChange={setStatus} />
-        </Section>
-
         <Section title={`Itens · ${items.length}`} action={<span onClick={() => setShowPicker(v => !v)} style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold-500)', cursor: 'pointer' }}>+ Item</span>} top={18}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {showPicker && (
@@ -132,7 +142,7 @@ export default function PurchaseForm() {
                   <div key={v.id} onClick={() => addItem(p, v)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderTop: '1px solid var(--line-1)', cursor: 'pointer' }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 12, fontWeight: 600 }}>{p.name}</div>
-                      <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{v.size} · {v.color}</div>
+                      <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{v.size} · {v.color} · estoque: {v.stock_quantity}</div>
                     </div>
                     <span className="tnum" style={{ fontSize: 12, color: 'var(--text-3)' }}>{fmtBRL(p.cost_price)}</span>
                   </div>
@@ -140,27 +150,34 @@ export default function PurchaseForm() {
               </div>
             )}
 
-            {items.map((it, i) => (
-              <div key={it.variant.id} style={{ display: 'flex', gap: 10, padding: 10, background: 'var(--bg-1)', border: '1px solid var(--line-1)', borderRadius: 12 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{it.variant.productName}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>{it.variant.size} · {it.variant.color}</div>
+            {items.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 72px 28px', gap: 8, fontSize: 9.5, color: 'var(--text-4)', textTransform: 'uppercase', padding: '0 2px', letterSpacing: 0.4 }}>
+                <span>Produto</span><span style={{ textAlign: 'center' }}>Qtd</span><span style={{ textAlign: 'center' }}>Custo/un</span><span />
+              </div>
+            )}
+
+            {items.map((it) => (
+              <div key={it.variant.id} style={{ display: 'grid', gridTemplateColumns: '1fr 52px 72px 28px', gap: 8, alignItems: 'center', padding: '8px 10px', background: 'var(--bg-1)', border: '1px solid var(--line-1)', borderRadius: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.variant.productName}</div>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-3)', marginTop: 2 }}>{it.variant.size} · {it.variant.color}</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <input
-                    type="number" value={it.qty} min={1}
-                    onChange={e => updateItem(it.variant.id, 'qty', parseInt(e.target.value) || 0)}
-                    style={{ width: 40, height: 32, borderRadius: 8, background: 'var(--bg-3)', border: '1px solid var(--line-2)', color: 'var(--text-1)', fontSize: 13, textAlign: 'center', outline: 0 }}
-                  />
-                  <span style={{ fontSize: 11, color: 'var(--text-3)' }}>×</span>
-                  <input
-                    type="number" value={it.unitCost} min={0}
-                    onChange={e => updateItem(it.variant.id, 'unitCost', parseFloat(e.target.value) || 0)}
-                    style={{ width: 64, height: 32, borderRadius: 8, background: 'var(--bg-3)', border: '1px solid var(--line-2)', color: 'var(--text-1)', fontSize: 12, textAlign: 'center', outline: 0 }}
-                  />
-                  <div onClick={() => updateItem(it.variant.id, 'qty', 0)} style={{ cursor: 'pointer', padding: 4 }}>
-                    <Ico.close size={14} stroke="var(--text-3)" />
-                  </div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={it.qty}
+                  onChange={e => updateItem(it.variant.id, 'qty', e.target.value.replace(/[^0-9]/g, ''))}
+                  style={{ ...inputStyle, width: '100%' }}
+                />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={it.unitCost}
+                  onChange={e => updateItem(it.variant.id, 'unitCost', e.target.value.replace(/[^0-9.,]/g, ''))}
+                  style={{ ...inputStyle, width: '100%' }}
+                />
+                <div onClick={() => setItems(prev => prev.filter(i => i.variant.id !== it.variant.id))} style={{ cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                  <Ico.close size={14} stroke="var(--text-3)" />
                 </div>
               </div>
             ))}
@@ -182,7 +199,7 @@ export default function PurchaseForm() {
             <span>Itens</span><span className="tnum">{units} unidades</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span style={{ fontSize: 13, fontWeight: 700 }}>Total</span>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>Total estimado</span>
             <span className="tnum" style={{ fontSize: 22, fontWeight: 800, color: 'var(--gold-300)' }}>{fmtBRL(total)}</span>
           </div>
         </div>

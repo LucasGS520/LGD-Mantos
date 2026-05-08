@@ -58,3 +58,25 @@ class SalesService:
         await db.flush()
         await db.refresh(sale, ["items"])
         return sale
+
+    @staticmethod
+    async def delete_sale(db: AsyncSession, sale_id: str) -> dict:
+        """Remove uma venda e estorna o estoque de cada item vendido."""
+
+        sale = await repo.get_sale(db, sale_id)
+        if not sale:
+            raise HTTPException(404, "Venda não encontrada")
+
+        for item in sale.items:
+            variant = await repo.get_variant(db, item.variant_id)
+            if variant:
+                variant.stock_quantity += item.quantity
+                db.add(StockMovement(
+                    variant_id=variant.id,
+                    movement_type="devolucao",
+                    quantity=item.quantity,
+                    notes=f"Estorno venda #{sale_id[:8]}",
+                ))
+
+        await db.delete(sale)
+        return {"ok": True}

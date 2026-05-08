@@ -6,6 +6,7 @@ import uuid
 from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.operational import repositories as repo
@@ -64,23 +65,47 @@ class CatalogService:
         return supplier
 
     @staticmethod
-    async def create_product(db: AsyncSession, data: ProductCreate) -> Product:
-        """Cria um produto e suas variantes iniciais, validando SKU único."""
+    def _generate_sku() -> str:
+        """Gera um SKU curto único no formato LGD-XXXXXXXX."""
+        return f"LGD-{uuid.uuid4().hex[:8].upper()}"
 
-        existing = await repo.get_product_by_sku(db, data.sku)
+    @staticmethod
+    async def create_product(db: AsyncSession, data: ProductCreate) -> Product:
+        """Cria um produto e suas variantes iniciais, validando referências e unicidade de SKU."""
+
+        if data.category_id:
+            if not await repo.get_category(db, data.category_id):
+                raise HTTPException(400, "Categoria nao encontrada")
+
+        if data.supplier_id:
+            if not await repo.get_supplier(db, data.supplier_id):
+                raise HTTPException(400, "Fornecedor nao encontrado")
+
+        sku = data.sku or CatalogService._generate_sku()
+
+        existing = await repo.get_product_by_sku(db, sku)
         if existing:
             raise HTTPException(400, "SKU ja cadastrado")
 
-        # As variantes são persistidas separadamente porque dependem do id do produto.
-        product = Product(**{key: value for key, value in data.model_dump().items() if key != "variants"})
-        db.add(product)
-        await db.flush()
+        product_data = {k: v for k, v in data.model_dump().items() if k not in ("variants", "sku")}
+        product_data["sku"] = sku
 
-        for variant in data.variants:
-            db.add(ProductVariant(product_id=product.id, **variant.model_dump()))
+        try:
+            product = Product(**product_data)
+            db.add(product)
+            await db.flush()
 
-        await db.flush()
-        await db.refresh(product, ["variants"])
+            for variant in data.variants:
+                if variant.stock_quantity < 0:
+                    raise HTTPException(400, "Quantidade de estoque nao pode ser negativa")
+                db.add(ProductVariant(product_id=product.id, **variant.model_dump()))
+
+            await db.flush()
+            await db.refresh(product, ["variants"])
+        except IntegrityError as exc:
+            await db.rollback()
+            raise HTTPException(400, "Erro de integridade: verifique categoria e fornecedor") from exc
+
         return product
 
     @staticmethod

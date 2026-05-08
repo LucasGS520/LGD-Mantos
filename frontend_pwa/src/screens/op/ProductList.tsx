@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Ico } from '../../components/Icons'
 import { Badge, PhotoPlaceholder, SearchBar, LoadingBody, ErrorBody } from '../../components/UI'
 import { AppBar, BottomNav, FAB, OpSubNav, ScreenBody } from '../../components/Chrome'
 import { fmtBRL } from '../../fmt'
 import { api } from '../../services/api'
 import { useData } from '../../hooks/useData'
-import type { Product } from '../../services/types'
+import type { Product, Category } from '../../services/types'
 import { useNav } from '../../nav'
 
 function totalStock(p: Product) {
@@ -19,19 +19,37 @@ export default function ProductList() {
   const { navigate } = useNav()
   const { data: products, loading, error, reload } = useData<Product[]>(() => api.get('/products'))
   const [search, setSearch] = useState('')
-  const [activeCategory, setActiveCategory] = useState('Todos')
+  const [activeCatId, setActiveCatId] = useState<string | null>(null)
+  const [catMap, setCatMap] = useState<Record<string, string>>({})
 
-  const categories = ['Todos', ...Array.from(new Set((products ?? []).map(p => p.category_id ?? 'Sem categoria')))]
+  useEffect(() => {
+    api.get<Category[]>('/categories')
+      .then(cats => setCatMap(Object.fromEntries(cats.map(c => [c.id, c.name]))))
+      .catch(() => {})
+  }, [])
+
+  // Chips de categoria: IDs presentes nos produtos carregados
+  const usedCatIds = Array.from(new Set((products ?? []).map(p => p.category_id).filter(Boolean))) as string[]
+  const hasUncategorized = (products ?? []).some(p => !p.category_id)
 
   const filtered = (products ?? []).filter(p => {
     const matchSearch = !search
       || p.name.toLowerCase().includes(search.toLowerCase())
       || p.sku.toLowerCase().includes(search.toLowerCase())
-    const matchCat = activeCategory === 'Todos' || (p.category_id ?? 'Sem categoria') === activeCategory
+    const matchCat = activeCatId === null
+      || (activeCatId === '__none__' ? !p.category_id : p.category_id === activeCatId)
     return matchSearch && matchCat
   })
 
   const count = products?.length ?? 0
+
+  const chipStyle = (active: boolean): React.CSSProperties => ({
+    padding: '7px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 600,
+    whiteSpace: 'nowrap', cursor: 'pointer',
+    background: active ? 'var(--gold-500)' : 'var(--bg-2)',
+    color: active ? '#1A1408' : 'var(--text-2)',
+    border: active ? '1px solid var(--gold-500)' : '1px solid var(--line-1)',
+  })
 
   return (
     <>
@@ -44,14 +62,17 @@ export default function ProductList() {
       <div style={{ padding: '0 18px 12px', flexShrink: 0 }}>
         <SearchBar placeholder="Buscar por nome ou SKU…" value={search} onChange={setSearch} />
         <div style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto' }} className="lgd-scroll">
-          {categories.map(c => (
-            <div key={c} onClick={() => setActiveCategory(c)} style={{
-              padding: '7px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer',
-              background: activeCategory === c ? 'var(--gold-500)' : 'var(--bg-2)',
-              color: activeCategory === c ? '#1A1408' : 'var(--text-2)',
-              border: activeCategory === c ? '1px solid var(--gold-500)' : '1px solid var(--line-1)',
-            }}>{c}</div>
+          <div onClick={() => setActiveCatId(null)} style={chipStyle(activeCatId === null)}>Todos</div>
+          {usedCatIds.map(id => (
+            <div key={id} onClick={() => setActiveCatId(id)} style={chipStyle(activeCatId === id)}>
+              {catMap[id] ?? id}
+            </div>
           ))}
+          {hasUncategorized && (
+            <div onClick={() => setActiveCatId('__none__')} style={chipStyle(activeCatId === '__none__')}>
+              Sem categoria
+            </div>
+          )}
         </div>
       </div>
 
