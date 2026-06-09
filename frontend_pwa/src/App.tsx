@@ -24,6 +24,7 @@ import SupplierForm from './screens/mais/SupplierForm'
 import Categories from './screens/mais/Categories'
 import CategoryForm from './screens/mais/CategoryForm'
 import SaleChannels from './screens/mais/SaleChannels'
+import SaleChannelForm from './screens/mais/SaleChannelForm'
 import Settings from './screens/mais/Settings'
 import About from './screens/mais/About'
 
@@ -55,6 +56,7 @@ export default function App() {
     'categories':     <Categories />,
     'category-form':  <CategoryForm />,
     'sale-channels':  <SaleChannels />,
+    'channel-form':   <SaleChannelForm />,
     'settings':       <Settings />,
     'about':          <About />,
   }

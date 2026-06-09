@@ -51,7 +51,14 @@ export default function SaleChannels() {
                       style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
                       onClick={() => navigate('channel-form', { channelId: ch.id })}
                     >
-                      <div style={{ fontSize: 14, fontWeight: 700 }}>{ch.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700 }}>{ch.name}</div>
+                        {ch.fee_pct > 0 && (
+                          <span style={{ fontSize: 10, fontWeight: 700, color: '#F5BF7A', background: 'rgba(245,191,122,0.12)', borderRadius: 5, padding: '1px 6px', flexShrink: 0 }}>
+                            Taxa {ch.fee_pct}%
+                          </span>
+                        )}
+                      </div>
                       {ch.description
                         ? <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{ch.description}</div>
                         : <div style={{ fontSize: 12, color: 'var(--text-4)', marginTop: 2, fontStyle: 'italic' }}>Sem descrição</div>

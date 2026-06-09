@@ -55,6 +55,8 @@ class SaleChannelCreate(BaseModel):
     name: str
     description: Optional[str] = None
     color: str = "#D4A847"
+    fee_pct: float = 0.0
+    monthly_goal: Optional[float] = None
 
 
 class SaleChannelOut(BaseModel):
@@ -64,6 +66,8 @@ class SaleChannelOut(BaseModel):
     name: str
     description: Optional[str] = None
     color: str
+    fee_pct: float
+    monthly_goal: Optional[float] = None
     is_active: bool
     created_at: datetime
 

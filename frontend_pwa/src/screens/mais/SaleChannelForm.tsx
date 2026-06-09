@@ -31,6 +31,8 @@ export default function SaleChannelForm() {
   const [name, setName]               = useState('')
   const [description, setDescription] = useState('')
   const [color, setColor]             = useState('#D4A847')
+  const [feePct, setFeePct]           = useState('')
+  const [monthlyGoal, setMonthlyGoal] = useState('')
 
   useEffect(() => {
     if (!channelId) return
@@ -39,6 +41,8 @@ export default function SaleChannelForm() {
         setName(c.name)
         setDescription(c.description ?? '')
         setColor(c.color)
+        setFeePct(c.fee_pct > 0 ? String(c.fee_pct) : '')
+        setMonthlyGoal(c.monthly_goal != null ? String(c.monthly_goal) : '')
       })
       .catch(e => setError(e instanceof Error ? e.message : 'Erro ao carregar'))
       .finally(() => setLoading(false))
@@ -46,10 +50,19 @@ export default function SaleChannelForm() {
 
   const handleSave = async () => {
     if (!name.trim()) { setError('O nome do canal é obrigatório'); return }
+    const fee = parseFloat(feePct.replace(',', '.')) || 0
+    if (fee < 0 || fee > 100) { setError('A taxa deve estar entre 0% e 100%'); return }
     setSaving(true)
     setError(null)
     try {
-      const body = { name: name.trim(), description: description.trim() || null, color }
+      const goal = parseFloat(monthlyGoal.replace(',', '.'))
+      const body = {
+        name: name.trim(),
+        description: description.trim() || null,
+        color,
+        fee_pct: fee,
+        monthly_goal: isNaN(goal) || goal <= 0 ? null : goal,
+      }
       if (channelId) {
         await api.put(`/channels/${channelId}`, body)
       } else {
@@ -120,7 +133,6 @@ export default function SaleChannelForm() {
               Usada nos gráficos e nos chips de canal em todo o sistema.
             </div>
 
-            {/* Preview */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, padding: '10px 14px', background: 'var(--bg-2)', borderRadius: 10 }}>
               <div style={{ width: 32, height: 32, borderRadius: 8, background: color }} />
               <span style={{ fontSize: 13, fontWeight: 700, color }}>
@@ -130,7 +142,6 @@ export default function SaleChannelForm() {
               <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-3)' }}>{color}</span>
             </div>
 
-            {/* Swatches */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }}>
               {PRESET_COLORS.map(p => (
                 <button
@@ -144,6 +155,50 @@ export default function SaleChannelForm() {
                   }}
                 />
               ))}
+            </div>
+          </div>
+        </Section>
+
+        <Section title="Desempenho" top={20}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6, letterSpacing: 0.2, textTransform: 'uppercase' }}>
+                Taxa do canal
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 46, padding: '0 14px', borderRadius: 12, background: 'var(--bg-4)', border: '1px solid var(--line-2)' }}>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={feePct}
+                  onChange={e => setFeePct(e.target.value.replace(/[^0-9.,]/g, ''))}
+                  placeholder="0"
+                  style={{ flex: 1, background: 'transparent', border: 0, outline: 'none', color: 'var(--text-1)', fontSize: 15, fontWeight: 500 }}
+                />
+                <span style={{ color: 'var(--text-3)', fontSize: 14, flexShrink: 0 }}>%</span>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-4)', marginTop: 4 }}>
+                Comissão cobrada pelo canal (ex: Shopee ~15%). Deixe 0 se não há taxa.
+              </div>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6, letterSpacing: 0.2, textTransform: 'uppercase' }}>
+                Meta mensal
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: 46, padding: '0 14px', borderRadius: 12, background: 'var(--bg-4)', border: '1px solid var(--line-2)' }}>
+                <span style={{ color: 'var(--text-3)', fontSize: 14, flexShrink: 0 }}>R$</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={monthlyGoal}
+                  onChange={e => setMonthlyGoal(e.target.value.replace(/[^0-9.,]/g, ''))}
+                  placeholder="0,00  (opcional)"
+                  style={{ flex: 1, background: 'transparent', border: 0, outline: 'none', color: 'var(--text-1)', fontSize: 15, fontWeight: 500 }}
+                />
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-4)', marginTop: 4 }}>
+                Receita esperada por mês neste canal. Usada nas análises de desempenho.
+              </div>
             </div>
           </div>
         </Section>

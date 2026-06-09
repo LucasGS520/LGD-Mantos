@@ -36,6 +36,8 @@ export interface SaleChannel {
   name: string
   description: string | null
   color: string
+  fee_pct: number
+  monthly_goal: number | null
   is_active: boolean
   created_at: string
 }
