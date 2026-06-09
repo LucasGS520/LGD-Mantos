@@ -30,10 +30,22 @@ export interface Product {
   variants: Variant[]
 }
 
+// Sale Channels
+export interface SaleChannel {
+  id: string
+  name: string
+  description: string | null
+  color: string
+  is_active: boolean
+  created_at: string
+}
+
 // Categories
 export interface Category {
   id: string
   name: string
+  description: string | null
+  created_at: string
 }
 
 // Suppliers
@@ -43,7 +55,9 @@ export interface Supplier {
   contact: string | null
   phone: string | null
   email: string | null
+  notes: string | null
   is_active: boolean
+  created_at: string
 }
 
 // Sales

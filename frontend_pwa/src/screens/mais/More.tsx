@@ -11,12 +11,13 @@ interface ItemProps {
   end?: ReactNode
   accent?: boolean
   danger?: boolean
+  first?: boolean
   onClick?: () => void
 }
-function Item({ icon, label, hint, end, accent, danger, onClick }: ItemProps) {
+function Item({ icon, label, hint, end, accent, danger, first, onClick }: ItemProps) {
   const I = icon
   return (
-    <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderTop: '1px solid var(--line-1)', cursor: onClick ? 'pointer' : undefined }}>
+    <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderTop: first ? undefined : '1px solid var(--line-1)', cursor: onClick ? 'pointer' : undefined }}>
       <div style={{ width: 36, height: 36, borderRadius: 10, background: danger ? 'rgba(232,88,79,0.1)' : accent ? 'rgba(212,168,71,0.1)' : 'var(--bg-3)', display: 'grid', placeItems: 'center' }}>
         <I size={18} stroke={danger ? '#F5847B' : accent ? 'var(--gold-500)' : 'var(--text-2)'} />
       </div>
@@ -47,23 +48,23 @@ export default function More() {
 
         <Section title="Cadastros" top={20}>
           <Card padding={0}>
-            <Item icon={Ico.users} label="Fornecedores" accent onClick={() => navigate('suppliers')} />
-            <Item icon={Ico.tag}   label="Categorias" />
-            <Item icon={Ico.store} label="Canais de venda" />
+            <Item first icon={Ico.users} label="Fornecedores"   accent onClick={() => navigate('suppliers')} />
+            <Item icon={Ico.tag}   label="Categorias"       onClick={() => navigate('categories')} />
+            <Item icon={Ico.store} label="Canais de venda"  onClick={() => navigate('sale-channels')} />
           </Card>
         </Section>
 
         <Section title="App" top={18}>
           <Card padding={0}>
-            <Item icon={Ico.settings} label="Configurações"  hint="Senha, backup, notificações" />
-            <Item icon={Ico.refresh}  label="Sincronização"  hint="Dados sincronizados com o servidor" />
-            <Item icon={Ico.doc}      label="Sobre o app"    end={<span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>v1.0.0</span>} />
+            <Item first icon={Ico.settings} label="Configurações"  hint="Senha, backup, notificações"              onClick={() => navigate('settings')} />
+            <Item icon={Ico.refresh}  label="Sincronização"  hint="Dados sincronizados com o servidor"       onClick={() => navigate('settings')} />
+            <Item icon={Ico.doc}      label="Sobre o app"    onClick={() => navigate('about')} end={<span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>v1.0.0</span>} />
           </Card>
         </Section>
 
         <Section title="" top={18}>
           <Card padding={0}>
-            <Item icon={Ico.logout} label="Sair" danger onClick={logout} />
+            <Item first icon={Ico.logout} label="Sair" danger onClick={logout} />
           </Card>
         </Section>
       </ScreenBody>

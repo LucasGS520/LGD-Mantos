@@ -89,11 +89,13 @@ export function Btn({ children, kind = 'primary', size = 'md', icon, full, style
 // ─── Input ─────────────────────────────────────────────────────
 interface InputProps {
   label?: string; value?: string; placeholder?: string; suffix?: string
-  prefix?: string; type?: string; readOnly?: boolean; error?: boolean; hint?: string
+  prefix?: string; type?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode']
+  readOnly?: boolean; error?: boolean; hint?: string
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void
 }
-export function Input({ label, value, placeholder, suffix, prefix, type = 'text', readOnly, error, hint, onChange }: InputProps) {
+export function Input({ label, value, placeholder, suffix, prefix, type = 'text', inputMode, readOnly, error, hint, onChange }: InputProps) {
   const isNumeric = type === 'number'
+  const resolvedInputMode = inputMode ?? (isNumeric ? 'decimal' : undefined)
   return (
     <div>
       {label && <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6, letterSpacing: 0.2, textTransform: 'uppercase' }}>{label}</div>}
@@ -105,7 +107,7 @@ export function Input({ label, value, placeholder, suffix, prefix, type = 'text'
         {prefix && <span style={{ color: 'var(--text-3)', fontSize: 14 }}>{prefix}</span>}
         <input
           type={isNumeric ? 'text' : type}
-          inputMode={isNumeric ? 'decimal' : undefined}
+          inputMode={resolvedInputMode}
           value={onChange ? (value ?? '') : undefined}
           defaultValue={onChange ? undefined : value}
           placeholder={placeholder}
@@ -164,18 +166,18 @@ export function KPI({ label, value, delta, deltaTone = 'success', icon, big }: K
 }
 
 // ─── ChannelChip ───────────────────────────────────────────────
-interface ChannelChipProps { ch: string; size?: 'sm' | 'lg' }
-export function ChannelChip({ ch, size = 'sm' }: ChannelChipProps) {
-  const map: Record<string, { color: string }> = {
-    'Loja':      { color: 'var(--gold-500)' },
-    'WhatsApp':  { color: '#25D366' },
-    'Instagram': { color: '#E1306C' },
-    'Shopee':    { color: '#EE4D2D' },
+interface ChannelChipProps { ch: string; size?: 'sm' | 'lg'; color?: string }
+export function ChannelChip({ ch, size = 'sm', color }: ChannelChipProps) {
+  const fallback: Record<string, string> = {
+    'Loja':      'var(--gold-500)',
+    'WhatsApp':  '#25D366',
+    'Instagram': '#E1306C',
+    'Shopee':    '#EE4D2D',
   }
-  const c = map[ch] || map['Loja']
+  const c = color ?? fallback[ch] ?? '#888888'
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: size === 'lg' ? 12 : 10.5, fontWeight: 600, color: c.color, letterSpacing: 0.1 }}>
-      <span style={{ width: 6, height: 6, borderRadius: 99, background: c.color }} />
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: size === 'lg' ? 12 : 10.5, fontWeight: 600, color: c, letterSpacing: 0.1 }}>
+      <span style={{ width: 6, height: 6, borderRadius: 99, background: c }} />
       {ch}
     </span>
   )

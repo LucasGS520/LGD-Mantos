@@ -10,7 +10,7 @@ export type ScreenId =
   | 'expenses' | 'stock-moves' | 'stock-alerts'
   | 'dashboard' | 'top-products' | 'by-size' | 'by-channel' | 'suggestions' | 'dre'
   | 'marketing'
-  | 'more' | 'suppliers'
+  | 'more' | 'suppliers' | 'supplier-form' | 'categories' | 'category-form' | 'sale-channels' | 'channel-form' | 'settings' | 'about'
 
 export type TabId = 'op' | 'an' | 'mk' | 'mais'
 

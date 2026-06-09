@@ -13,6 +13,8 @@ from app.shared.schemas.catalog import (
     ProductCreate,
     ProductOut,
     ProductUpdate,
+    SaleChannelCreate,
+    SaleChannelOut,
     SupplierCreate,
     SupplierOut,
     VariantIn,
@@ -20,6 +22,44 @@ from app.shared.schemas.catalog import (
 )
 
 router = APIRouter(tags=["operational"])
+
+
+@router.get("/channels", response_model=list[SaleChannelOut])
+async def list_channels(active_only: bool = False, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Lista canais de venda; active_only=true retorna apenas os ativos."""
+
+    return await repo.list_channels(db, active_only=active_only)
+
+
+@router.post("/channels", response_model=SaleChannelOut)
+async def create_channel(data: SaleChannelCreate, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Cria um canal de venda."""
+
+    return await CatalogService.create_channel(db, data)
+
+
+@router.get("/channels/{cid}", response_model=SaleChannelOut)
+async def get_channel(cid: str, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Retorna os dados de um canal pelo ID."""
+
+    channel = await repo.get_channel(db, cid)
+    if not channel:
+        raise HTTPException(status_code=404, detail="Canal não encontrado")
+    return channel
+
+
+@router.put("/channels/{cid}", response_model=SaleChannelOut)
+async def update_channel(cid: str, data: SaleChannelCreate, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Atualiza nome, descrição e cor de um canal."""
+
+    return await CatalogService.update_channel(db, cid, data)
+
+
+@router.patch("/channels/{cid}/toggle", response_model=SaleChannelOut)
+async def toggle_channel(cid: str, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Alterna ativo/inativo de um canal sem excluí-lo."""
+
+    return await CatalogService.toggle_channel(db, cid)
 
 
 @router.get("/categories", response_model=list[CategoryOut])
@@ -36,9 +76,27 @@ async def create_category(data: CategoryCreate, db: AsyncSession = Depends(get_d
     return await CatalogService.create_category(db, data)
 
 
+@router.get("/categories/{cid}", response_model=CategoryOut)
+async def get_category(cid: str, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Retorna os dados completos de uma categoria pelo ID."""
+
+    category = await repo.get_category(db, cid)
+    if not category:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Categoria não encontrada")
+    return category
+
+
+@router.put("/categories/{cid}", response_model=CategoryOut)
+async def update_category(cid: str, data: CategoryCreate, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Atualiza nome e descrição de uma categoria existente."""
+
+    return await CatalogService.update_category(db, cid, data)
+
+
 @router.delete("/categories/{cid}")
 async def delete_category(cid: str, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
-    """Exclui uma categoria pelo identificador."""
+    """Exclui uma categoria, desvinculando produtos associados antes."""
 
     return await CatalogService.delete_category(db, cid)
 
@@ -57,11 +115,29 @@ async def create_supplier(data: SupplierCreate, db: AsyncSession = Depends(get_d
     return await CatalogService.create_supplier(db, data)
 
 
+@router.get("/suppliers/{sid}", response_model=SupplierOut)
+async def get_supplier(sid: str, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Retorna os dados completos de um fornecedor pelo ID."""
+
+    supplier = await repo.get_supplier(db, sid)
+    if not supplier:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
+    return supplier
+
+
 @router.put("/suppliers/{sid}", response_model=SupplierOut)
 async def update_supplier(sid: str, data: SupplierCreate, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
     """Atualiza os dados de um fornecedor existente."""
 
     return await CatalogService.update_supplier(db, sid, data)
+
+
+@router.delete("/suppliers/{sid}")
+async def delete_supplier(sid: str, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Desativa um fornecedor pelo ID (soft delete)."""
+
+    return await CatalogService.delete_supplier(db, sid)
 
 
 @router.get("/products", response_model=list[ProductOut])

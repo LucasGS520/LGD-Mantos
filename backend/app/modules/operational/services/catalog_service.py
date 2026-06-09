@@ -10,11 +10,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.operational import repositories as repo
-from app.shared.models.catalog import Category, Product, ProductVariant, Supplier
+from app.shared.models.catalog import Category, Product, ProductVariant, SaleChannel, Supplier
 from app.shared.schemas.catalog import (
     CategoryCreate,
     ProductCreate,
     ProductUpdate,
+    SaleChannelCreate,
     SupplierCreate,
     VariantIn,
 )
@@ -29,18 +30,33 @@ class CatalogService:
     async def create_category(db: AsyncSession, data: CategoryCreate) -> Category:
         """Cria uma categoria de produto."""
 
-        category = Category(name=data.name)
+        category = Category(name=data.name, description=data.description)
         db.add(category)
         await db.flush()
         return category
 
     @staticmethod
-    async def delete_category(db: AsyncSession, category_id: str) -> dict:
-        """Remove uma categoria existente."""
+    async def update_category(db: AsyncSession, category_id: str, data: CategoryCreate) -> Category:
+        """Atualiza nome e descrição de uma categoria existente."""
 
         category = await repo.get_category(db, category_id)
         if not category:
-            raise HTTPException(404, "Nao encontrado")
+            raise HTTPException(404, "Categoria não encontrada")
+        category.name = data.name
+        category.description = data.description
+        return category
+
+    @staticmethod
+    async def delete_category(db: AsyncSession, category_id: str) -> dict:
+        """Remove uma categoria, desvinculando os produtos associados antes de excluir."""
+
+        from sqlalchemy import update as sa_update
+        category = await repo.get_category(db, category_id)
+        if not category:
+            raise HTTPException(404, "Categoria não encontrada")
+        await db.execute(
+            sa_update(Product).where(Product.category_id == category_id).values(category_id=None)
+        )
         await db.delete(category)
         return {"ok": True}
 
@@ -63,6 +79,46 @@ class CatalogService:
         for key, value in data.model_dump(exclude_none=True).items():
             setattr(supplier, key, value)
         return supplier
+
+    @staticmethod
+    async def delete_supplier(db: AsyncSession, supplier_id: str) -> dict:
+        """Desativa um fornecedor (soft delete) preservando referências históricas."""
+
+        supplier = await repo.get_supplier(db, supplier_id)
+        if not supplier:
+            raise HTTPException(404, "Fornecedor nao encontrado")
+        supplier.is_active = False
+        return {"ok": True}
+
+    @staticmethod
+    async def create_channel(db: AsyncSession, data: SaleChannelCreate) -> SaleChannel:
+        """Cria um novo canal de venda."""
+
+        channel = SaleChannel(**data.model_dump())
+        db.add(channel)
+        await db.flush()
+        return channel
+
+    @staticmethod
+    async def update_channel(db: AsyncSession, channel_id: str, data: SaleChannelCreate) -> SaleChannel:
+        """Atualiza nome, descrição e cor de um canal existente."""
+
+        channel = await repo.get_channel(db, channel_id)
+        if not channel:
+            raise HTTPException(404, "Canal não encontrado")
+        for key, value in data.model_dump().items():
+            setattr(channel, key, value)
+        return channel
+
+    @staticmethod
+    async def toggle_channel(db: AsyncSession, channel_id: str) -> SaleChannel:
+        """Alterna o status ativo/inativo de um canal de venda."""
+
+        channel = await repo.get_channel(db, channel_id)
+        if not channel:
+            raise HTTPException(404, "Canal não encontrado")
+        channel.is_active = not channel.is_active
+        return channel
 
     @staticmethod
     def _generate_sku() -> str:

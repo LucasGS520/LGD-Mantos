@@ -16,6 +16,8 @@ class Category(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
     products = relationship("Product", back_populates="category")
 
@@ -37,6 +39,19 @@ class Supplier(Base):
     # Relacionamentos deixam o fornecedor navegável a partir de produtos e compras.
     products = relationship("Product", back_populates="supplier")
     purchase_orders = relationship("PurchaseOrder", back_populates="supplier")
+
+
+class SaleChannel(Base):
+    """Canal de venda pelo qual as transações podem ser realizadas."""
+
+    __tablename__ = "sale_channels"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    color: Mapped[str] = mapped_column(String(20), nullable=False, default="#D4A847")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
 class Product(Base):

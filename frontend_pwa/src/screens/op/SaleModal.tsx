@@ -6,24 +6,20 @@ import { api } from '../../services/api'
 import type { Product, Variant } from '../../services/types'
 import { useNav } from '../../nav'
 
-const CHANNELS = [
-  { ch: 'Loja',      color: 'var(--gold-500)' },
-  { ch: 'WhatsApp',  color: '#25D366' },
-  { ch: 'Instagram', color: '#E1306C' },
-  { ch: 'Shopee',    color: '#EE4D2D' },
-]
-
 interface CartItem {
   variant: Variant & { productName: string; productSku: string; costPrice: number; salePrice: number }
   quantity: number
   unitPrice: number
 }
 
+interface ChannelOption { name: string; color: string }
+
 export default function SaleModal() {
   const { back } = useNav()
   const [products, setProducts] = useState<Product[]>([])
+  const [channels, setChannels] = useState<ChannelOption[]>([])
   const [cart, setCart] = useState<CartItem[]>([])
-  const [channel, setChannel] = useState('Loja')
+  const [channel, setChannel] = useState('')
   const [discount, setDiscount] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +27,15 @@ export default function SaleModal() {
 
   useEffect(() => {
     api.get<Product[]>('/products').then(setProducts).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    api.get<ChannelOption[]>('/channels?active_only=true')
+      .then(list => {
+        setChannels(list)
+        if (list.length > 0) setChannel(list[0].name)
+      })
+      .catch(() => {})
   }, [])
 
   const addToCart = (product: Product, variant: Variant) => {
@@ -144,32 +149,36 @@ export default function SaleModal() {
         </Section>
 
         <Section title="Canal de venda">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-            {CHANNELS.map(o => (
-              <div key={o.ch} onClick={() => setChannel(o.ch)} style={{
-                padding: '10px 6px', borderRadius: 10, textAlign: 'center', cursor: 'pointer',
-                background: channel === o.ch ? 'rgba(212,168,71,0.10)' : 'var(--bg-2)',
-                border: `1px solid ${channel === o.ch ? 'var(--gold-500)' : 'var(--line-1)'}`,
-                fontSize: 11, fontWeight: 700, color: channel === o.ch ? 'var(--gold-300)' : 'var(--text-2)',
-              }}>
-                <div style={{ width: 6, height: 6, borderRadius: 99, background: o.color, margin: '0 auto 4px' }} />
-                {o.ch}
-              </div>
-            ))}
-          </div>
+          {channels.length === 0 ? (
+            <div style={{ fontSize: 12, color: 'var(--text-3)', padding: '8px 0' }}>Nenhum canal ativo cadastrado</div>
+          ) : (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {channels.map(o => (
+                <div key={o.name} onClick={() => setChannel(o.name)} style={{
+                  padding: '8px 14px', borderRadius: 99, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                  background: channel === o.name ? 'rgba(212,168,71,0.10)' : 'var(--bg-2)',
+                  border: `1px solid ${channel === o.name ? 'var(--gold-500)' : 'var(--line-1)'}`,
+                  fontSize: 12, fontWeight: 700, color: channel === o.name ? 'var(--gold-300)' : 'var(--text-2)',
+                }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 99, background: o.color, flexShrink: 0 }} />
+                  {o.name}
+                </div>
+              ))}
+            </div>
+          )}
         </Section>
 
         <Section title="Resumo">
           <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line-1)', borderRadius: 12, padding: 14 }}>
-            {([
-              ['Subtotal', fmtBRL(subtotal), undefined],
-              discountAmt > 0 ? ['Desconto', `− ${fmtBRL(discountAmt)}`, '#F5847B'] : null,
-              ['Custo total', fmtBRL(totalCost), 'var(--text-3)'],
-              ['Lucro estimado', fmtBRL(profit), '#5DD49E'],
-            ] as ([string, string, string | undefined] | null)[]).filter(Boolean).map(([l, v, c], i) => (
+            {[
+              { l: 'Subtotal', v: fmtBRL(subtotal), c: undefined as string | undefined },
+              discountAmt > 0 ? { l: 'Desconto', v: `− ${fmtBRL(discountAmt)}`, c: '#F5847B' } : null,
+              { l: 'Custo total', v: fmtBRL(totalCost), c: 'var(--text-3)' },
+              { l: 'Lucro estimado', v: fmtBRL(profit), c: '#5DD49E' },
+            ].filter((x): x is { l: string; v: string; c: string | undefined } => x !== null).map((row, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}>
-                <span style={{ color: 'var(--text-2)' }}>{l}</span>
-                <span className="tnum" style={{ fontWeight: 600, color: c || 'var(--text-1)' }}>{v}</span>
+                <span style={{ color: 'var(--text-2)' }}>{row.l}</span>
+                <span className="tnum" style={{ fontWeight: 600, color: row.c || 'var(--text-1)' }}>{row.v}</span>
               </div>
             ))}
             <div style={{ height: 1, background: 'var(--line-1)', margin: '8px 0' }} />

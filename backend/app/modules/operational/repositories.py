@@ -9,7 +9,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.shared.models.catalog import Category, Product, ProductVariant, Supplier
+from app.shared.models.catalog import Category, Product, ProductVariant, SaleChannel, Supplier
 from app.shared.models.operations import (
     Expense,
     PurchaseOrder,
@@ -45,6 +45,23 @@ async def get_supplier(db: AsyncSession, supplier_id: str) -> Supplier | None:
     """Busca um fornecedor pelo identificador interno."""
 
     result = await db.execute(select(Supplier).where(Supplier.id == supplier_id))
+    return result.scalar_one_or_none()
+
+
+async def list_channels(db: AsyncSession, active_only: bool = False) -> list[SaleChannel]:
+    """Lista canais de venda, opcionalmente filtrando apenas os ativos."""
+
+    query = select(SaleChannel).order_by(SaleChannel.name)
+    if active_only:
+        query = query.where(SaleChannel.is_active == True)
+    result = await db.execute(query)
+    return list(result.scalars().all())
+
+
+async def get_channel(db: AsyncSession, channel_id: str) -> SaleChannel | None:
+    """Busca um canal de venda pelo identificador interno."""
+
+    result = await db.execute(select(SaleChannel).where(SaleChannel.id == channel_id))
     return result.scalar_one_or_none()
 
 

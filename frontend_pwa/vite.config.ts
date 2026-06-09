@@ -23,8 +23,8 @@ export default defineConfig({
         orientation: 'portrait',
         start_url: '/',
         icons: [
-          { src: '/logo_lgd.png', sizes: '192x192', type: 'image/png' },
-          { src: '/logo_lgd.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: '/favicon.png', sizes: '192x192', type: 'image/png' },
+          { src: '/favicon.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
     }),

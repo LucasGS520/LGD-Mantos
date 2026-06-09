@@ -20,6 +20,12 @@ import DRE from './screens/an/DRE'
 import Marketing from './screens/Marketing'
 import More from './screens/mais/More'
 import Suppliers from './screens/mais/Suppliers'
+import SupplierForm from './screens/mais/SupplierForm'
+import Categories from './screens/mais/Categories'
+import CategoryForm from './screens/mais/CategoryForm'
+import SaleChannels from './screens/mais/SaleChannels'
+import Settings from './screens/mais/Settings'
+import About from './screens/mais/About'
 
 export default function App() {
   const { screen } = useNav()
@@ -45,6 +51,12 @@ export default function App() {
     'marketing':      <Marketing />,
     'more':           <More />,
     'suppliers':      <Suppliers />,
+    'supplier-form':  <SupplierForm />,
+    'categories':     <Categories />,
+    'category-form':  <CategoryForm />,
+    'sale-channels':  <SaleChannels />,
+    'settings':       <Settings />,
+    'about':          <About />,
   }
 
   return (

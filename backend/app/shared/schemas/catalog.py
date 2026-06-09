@@ -7,9 +7,10 @@ from pydantic import BaseModel, Field
 
 
 class CategoryCreate(BaseModel):
-    """Entrada para criação de uma categoria."""
+    """Entrada para criação ou atualização de uma categoria."""
 
     name: str
+    description: Optional[str] = None
 
 
 class CategoryOut(BaseModel):
@@ -17,8 +18,9 @@ class CategoryOut(BaseModel):
 
     id: str
     name: str
+    description: Optional[str] = None
+    created_at: datetime
 
-    # Permite construir o schema diretamente a partir de instâncias SQLAlchemy.
     model_config = {"from_attributes": True}
 
 
@@ -40,7 +42,30 @@ class SupplierOut(BaseModel):
     contact: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[str] = None
+    notes: Optional[str] = None
     is_active: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class SaleChannelCreate(BaseModel):
+    """Entrada para criação ou atualização de canal de venda."""
+
+    name: str
+    description: Optional[str] = None
+    color: str = "#D4A847"
+
+
+class SaleChannelOut(BaseModel):
+    """Resposta pública de canal de venda."""
+
+    id: str
+    name: str
+    description: Optional[str] = None
+    color: str
+    is_active: bool
+    created_at: datetime
 
     model_config = {"from_attributes": True}
 
