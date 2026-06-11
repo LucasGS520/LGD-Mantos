@@ -26,8 +26,15 @@ async def create_purchase(data: POIn, db: AsyncSession = Depends(get_db), _=Depe
     return await PurchaseService.create_purchase(db, data)
 
 
-@router.put("/purchases/{po_id}/receive")
+@router.put("/purchases/{po_id}/receive", response_model=POOut)
 async def receive_purchase(po_id: str, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
     """Confirma recebimento de compra e aplica entrada no estoque."""
 
     return await PurchaseService.receive_purchase(db, po_id)
+
+
+@router.put("/purchases/{po_id}/send", response_model=POOut)
+async def send_purchase(po_id: str, db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
+    """Marca o pedido como enviado ao fornecedor."""
+
+    return await PurchaseService.send_purchase(db, po_id)

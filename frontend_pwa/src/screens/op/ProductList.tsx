@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Ico } from '../../components/Icons'
-import { Badge, PhotoPlaceholder, SearchBar, LoadingBody, ErrorBody } from '../../components/UI'
+import { PhotoPlaceholder, SearchBar, LoadingBody, ErrorBody } from '../../components/UI'
 import { AppBar, BottomNav, FAB, OpSubNav, ScreenBody } from '../../components/Chrome'
 import { fmtBRL } from '../../fmt'
 import { api } from '../../services/api'
@@ -10,9 +10,6 @@ import { useNav } from '../../nav'
 
 function totalStock(p: Product) {
   return p.variants.reduce((s, v) => s + v.stock_quantity, 0)
-}
-function isLowStock(p: Product) {
-  return p.variants.some(v => v.stock_quantity <= v.min_stock_alert)
 }
 
 export default function ProductList() {
@@ -88,14 +85,13 @@ export default function ProductList() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-3)' }}>{p.sku}</span>
-                    {isLowStock(p) && <Badge tone="danger" dot>Estoque baixo</Badge>}
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)', marginBottom: 6, lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {p.name}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
                     <span className="tnum" style={{ fontSize: 15, fontWeight: 700, color: 'var(--gold-300)' }}>{fmtBRL(p.sale_price)}</span>
-                    <span style={{ fontSize: 11.5, color: isLowStock(p) ? '#F5847B' : 'var(--text-3)', fontWeight: 600 }}>{totalStock(p)} em estoque</span>
+                    <span style={{ fontSize: 11.5, color: 'var(--text-3)', fontWeight: 600 }}>{totalStock(p)} em estoque</span>
                   </div>
                 </div>
               </div>

@@ -10,7 +10,7 @@ class StockMoveIn(BaseModel):
     """Entrada para registrar uma movimentação de estoque."""
 
     variant_id: str
-    movement_type: Literal["entrada", "saida", "ajuste", "devolucao"]
+    movement_type: Literal["entrada", "saida"]
     quantity: int
     unit_cost: Optional[float] = None
     notes: Optional[str] = None

@@ -3,7 +3,7 @@ import { Ico } from '../../components/Icons'
 import { Btn, PhotoPlaceholder, Section } from '../../components/UI'
 import { fmtBRL } from '../../fmt'
 import { api } from '../../services/api'
-import type { Product, Variant } from '../../services/types'
+import type { Product, Variant, SaleChannel } from '../../services/types'
 import { useNav } from '../../nav'
 
 interface CartItem {
@@ -12,14 +12,12 @@ interface CartItem {
   unitPrice: number
 }
 
-interface ChannelOption { name: string; color: string }
-
 export default function SaleModal() {
   const { back } = useNav()
   const [products, setProducts] = useState<Product[]>([])
-  const [channels, setChannels] = useState<ChannelOption[]>([])
+  const [channels, setChannels] = useState<SaleChannel[]>([])
   const [cart, setCart] = useState<CartItem[]>([])
-  const [channel, setChannel] = useState('')
+  const [channel, setChannel] = useState<SaleChannel | null>(null)
   const [discount, setDiscount] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -30,10 +28,10 @@ export default function SaleModal() {
   }, [])
 
   useEffect(() => {
-    api.get<ChannelOption[]>('/channels?active_only=true')
+    api.get<SaleChannel[]>('/channels?active_only=true')
       .then(list => {
         setChannels(list)
-        if (list.length > 0) setChannel(list[0].name)
+        if (list.length > 0) setChannel(list[0])
       })
       .catch(() => {})
   }, [])
@@ -58,9 +56,12 @@ export default function SaleModal() {
     else setCart(prev => prev.map(i => i.variant.id === variantId ? { ...i, quantity: qty } : i))
   }
 
+  const feePct = channel?.fee_pct ?? 0
   const subtotal = cart.reduce((s, i) => s + i.unitPrice * i.quantity, 0)
   const discountAmt = Math.min(parseFloat(discount.replace(',', '.')) || 0, subtotal)
-  const total = subtotal - discountAmt
+  const net = subtotal - discountAmt
+  const feeAmt = net * (feePct / 100)
+  const total = net - feeAmt
   const totalCost = cart.reduce((s, i) => s + i.variant.costPrice * i.quantity, 0)
   const profit = total - totalCost
 
@@ -69,9 +70,9 @@ export default function SaleModal() {
     setSaving(true)
     setError(null)
     try {
-      const ratio = subtotal > 0 ? total / subtotal : 1
+      const ratio = subtotal > 0 ? net / subtotal : 1
       await api.post('/sales', {
-        channel,
+        channel: channel?.name ?? 'loja',
         items: cart.map(i => ({
           variant_id: i.variant.id,
           quantity: i.quantity,
@@ -154,11 +155,11 @@ export default function SaleModal() {
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {channels.map(o => (
-                <div key={o.name} onClick={() => setChannel(o.name)} style={{
+                <div key={o.name} onClick={() => setChannel(o)} style={{
                   padding: '8px 14px', borderRadius: 99, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                  background: channel === o.name ? 'rgba(212,168,71,0.10)' : 'var(--bg-2)',
-                  border: `1px solid ${channel === o.name ? 'var(--gold-500)' : 'var(--line-1)'}`,
-                  fontSize: 12, fontWeight: 700, color: channel === o.name ? 'var(--gold-300)' : 'var(--text-2)',
+                  background: channel?.name === o.name ? 'rgba(212,168,71,0.10)' : 'var(--bg-2)',
+                  border: `1px solid ${channel?.name === o.name ? 'var(--gold-500)' : 'var(--line-1)'}`,
+                  fontSize: 12, fontWeight: 700, color: channel?.name === o.name ? 'var(--gold-300)' : 'var(--text-2)',
                 }}>
                   <span style={{ width: 8, height: 8, borderRadius: 99, background: o.color, flexShrink: 0 }} />
                   {o.name}
@@ -173,6 +174,7 @@ export default function SaleModal() {
             {[
               { l: 'Subtotal', v: fmtBRL(subtotal), c: undefined as string | undefined },
               discountAmt > 0 ? { l: 'Desconto', v: `− ${fmtBRL(discountAmt)}`, c: '#F5847B' } : null,
+              feeAmt > 0 ? { l: `Taxa canal (${feePct}%)`, v: `− ${fmtBRL(feeAmt)}`, c: '#F5847B' } : null,
               { l: 'Custo total', v: fmtBRL(totalCost), c: 'var(--text-3)' },
               { l: 'Lucro estimado', v: fmtBRL(profit), c: '#5DD49E' },
             ].filter((x): x is { l: string; v: string; c: string | undefined } => x !== null).map((row, i) => (

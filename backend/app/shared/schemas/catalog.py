@@ -80,7 +80,6 @@ class VariantIn(BaseModel):
     size: str
     color: str = "Unico"
     stock_quantity: int = Field(default=0, ge=0)
-    min_stock_alert: int = 3
     price_override: Optional[float] = None
 
 
@@ -92,7 +91,6 @@ class VariantOut(BaseModel):
     size: str
     color: str
     stock_quantity: int
-    min_stock_alert: int
     price_override: Optional[float] = None
 
     model_config = {"from_attributes": True}

@@ -65,17 +65,6 @@ async def revenue_since(db: AsyncSession, since: datetime) -> float:
     return float(result.scalar())
 
 
-async def stock_alert_count(db: AsyncSession) -> int:
-    """Conta variantes com estoque igual ou menor que o mínimo configurado."""
-
-    result = await db.execute(
-        select(func.count(ProductVariant.id)).where(
-            ProductVariant.stock_quantity <= ProductVariant.min_stock_alert
-        )
-    )
-    return int(result.scalar())
-
-
 async def stock_value(db: AsyncSession):
     """Calcula valor de custo, valor de venda e unidades totais em estoque ativo."""
 

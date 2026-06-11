@@ -33,7 +33,7 @@ class PurchaseService:
         return purchase
 
     @staticmethod
-    async def receive_purchase(db: AsyncSession, purchase_id: str) -> dict:
+    async def receive_purchase(db: AsyncSession, purchase_id: str) -> PurchaseOrder:
         """Marca a compra como recebida e soma os itens ao estoque."""
 
         purchase = await repo.get_purchase(db, purchase_id)
@@ -57,4 +57,19 @@ class PurchaseService:
                         notes=f"Compra #{purchase.id[:8]}",
                     )
                 )
-        return {"ok": True}
+        await db.refresh(purchase, ["items"])
+        return purchase
+
+    @staticmethod
+    async def send_purchase(db: AsyncSession, purchase_id: str) -> PurchaseOrder:
+        """Transiciona pedido de rascunho para enviado ao fornecedor."""
+
+        purchase = await repo.get_purchase(db, purchase_id)
+        if not purchase:
+            raise HTTPException(404, "Compra nao encontrada")
+        if purchase.status != "rascunho":
+            raise HTTPException(400, "Apenas pedidos em rascunho podem ser marcados como enviados")
+
+        purchase.status = "enviado"
+        await db.refresh(purchase, ["items"])
+        return purchase

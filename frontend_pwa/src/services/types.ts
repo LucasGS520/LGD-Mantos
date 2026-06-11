@@ -10,7 +10,6 @@ export interface Variant {
   size: string
   color: string
   stock_quantity: number
-  min_stock_alert: number
   price_override: number | null
 }
 
@@ -109,20 +108,10 @@ export interface Expense {
 }
 
 // Stock
-export interface StockAlert {
-  variant_id: string
-  product_name: string
-  sku: string
-  size: string
-  color: string
-  stock: number
-  min: number
-}
-
 export interface StockMovement {
   id: string
   variant_id: string
-  movement_type: 'entrada' | 'saida' | 'ajuste' | 'devolucao'
+  movement_type: 'entrada' | 'saida'
   quantity: number
   unit_cost: number
   notes: string | null
@@ -144,7 +133,6 @@ export interface Dashboard {
   gross_profit: number
   net_profit: number
   margin_pct: number
-  stock_alerts: number
   stock_cost_value: number
   stock_sale_value: number
   stock_units: number

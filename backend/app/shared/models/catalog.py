@@ -91,7 +91,6 @@ class ProductVariant(Base):
     size: Mapped[str] = mapped_column(String(20), nullable=False)
     color: Mapped[str] = mapped_column(String(50), nullable=False, default="Unico")
     stock_quantity: Mapped[int] = mapped_column(Integer, default=0)
-    min_stock_alert: Mapped[int] = mapped_column(Integer, default=3)
     price_override: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
 
     product = relationship("Product", back_populates="variants")

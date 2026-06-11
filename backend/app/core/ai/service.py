@@ -139,12 +139,12 @@ class AIService:
 
     @staticmethod
     async def _low_stock(db: AsyncSession):
-        """Retorna produtos em estoque crítico para avisos no contexto da IA."""
+        """Retorna produtos zerados em estoque para avisos no contexto da IA."""
 
         result = await db.execute(
             select(Product.name, ProductVariant.size, ProductVariant.color, ProductVariant.stock_quantity)
             .join(Product)
-            .where(ProductVariant.stock_quantity <= ProductVariant.min_stock_alert)
+            .where(ProductVariant.stock_quantity == 0)
         )
         return result.all()
 

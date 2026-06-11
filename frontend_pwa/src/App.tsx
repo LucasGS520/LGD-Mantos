@@ -10,7 +10,6 @@ import PurchaseForm from './screens/op/PurchaseForm'
 import PurchaseList from './screens/op/PurchaseList'
 import Expenses from './screens/op/Expenses'
 import StockMoves from './screens/op/StockMoves'
-import StockAlerts from './screens/op/StockAlerts'
 import Dashboard from './screens/an/Dashboard'
 import TopProducts from './screens/an/TopProducts'
 import BySize from './screens/an/BySize'
@@ -42,7 +41,6 @@ export default function App() {
     'purchase-list':  <PurchaseList />,
     'expenses':       <Expenses />,
     'stock-moves':    <StockMoves />,
-    'stock-alerts':   <StockAlerts />,
     'dashboard':      <Dashboard />,
     'top-products':   <TopProducts />,
     'by-size':        <BySize />,

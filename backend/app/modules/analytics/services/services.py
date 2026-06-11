@@ -23,7 +23,6 @@ class AnalyticsService:
         expenses = await repo.expenses_total(db, month_start.strftime("%Y-%m-%d"))
         today_count = await repo.sales_count_since(db, today_start)
         today_revenue = await repo.revenue_since(db, today_start)
-        alerts = await repo.stock_alert_count(db)
         stock = await repo.stock_value(db)
 
         # A série diária alimenta gráficos simples dos últimos 30 dias.
@@ -45,7 +44,6 @@ class AnalyticsService:
             "gross_profit": gross_profit,
             "net_profit": net_profit,
             "margin_pct": round(net_profit / revenue * 100, 1) if revenue else 0,
-            "stock_alerts": alerts,
             "stock_cost_value": float(stock[0]),
             "stock_sale_value": float(stock[1]),
             "stock_units": int(stock[2]),
@@ -87,7 +85,7 @@ class AnalyticsService:
 
     @staticmethod
     async def purchase_suggestions(db: AsyncSession) -> list[dict]:
-        """Sugere reposição com base em vendas recentes e estoque mínimo."""
+        """Sugere reposição com base em vendas recentes e estoque atual."""
 
         since = datetime.now(timezone.utc) - timedelta(days=30)
         velocity = await repo.variant_velocity_30d(db, since)
@@ -99,7 +97,7 @@ class AnalyticsService:
             # Sem venda recente, a variante não recebe previsão de dias restantes.
             days_left = (variant.stock_quantity / (sold / 30)) if sold > 0 else 999
             score = sold * 2 - variant.stock_quantity
-            if score > 0 or variant.stock_quantity <= variant.min_stock_alert:
+            if score > 0 or variant.stock_quantity == 0:
                 suggestions.append(
                     {
                         "variant_id": variant.id,
@@ -111,7 +109,7 @@ class AnalyticsService:
                         "sold_30d": sold,
                         "days_remaining": round(days_left, 1) if days_left < 999 else None,
                         "urgency": "alta"
-                        if (variant.stock_quantity <= variant.min_stock_alert or days_left < 7)
+                        if (variant.stock_quantity == 0 or days_left < 7)
                         else "media",
                         "suggested_qty": max(10, sold * 2 - variant.stock_quantity),
                     }

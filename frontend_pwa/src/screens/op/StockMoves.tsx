@@ -5,26 +5,22 @@ import { AppBar, BottomNav, FAB, OpSubNav, ScreenBody } from '../../components/C
 import { api } from '../../services/api'
 import type { Product, Variant, StockMovement } from '../../services/types'
 
-type MoveType = 'entrada' | 'saida' | 'ajuste'
+type MoveType = 'entrada' | 'saida'
 
 const moveMeta: Record<MoveType, { color: string; icon: (p: IcoProps) => JSX.Element; sign: string; bg: string }> = {
-  entrada: { color: '#5DD49E', icon: Ico.upload,  sign: '+', bg: 'rgba(63,184,124,0.10)'  },
-  saida:   { color: '#F5847B', icon: Ico.cart,    sign: '−', bg: 'rgba(232,88,79,0.10)'   },
-  ajuste:  { color: '#F5BF7A', icon: Ico.edit,    sign: '±', bg: 'rgba(232,160,74,0.10)'  },
+  entrada: { color: '#5DD49E', icon: Ico.upload, sign: '+', bg: 'rgba(63,184,124,0.10)' },
+  saida:   { color: '#F5847B', icon: Ico.cart,   sign: '−', bg: 'rgba(232,88,79,0.10)'  },
 }
 
 const MOVE_LABELS: Record<MoveType, string> = {
-  entrada: 'Entrada', saida: 'Saída', ajuste: 'Ajuste',
+  entrada: 'Entrada', saida: 'Saída',
 }
 
-const ALL_MOVE_META: Record<string, typeof moveMeta['entrada']> = {
-  ...moveMeta,
-  devolucao: { color: '#8BC0E8', icon: Ico.refresh, sign: '+', bg: 'rgba(94,168,224,0.10)' },
-}
+const ALL_MOVE_META: Record<string, typeof moveMeta['entrada']> = { ...moveMeta }
 
-const HIST_TABS = ['Tudo', 'Entrada', 'Saída', 'Ajuste']
+const HIST_TABS = ['Tudo', 'Entrada', 'Saída']
 const HIST_TAB_TYPE: Record<string, string> = {
-  'Entrada': 'entrada', 'Saída': 'saida', 'Ajuste': 'ajuste',
+  'Entrada': 'entrada', 'Saída': 'saida',
 }
 
 function fmtMoveDate(iso: string) {
@@ -39,7 +35,7 @@ export default function StockMoves() {
   const [products, setProducts] = useState<Product[]>([])
   const [showPicker, setShowPicker] = useState(false)
   const [selected, setSelected] = useState<(Variant & { productName: string }) | null>(null)
-  const [moveType, setMoveType] = useState<MoveType>('ajuste')
+  const [moveType, setMoveType] = useState<MoveType>('entrada')
   const [qty, setQty] = useState('1')
   const [unitCost, setUnitCost] = useState('')
   const [notes, setNotes] = useState('')
@@ -216,7 +212,7 @@ export default function StockMoves() {
           <Section title={`Histórico · ${selected.productName} ${selected.size} ${selected.color}`} top={14}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {filteredHistory.map(m => {
-                const meta = ALL_MOVE_META[m.movement_type] ?? ALL_MOVE_META.ajuste
+                const meta = ALL_MOVE_META[m.movement_type] ?? ALL_MOVE_META.entrada
                 const MoveIcon = meta.icon
                 return (
                   <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: 'var(--bg-1)', border: '1px solid var(--line-1)', borderRadius: 12 }}>

@@ -7,7 +7,7 @@ export type ScreenId =
   | 'product-list' | 'product-detail' | 'product-form'
   | 'sale-modal' | 'sales-history'
   | 'purchase-form' | 'purchase-list'
-  | 'expenses' | 'stock-moves' | 'stock-alerts'
+  | 'expenses' | 'stock-moves'
   | 'dashboard' | 'top-products' | 'by-size' | 'by-channel' | 'suggestions' | 'dre'
   | 'marketing'
   | 'more' | 'suppliers' | 'supplier-form' | 'categories' | 'category-form' | 'sale-channels' | 'channel-form' | 'settings' | 'about'

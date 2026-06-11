@@ -134,7 +134,6 @@ export default function ProductForm() {
           size: v.size.trim(),
           color: v.color.trim(),
           stock_quantity: Math.max(0, parseInt(v.qty) || 0),
-          min_stock_alert: 3,
         })),
       }
       if (productId) {

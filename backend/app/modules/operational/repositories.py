@@ -125,17 +125,6 @@ async def get_product_variant(
     return result.scalar_one_or_none()
 
 
-async def list_stock_alerts(db: AsyncSession) -> list[ProductVariant]:
-    """Lista variantes cujo estoque está igual ou abaixo do mínimo definido."""
-
-    result = await db.execute(
-        select(ProductVariant)
-        .options(selectinload(ProductVariant.product))
-        .where(ProductVariant.stock_quantity <= ProductVariant.min_stock_alert)
-    )
-    return list(result.scalars().all())
-
-
 async def list_stock_history(db: AsyncSession, variant_id: str) -> list[StockMovement]:
     """Retorna o histórico recente de movimentações de uma variante."""
 

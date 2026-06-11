@@ -98,9 +98,8 @@ export default function ProductDetail() {
                     <div style={{ width: 36, height: 36, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'var(--bg-3)', color: 'var(--gold-300)', fontSize: 13, fontWeight: 800, border: '1px solid var(--line-2)' }}>{v.size}</div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 600 }}>{v.color}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>mín. {v.min_stock_alert}</div>
                     </div>
-                    <div className="tnum" style={{ fontSize: 14, fontWeight: 700, color: v.stock_quantity === 0 ? '#F5847B' : v.stock_quantity < v.min_stock_alert ? '#F5BF7A' : 'var(--text-1)' }}>
+                    <div className="tnum" style={{ fontSize: 14, fontWeight: 700, color: v.stock_quantity === 0 ? '#F5847B' : 'var(--text-1)' }}>
                       {v.stock_quantity}
                     </div>
                   </div>

@@ -73,7 +73,7 @@ class SalesService:
                 variant.stock_quantity += item.quantity
                 db.add(StockMovement(
                     variant_id=variant.id,
-                    movement_type="devolucao",
+                    movement_type="entrada",
                     quantity=item.quantity,
                     notes=f"Estorno venda #{sale_id[:8]}",
                 ))

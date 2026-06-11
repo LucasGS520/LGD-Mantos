@@ -17,14 +17,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <AppBar title="Análise" subtitle={`Hoje, ${today}`} action={
-        <button style={{ width: 38, height: 38, borderRadius: 12, border: '1px solid var(--line-2)', background: 'var(--bg-2)', display: 'grid', placeItems: 'center', position: 'relative' }}>
-          <Ico.bell size={18} stroke="var(--text-1)" />
-          {(data?.stock_alerts ?? 0) > 0 && (
-            <span style={{ position: 'absolute', top: 6, right: 8, width: 7, height: 7, borderRadius: 99, background: '#E8584F', border: '1.5px solid var(--bg-2)' }} />
-          )}
-        </button>
-      } />
+      <AppBar title="Análise" subtitle={`Hoje, ${today}`} />
 
       {loading ? <LoadingBody /> : error ? <ErrorBody msg={error} onRetry={reload} /> : data ? (
         <ScreenBody>
@@ -54,19 +47,6 @@ export default function Dashboard() {
             <KPI label="Vendas hoje" value={String(data.today_count)} deltaTone="muted" icon={Ico.cart} />
             <KPI label="Est. custo" value={fmtBRLshort(data.stock_cost_value)} delta={`${data.stock_units} un`} deltaTone="muted" icon={Ico.box} />
           </div>
-
-          {data.stock_alerts > 0 && (
-            <div onClick={() => navigate('stock-alerts')} style={{ marginTop: 12, padding: 14, borderRadius: 14, background: 'var(--bg-1)', border: '1px solid var(--line-1)', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-              <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(232,88,79,0.12)', display: 'grid', placeItems: 'center' }}>
-                <Ico.warning size={20} stroke="#F5847B" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700 }}>{data.stock_alerts} variante{data.stock_alerts !== 1 ? 's' : ''} em alerta</div>
-                <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2 }}>Ver detalhes</div>
-              </div>
-              <Ico.chevron size={18} stroke="var(--text-3)" />
-            </div>
-          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
             <Card padding={14}>

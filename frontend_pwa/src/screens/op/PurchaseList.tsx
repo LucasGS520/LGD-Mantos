@@ -69,7 +69,8 @@ export default function PurchaseList() {
             {filtered.map(p => {
               const total = p.items.reduce((s, i) => s + i.quantity * i.unit_cost, 0)
               const units = p.items.reduce((s, i) => s + i.quantity, 0)
-              const canReceive = p.status !== 'recebido' && p.status !== 'cancelado'
+              const canSend = p.status === 'rascunho'
+              const canReceive = p.status === 'rascunho' || p.status === 'enviado'
               return (
                 <div key={p.id} style={{ padding: 14, background: 'var(--bg-1)', border: '1px solid var(--line-1)', borderRadius: 14 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -83,16 +84,26 @@ export default function PurchaseList() {
                     Pedido em {fmtOrderDate(p.order_date)} · {units} unidades
                   </div>
                   <div style={{ height: 1, background: 'var(--line-1)', margin: '10px 0' }} />
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <span className="tnum" style={{ fontSize: 17, fontWeight: 800, color: 'var(--gold-300)' }}>{fmtBRL(total)}</span>
-                    {canReceive && (
-                      <button
-                        onClick={() => navigate('purchase-form', { purchaseId: p.id })}
-                        style={{ height: 34, padding: '0 14px', borderRadius: 10, background: 'var(--gold-500)', color: '#1A1408', fontWeight: 700, fontSize: 12, border: 0, cursor: 'pointer' }}
-                      >
-                        Receber
-                      </button>
-                    )}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {canSend && (
+                        <button
+                          onClick={async () => { await api.put(`/purchases/${p.id}/send`); reload() }}
+                          style={{ height: 34, padding: '0 12px', borderRadius: 10, background: 'transparent', color: 'var(--text-2)', fontWeight: 700, fontSize: 12, border: '1px solid var(--line-2)', cursor: 'pointer' }}
+                        >
+                          Marcar enviado
+                        </button>
+                      )}
+                      {canReceive && (
+                        <button
+                          onClick={() => navigate('purchase-form', { purchaseId: p.id })}
+                          style={{ height: 34, padding: '0 14px', borderRadius: 10, background: 'var(--gold-500)', color: '#1A1408', fontWeight: 700, fontSize: 12, border: 0, cursor: 'pointer' }}
+                        >
+                          Receber
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )

@@ -10,14 +10,14 @@ from app.shared.models.common import now, uid
 
 
 class StockMovement(Base):
-    """Registro histórico de entrada, saída, ajuste ou devolução de estoque."""
+    """Registro histórico de entrada ou saída de estoque."""
 
     __tablename__ = "stock_movements"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     variant_id: Mapped[str] = mapped_column(String(36), ForeignKey("product_variants.id"), nullable=False)
     movement_type: Mapped[str] = mapped_column(
-        SAEnum("entrada", "saida", "ajuste", "devolucao", name="mvt_type"),
+        SAEnum("entrada", "saida", name="mvt_type"),
         nullable=False,
     )
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)

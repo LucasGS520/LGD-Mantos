@@ -1,4 +1,4 @@
-"""Rotas HTTP para movimentações, alertas e histórico de estoque."""
+"""Rotas HTTP para movimentações e histórico de estoque."""
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,13 +17,6 @@ async def stock_movement(data: StockMoveIn, db: AsyncSession = Depends(get_db), 
     """Registra uma movimentação manual de estoque."""
 
     return await StockService.stock_movement(db, data)
-
-
-@router.get("/stock/alerts")
-async def stock_alerts(db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
-    """Lista variantes que precisam de atenção por estoque baixo."""
-
-    return await StockService.stock_alerts(db)
 
 
 @router.get("/stock/history/{variant_id}", response_model=list[StockMoveOut])

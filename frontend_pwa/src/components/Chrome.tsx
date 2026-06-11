@@ -79,7 +79,7 @@ export function OpSubNav({ active }: { active: OpScreen }) {
     <div style={{ display: 'flex', gap: 8, padding: '0 18px 10px', overflowX: 'auto', flexShrink: 0 }} className="lgd-scroll">
       {OP_TABS.map(t => (
         <div key={t.id} onClick={() => navigate(t.id)} style={{
-          padding: '7px 14px', borderRadius: 999, fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer',
+          padding: '6px 10px', borderRadius: 999, fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer',
           background: t.id === active ? 'var(--gold-500)' : 'var(--bg-2)',
           color: t.id === active ? '#1A1408' : 'var(--text-2)',
           border: t.id === active ? '1px solid var(--gold-500)' : '1px solid var(--line-1)',
