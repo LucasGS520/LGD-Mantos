@@ -1,4 +1,4 @@
-"""Rotina de inicialização do banco local.
+""" Rotina de inicialização do banco local.
 
 Cria as tabelas declaradas nos modelos SQLAlchemy e insere dados básicos de
 categoria e fornecedor quando eles ainda não existem.

@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Ico } from '../../components/Icons'
 import { KPI, ChannelChip, Section, LoadingBody, ErrorBody } from '../../components/UI'
 import { AppBar, BottomNav, FAB, OpSubNav, ScreenBody } from '../../components/Chrome'
 import { fmtBRL } from '../../fmt'
 import { api } from '../../services/api'
 import { useData } from '../../hooks/useData'
-import type { Sale } from '../../services/types'
+import type { Sale, SaleChannel } from '../../services/types'
 import { useNav } from '../../nav'
 
 function fmtDate(iso: string): string {
@@ -37,6 +37,13 @@ export default function SalesHistory() {
   const { data: sales, loading, error, reload } = useData<Sale[]>(() => api.get('/sales?limit=200'))
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [channelMap, setChannelMap] = useState<Record<string, SaleChannel>>({})
+
+  useEffect(() => {
+    api.get<SaleChannel[]>('/channels')
+      .then(chs => setChannelMap(Object.fromEntries(chs.map(c => [c.id, c]))))
+      .catch(() => {})
+  }, [])
 
   const totalRev = (sales ?? []).reduce((s, v) => s + v.total, 0)
   const groups = groupByDate(sales ?? [])
@@ -85,7 +92,7 @@ export default function SalesHistory() {
                           <span style={{ fontSize: 11, color: 'var(--text-3)' }}>· {fmtTime(s.sold_at)}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <ChannelChip ch={s.channel} />
+                          <ChannelChip ch={s.sale_channel_id ? (channelMap[s.sale_channel_id]?.name ?? '') : ''} />
                           <span style={{ fontSize: 11.5, color: 'var(--text-3)' }}>{s.items.length} {s.items.length === 1 ? 'item' : 'itens'}</span>
                         </div>
                       </div>

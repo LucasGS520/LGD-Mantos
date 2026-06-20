@@ -1,4 +1,4 @@
-"""Schemas Pydantic das operações de estoque, vendas, despesas e compras."""
+"""Schemas Pydantic das operações de estoque, vendas, despesas e entrada de mercadoria."""
 
 from datetime import datetime
 from typing import Literal, Optional
@@ -42,7 +42,7 @@ class SaleItemIn(BaseModel):
 class SaleIn(BaseModel):
     """Entrada para registrar uma venda com seus itens."""
 
-    channel: str = "loja"
+    sale_channel_id: Optional[str] = None
     notes: Optional[str] = None
     items: list[SaleItemIn]
 
@@ -64,7 +64,7 @@ class SaleOut(BaseModel):
 
     id: str
     sold_at: datetime
-    channel: str
+    sale_channel_id: Optional[str] = None
     notes: Optional[str] = None
     total: float
     items: list[SaleItemOut] = Field(default_factory=list)
@@ -91,47 +91,5 @@ class ExpenseOut(BaseModel):
     amount: float
     description: Optional[str] = None
     created_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class POItemIn(BaseModel):
-    """Entrada de item de pedido de compra."""
-
-    variant_id: str
-    quantity: int
-    unit_cost: float
-
-
-class POItemOut(BaseModel):
-    """Resposta pública de item de pedido de compra."""
-
-    id: str
-    variant_id: str
-    quantity: int
-    unit_cost: float
-
-    model_config = {"from_attributes": True}
-
-
-class POIn(BaseModel):
-    """Entrada para criar um pedido de compra."""
-
-    supplier_id: str
-    order_date: str
-    notes: Optional[str] = None
-    items: list[POItemIn]
-
-
-class POOut(BaseModel):
-    """Resposta pública de pedido de compra com seus itens."""
-
-    id: str
-    supplier_id: str
-    order_date: str
-    status: str
-    notes: Optional[str] = None
-    created_at: datetime
-    items: list[POItemOut] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}

@@ -1,6 +1,15 @@
-"""Schemas futuros para respostas analíticas.
+"""Re-exporta todos os schemas do módulo de analytics."""
 
-As rotas de analytics hoje retornam dicionários compactos e amigáveis ao app
-mobile. Modelos tipados podem ser introduzidos aqui quando esses contratos
-estiverem mais estáveis.
-"""
+from .dashboard import DailyRevenue, DashboardResponse
+from .finance import DREResponse
+from .products import ByChannelItem, BySizeItem, SuggestionItem, TopProductItem
+
+__all__ = [
+    "DailyRevenue",
+    "DashboardResponse",
+    "DREResponse",
+    "TopProductItem",
+    "SuggestionItem",
+    "BySizeItem",
+    "ByChannelItem",
+]

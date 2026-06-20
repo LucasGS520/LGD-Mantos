@@ -10,7 +10,7 @@ class CategoryCreate(BaseModel):
     """Entrada para criação ou atualização de uma categoria."""
 
     name: str
-    description: Optional[str] = None
+    description: str
 
 
 class CategoryOut(BaseModel):
@@ -83,6 +83,15 @@ class VariantIn(BaseModel):
     price_override: Optional[float] = None
 
 
+class VariantUpdateIn(BaseModel):
+    """Entrada para atualizar ou criar uma variante durante edição de produto."""
+
+    id: Optional[str] = None
+    size: str
+    color: str = "Unico"
+    stock_quantity: int = Field(default=0, ge=0)
+
+
 class VariantOut(BaseModel):
     """Resposta pública de uma variante, incluindo seu saldo de estoque."""
 
@@ -106,6 +115,9 @@ class ProductCreate(BaseModel):
     supplier_id: Optional[str] = None
     cost_price: float = 0
     sale_price: float = 0
+    brand: Optional[str] = None
+    product_type: Optional[str] = None
+    tags: list[str] = Field(default_factory=list)
     notes: Optional[str] = None
     variants: list[VariantIn] = Field(default_factory=list)
 
@@ -119,8 +131,12 @@ class ProductUpdate(BaseModel):
     supplier_id: Optional[str] = None
     cost_price: Optional[float] = None
     sale_price: Optional[float] = None
+    brand: Optional[str] = None
+    product_type: Optional[str] = None
+    tags: Optional[list[str]] = None
     notes: Optional[str] = None
     is_active: Optional[bool] = None
+    variants: Optional[list["VariantUpdateIn"]] = None
 
 
 class ProductOut(BaseModel):
@@ -134,6 +150,9 @@ class ProductOut(BaseModel):
     supplier_id: Optional[str] = None
     cost_price: float
     sale_price: float
+    brand: Optional[str] = None
+    product_type: Optional[str] = None
+    tags: Optional[list] = None
     notes: Optional[str] = None
     photos: Optional[list] = None
     is_active: bool

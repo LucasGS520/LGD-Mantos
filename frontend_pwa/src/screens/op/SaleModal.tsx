@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Ico } from '../../components/Icons'
 import { Btn, PhotoPlaceholder, Section } from '../../components/UI'
 import { fmtBRL } from '../../fmt'
 import { api } from '../../services/api'
-import type { Product, Variant, SaleChannel } from '../../services/types'
+import type { Product, Variant, SaleChannel, Category } from '../../services/types'
 import { useNav } from '../../nav'
 
 interface CartItem {
@@ -15,6 +15,7 @@ interface CartItem {
 export default function SaleModal() {
   const { back } = useNav()
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [channels, setChannels] = useState<SaleChannel[]>([])
   const [cart, setCart] = useState<CartItem[]>([])
   const [channel, setChannel] = useState<SaleChannel | null>(null)
@@ -22,9 +23,13 @@ export default function SaleModal() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPicker, setShowPicker] = useState(false)
+  const [search, setSearch] = useState('')
+  const [filterCategory, setFilterCategory] = useState<string | null>(null)
+  const [addedVariantId, setAddedVariantId] = useState<string | null>(null)
 
   useEffect(() => {
     api.get<Product[]>('/products').then(setProducts).catch(() => {})
+    api.get<Category[]>('/categories').then(setCategories).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -35,6 +40,18 @@ export default function SaleModal() {
       })
       .catch(() => {})
   }, [])
+
+  const filteredProducts = useMemo(() => {
+    const q = search.toLowerCase()
+    return products
+      .filter(p => filterCategory == null || p.category_id === filterCategory)
+      .filter(p =>
+        q === '' ||
+        p.name.toLowerCase().includes(q) ||
+        p.sku.toLowerCase().includes(q)
+      )
+      .filter(p => p.variants.some(v => v.stock_quantity > 0))
+  }, [products, filterCategory, search])
 
   const addToCart = (product: Product, variant: Variant) => {
     setCart(prev => {
@@ -48,7 +65,8 @@ export default function SaleModal() {
         unitPrice: variant.price_override ?? product.sale_price,
       }]
     })
-    setShowPicker(false)
+    setAddedVariantId(variant.id)
+    setTimeout(() => setAddedVariantId(null), 900)
   }
 
   const updateQty = (variantId: string, qty: number) => {
@@ -72,7 +90,7 @@ export default function SaleModal() {
     try {
       const ratio = subtotal > 0 ? net / subtotal : 1
       await api.post('/sales', {
-        channel: channel?.name ?? 'loja',
+        sale_channel_id: channel?.id ?? null,
         items: cart.map(i => ({
           variant_id: i.variant.id,
           quantity: i.quantity,
@@ -130,16 +148,92 @@ export default function SaleModal() {
             ))}
 
             {showPicker ? (
-              <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 12, maxHeight: 280, overflow: 'auto' }} className="lgd-scroll">
-                {products.map(p => p.variants.map(v => (
-                  <div key={v.id} onClick={() => addToCart(p, v)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderTop: '1px solid var(--line-1)', cursor: 'pointer' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600 }}>{p.name}</div>
-                      <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>{v.size} · {v.color} · estoque: {v.stock_quantity}</div>
-                    </div>
-                    <span className="tnum" style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold-300)' }}>{fmtBRL(v.price_override ?? p.sale_price)}</span>
+              <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 14, overflow: 'hidden' }}>
+                {/* Barra de busca */}
+                <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--line-1)', display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <Ico.search size={16} stroke="var(--text-3)" />
+                  <input
+                    autoFocus
+                    type="text"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder="Buscar por nome ou SKU…"
+                    style={{ flex: 1, background: 'transparent', border: 0, outline: 'none', color: 'var(--text-1)', fontSize: 13 }}
+                  />
+                  <div onClick={() => setShowPicker(false)} style={{ cursor: 'pointer', padding: 2 }}>
+                    <Ico.close size={16} stroke="var(--text-3)" />
                   </div>
-                )))}
+                </div>
+
+                {/* Chips de categoria */}
+                {categories.length > 0 && (
+                  <div style={{ display: 'flex', gap: 6, padding: '8px 12px', overflowX: 'auto', borderBottom: '1px solid var(--line-1)' }} className="lgd-scroll">
+                    <button
+                      onClick={() => setFilterCategory(null)}
+                      style={{
+                        padding: '4px 12px', borderRadius: 99, fontSize: 11.5, fontWeight: 600, border: '1px solid', flexShrink: 0,
+                        background: filterCategory == null ? 'rgba(212,168,71,0.12)' : 'transparent',
+                        borderColor: filterCategory == null ? 'var(--gold-500)' : 'var(--line-2)',
+                        color: filterCategory == null ? 'var(--gold-300)' : 'var(--text-2)',
+                      }}
+                    >Todos</button>
+                    {categories.map(c => (
+                      <button
+                        key={c.id}
+                        onClick={() => setFilterCategory(filterCategory === c.id ? null : c.id)}
+                        style={{
+                          padding: '4px 12px', borderRadius: 99, fontSize: 11.5, fontWeight: 600, border: '1px solid', flexShrink: 0,
+                          background: filterCategory === c.id ? 'rgba(212,168,71,0.12)' : 'transparent',
+                          borderColor: filterCategory === c.id ? 'var(--gold-500)' : 'var(--line-2)',
+                          color: filterCategory === c.id ? 'var(--gold-300)' : 'var(--text-2)',
+                        }}
+                      >{c.name}</button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Lista de produtos com chips de tamanho */}
+                <div style={{ maxHeight: 280, overflowY: 'auto' }} className="lgd-scroll">
+                  {filteredProducts.length === 0 ? (
+                    <div style={{ padding: 20, textAlign: 'center', fontSize: 12.5, color: 'var(--text-3)' }}>
+                      Nenhum produto com estoque encontrado
+                    </div>
+                  ) : filteredProducts.map(p => (
+                    <div key={p.id} style={{ padding: '10px 12px', borderTop: '1px solid var(--line-1)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 600, flex: 1, marginRight: 8 }}>{p.name}</div>
+                        <span className="tnum" style={{ fontSize: 12, fontWeight: 700, color: 'var(--gold-300)', flexShrink: 0 }}>{fmtBRL(p.sale_price)}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                        {p.variants.map(v => {
+                          const inCart = cart.find(c => c.variant.id === v.id)?.quantity ?? 0
+                          const isAdded = addedVariantId === v.id
+                          const hasStock = v.stock_quantity > 0
+                          return (
+                            <button
+                              key={v.id}
+                              onClick={() => hasStock ? addToCart(p, v) : undefined}
+                              disabled={!hasStock}
+                              style={{
+                                padding: '4px 9px', borderRadius: 8, fontSize: 11.5, fontWeight: 700,
+                                border: '1px solid',
+                                borderColor: isAdded ? '#5DD49E' : inCart > 0 ? 'var(--gold-500)' : hasStock ? 'var(--line-2)' : 'transparent',
+                                background: isAdded ? 'rgba(93,212,158,0.15)' : inCart > 0 ? 'rgba(212,168,71,0.10)' : hasStock ? 'var(--bg-3)' : 'transparent',
+                                color: isAdded ? '#5DD49E' : inCart > 0 ? 'var(--gold-300)' : hasStock ? 'var(--text-1)' : 'var(--text-3)',
+                                opacity: hasStock ? 1 : 0.38,
+                                cursor: hasStock ? 'pointer' : 'default',
+                              }}
+                            >
+                              {v.size}
+                              {inCart > 0 && <span style={{ marginLeft: 3, fontWeight: 400 }}>×{inCart}</span>}
+                              {hasStock && <span style={{ marginLeft: 3, fontWeight: 400, opacity: 0.6 }}>{v.stock_quantity}</span>}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
               <button onClick={() => setShowPicker(true)} style={{ height: 42, border: '1.5px dashed var(--line-3)', background: 'transparent', color: 'var(--gold-500)', borderRadius: 12, fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}>
@@ -155,11 +249,11 @@ export default function SaleModal() {
           ) : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {channels.map(o => (
-                <div key={o.name} onClick={() => setChannel(o)} style={{
+                <div key={o.id} onClick={() => setChannel(o)} style={{
                   padding: '8px 14px', borderRadius: 99, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                  background: channel?.name === o.name ? 'rgba(212,168,71,0.10)' : 'var(--bg-2)',
-                  border: `1px solid ${channel?.name === o.name ? 'var(--gold-500)' : 'var(--line-1)'}`,
-                  fontSize: 12, fontWeight: 700, color: channel?.name === o.name ? 'var(--gold-300)' : 'var(--text-2)',
+                  background: channel?.id === o.id ? 'rgba(212,168,71,0.10)' : 'var(--bg-2)',
+                  border: `1px solid ${channel?.id === o.id ? 'var(--gold-500)' : 'var(--line-1)'}`,
+                  fontSize: 12, fontWeight: 700, color: channel?.id === o.id ? 'var(--gold-300)' : 'var(--text-2)',
                 }}>
                   <span style={{ width: 8, height: 8, borderRadius: 99, background: o.color, flexShrink: 0 }} />
                   {o.name}

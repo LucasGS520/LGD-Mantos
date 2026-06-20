@@ -36,9 +36,8 @@ class Supplier(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
-    # Relacionamentos deixam o fornecedor navegável a partir de produtos e compras.
     products = relationship("Product", back_populates="supplier")
-    purchase_orders = relationship("PurchaseOrder", back_populates="supplier")
+    merchandise_entries = relationship("MerchandiseEntry", back_populates="supplier")
 
 
 class SaleChannel(Base):
@@ -54,6 +53,8 @@ class SaleChannel(Base):
     monthly_goal: Mapped[float | None] = mapped_column(Float, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+    sales = relationship("Sale", back_populates="sale_channel")
 
 
 class Product(Base):
@@ -75,7 +76,10 @@ class Product(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
 
-    # Um produto pode ter várias variantes, como tamanhos ou cores.
+    brand: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    product_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    tags: Mapped[list | None] = mapped_column(JSON, default=list)
+
     category = relationship("Category", back_populates="products")
     supplier = relationship("Supplier", back_populates="products")
     variants = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")

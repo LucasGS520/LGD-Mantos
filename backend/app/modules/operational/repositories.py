@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 from app.shared.models.catalog import Category, Product, ProductVariant, SaleChannel, Supplier
 from app.shared.models.operations import (
     Expense,
-    PurchaseOrder,
+    MerchandiseEntry,
     Sale,
     StockMovement,
 )
@@ -111,6 +111,17 @@ async def get_variant(db: AsyncSession, variant_id: str) -> ProductVariant | Non
     return result.scalar_one_or_none()
 
 
+async def get_variant_with_product(db: AsyncSession, variant_id: str) -> ProductVariant | None:
+    """Busca uma variante carregando o produto pai junto."""
+
+    result = await db.execute(
+        select(ProductVariant)
+        .options(selectinload(ProductVariant.product))
+        .where(ProductVariant.id == variant_id)
+    )
+    return result.scalar_one_or_none()
+
+
 async def get_product_variant(
     db: AsyncSession, product_id: str, variant_id: str
 ) -> ProductVariant | None:
@@ -169,24 +180,24 @@ async def get_expense(db: AsyncSession, expense_id: str) -> Expense | None:
     return result.scalar_one_or_none()
 
 
-async def list_purchases(db: AsyncSession) -> list[PurchaseOrder]:
-    """Lista pedidos de compra recentes com seus itens."""
+async def list_entries(db: AsyncSession, limit: int = 100) -> list[MerchandiseEntry]:
+    """Lista entradas de mercadoria recentes com seus itens."""
 
     result = await db.execute(
-        select(PurchaseOrder)
-        .options(selectinload(PurchaseOrder.items))
-        .order_by(PurchaseOrder.order_date.desc())
-        .limit(100)
+        select(MerchandiseEntry)
+        .options(selectinload(MerchandiseEntry.items))
+        .order_by(MerchandiseEntry.entry_date.desc(), MerchandiseEntry.created_at.desc())
+        .limit(limit)
     )
     return list(result.scalars().all())
 
 
-async def get_purchase(db: AsyncSession, purchase_id: str) -> PurchaseOrder | None:
-    """Busca um pedido de compra com itens para recebimento ou consulta."""
+async def get_entry(db: AsyncSession, entry_id: str) -> MerchandiseEntry | None:
+    """Busca uma entrada de mercadoria com seus itens."""
 
     result = await db.execute(
-        select(PurchaseOrder)
-        .options(selectinload(PurchaseOrder.items))
-        .where(PurchaseOrder.id == purchase_id)
+        select(MerchandiseEntry)
+        .options(selectinload(MerchandiseEntry.items))
+        .where(MerchandiseEntry.id == entry_id)
     )
     return result.scalar_one_or_none()

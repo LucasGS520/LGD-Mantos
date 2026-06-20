@@ -1,10 +1,10 @@
 """Exporta os modelos ORM compartilhados para facilitar imports no backend."""
 
-from app.shared.models.catalog import Category, Product, ProductVariant, Supplier
+from app.shared.models.catalog import Category, Product, ProductVariant, SaleChannel, Supplier
 from app.shared.models.operations import (
     Expense,
-    PurchaseOrder,
-    PurchaseOrderItem,
+    MerchandiseEntry,
+    MerchandiseEntryItem,
     Sale,
     SaleItem,
     StockMovement,
@@ -13,11 +13,12 @@ from app.shared.models.operations import (
 __all__ = [
     "Category",
     "Expense",
+    "MerchandiseEntry",
+    "MerchandiseEntryItem",
     "Product",
     "ProductVariant",
-    "PurchaseOrder",
-    "PurchaseOrderItem",
     "Sale",
+    "SaleChannel",
     "SaleItem",
     "StockMovement",
     "Supplier",

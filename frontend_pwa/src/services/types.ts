@@ -22,6 +22,8 @@ export interface Product {
   supplier_id: string | null
   cost_price: number
   sale_price: number
+  brand: string | null
+  product_type: string | null
   notes: string | null
   photos: string[] | null
   is_active: boolean
@@ -73,28 +75,30 @@ export interface SaleItem {
 export interface Sale {
   id: string
   sold_at: string
-  channel: string
+  sale_channel_id: string | null
   notes: string | null
   total: number
   items: SaleItem[]
 }
 
-// Purchases
-export interface POItem {
+// Merchandise Entries
+export interface EntryItem {
   id: string
   variant_id: string
   quantity: number
   unit_cost: number
 }
 
-export interface Purchase {
+export interface MerchandiseEntry {
   id: string
-  supplier_id: string
-  order_date: string
-  status: string
+  supplier_id: string | null
+  entry_date: string
   notes: string | null
+  total_cost: number
+  products_created: number
+  variants_added: number
   created_at: string
-  items: POItem[]
+  items: EntryItem[]
 }
 
 // Expenses
@@ -156,19 +160,6 @@ export interface ByChannelItem {
   channel: string
   count: number
   total: number
-}
-
-export interface Suggestion {
-  variant_id: string
-  product_name: string
-  sku: string
-  size: string
-  color: string
-  stock: number
-  sold_30d: number
-  days_remaining: number | null
-  urgency: 'alta' | 'media'
-  suggested_qty: number
 }
 
 export interface DRE {

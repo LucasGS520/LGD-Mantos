@@ -67,7 +67,7 @@ export default function Dashboard() {
                 { label: 'Top Produtos',       hint: 'Ranking por receita',         screen: 'top-products' as const, icon: Ico.trend    },
                 { label: 'Vendas por Tamanho', hint: 'Distribuição de grade',       screen: 'by-size'      as const, icon: Ico.tshirt   },
                 { label: 'Vendas por Canal',   hint: 'Loja, WhatsApp, Instagram…', screen: 'by-channel'   as const, icon: Ico.pie      },
-                { label: 'Sugestões de Compra',hint: 'Reposição inteligente',       screen: 'suggestions'  as const, icon: Ico.sparkle  },
+                { label: 'Padrões de Compra',   hint: 'Mix e cobertura por categoria', screen: 'suggestions'  as const, icon: Ico.sparkle  },
                 { label: 'DRE do Mês',         hint: 'Demonstrativo de resultado',  screen: 'dre'          as const, icon: Ico.doc      },
               ].map(item => {
                 const I = item.icon
