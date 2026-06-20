@@ -9,6 +9,7 @@ export type ScreenId =
   | 'purchase-form' | 'purchase-list'
   | 'expenses' | 'stock-moves'
   | 'dashboard' | 'top-products' | 'by-size' | 'by-channel' | 'suggestions' | 'dre'
+  | 'an-categorias' | 'an-category-detail' | 'an-alertas' | 'an-marketing-intel' | 'an-compras'
   | 'marketing'
   | 'more' | 'suppliers' | 'supplier-form' | 'categories' | 'category-form' | 'sale-channels' | 'channel-form' | 'settings' | 'about'
 

@@ -1,4 +1,10 @@
 import { Session } from './session'
+import type {
+  Dashboard, DRE, TopProduct, BySizeItem, ByChannelItem,
+  ProductAnalysis, DataQuality,
+  CategoryPerformance, CategorySizeDistribution, CategoryCoverage, BuyingPattern, CategorySizeStock,
+  MarketingIntelligence,
+} from './types'
 
 const ENV_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.trim()
 const BASE = (ENV_BASE && ENV_BASE.length > 0
@@ -80,6 +86,50 @@ export const api = {
     }
     return data
   },
+
+  // ─── Analytics ────────────────────────────────────────────
+  getDashboard: () => req<Dashboard>('GET', '/analytics/dashboard'),
+
+  getDRE: (month?: number, year?: number) => {
+    const q = new URLSearchParams()
+    if (month) q.set('month', String(month))
+    if (year) q.set('year', String(year))
+    const qs = q.toString()
+    return req<DRE>('GET', `/analytics/finance/dre${qs ? `?${qs}` : ''}`)
+  },
+
+  getTopProducts: (period: string) =>
+    req<TopProduct[]>('GET', `/analytics/top-products?period=${period}`),
+
+  getBySize: (period: string) =>
+    req<BySizeItem[]>('GET', `/analytics/by-size?period=${period}`),
+
+  getByChannel: (period: string) =>
+    req<ByChannelItem[]>('GET', `/analytics/by-channel?period=${period}`),
+
+  getProductAnalysis: (period: string) =>
+    req<ProductAnalysis>('GET', `/analytics/products/analysis?period=${period}`),
+
+  getDataQuality: () =>
+    req<DataQuality>('GET', '/analytics/data-quality'),
+
+  getCategoryPerformance: (period: string) =>
+    req<CategoryPerformance[]>('GET', `/analytics/categories/performance?period=${period}`),
+
+  getCategoryStockCoverage: () =>
+    req<CategoryCoverage[]>('GET', '/analytics/categories/stock-coverage'),
+
+  getCategorySizeDistribution: (period: string) =>
+    req<CategorySizeDistribution[]>('GET', `/analytics/categories/size-distribution?period=${period}`),
+
+  getCategoryBuyingPatterns: (period: string) =>
+    req<BuyingPattern[]>('GET', `/analytics/categories/buying-patterns?period=${period}`),
+
+  getCategorySizeStock: () =>
+    req<CategorySizeStock[]>('GET', '/analytics/categories/size-stock'),
+
+  getMarketingIntelligence: () =>
+    req<MarketingIntelligence>('GET', '/analytics/marketing-intelligence'),
 
   async login(password: string): Promise<string> {
     const res = await fetch(`${BASE}/auth/login`, {

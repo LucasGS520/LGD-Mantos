@@ -12,17 +12,19 @@ router = APIRouter()
 
 @router.get("/by-size")
 async def sales_by_size(
+    period: str | None = Query(None),
     days: int = Query(30),
     db: AsyncSession = Depends(get_db),
     _=Depends(verify_token),
 ):
-    return await ChannelAnalysisService.sales_by_size(db, days)
+    return await ChannelAnalysisService.sales_by_size(db, period, days)
 
 
 @router.get("/by-channel")
 async def sales_by_channel(
+    period: str | None = Query(None),
     days: int = Query(30),
     db: AsyncSession = Depends(get_db),
     _=Depends(verify_token),
 ):
-    return await ChannelAnalysisService.sales_by_channel(db, days)
+    return await ChannelAnalysisService.sales_by_channel(db, period, days)

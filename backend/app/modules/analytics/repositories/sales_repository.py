@@ -62,9 +62,9 @@ async def daily_revenue_series(db: AsyncSession, start: datetime, end: datetime)
     return {str(row.day): float(row.total) for row in result}
 
 
-async def sales_by_channel(db: AsyncSession, since: datetime):
+async def sales_by_channel(db: AsyncSession, since: datetime, end: datetime | None = None):
     from app.shared.models.catalog import SaleChannel
-    result = await db.execute(
+    query = (
         select(
             func.coalesce(SaleChannel.name, "Sem canal").label("channel_name"),
             func.count(Sale.id).label("count"),
@@ -74,6 +74,9 @@ async def sales_by_channel(db: AsyncSession, since: datetime):
         .where(Sale.sold_at >= since)
         .group_by(SaleChannel.name, Sale.sale_channel_id)
     )
+    if end:
+        query = query.where(Sale.sold_at < end)
+    result = await db.execute(query)
     return result.all()
 
 

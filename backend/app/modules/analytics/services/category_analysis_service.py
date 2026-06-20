@@ -15,14 +15,16 @@ from app.modules.analytics.schemas.categories import (
     ProductAttributeAnalysis,
     SizeShare,
 )
+from app.modules.analytics.utils import resolve_period
 
 
 class CategoryAnalysisService:
     @staticmethod
-    async def performance(db: AsyncSession, days: int) -> list[CategoryPerformance]:
+    async def performance(db: AsyncSession, period: str | None = None, days: int = 30) -> list[CategoryPerformance]:
         """Performance de cada categoria no período: receita, margem e velocidade."""
-        since = datetime.now(timezone.utc) - timedelta(days=days)
-        rows = await product_repo.category_performance(db, since)
+        start, end = resolve_period(period, days)
+        period_days = max((end - start).days, 1)
+        rows = await product_repo.category_performance(db, start, end)
         return [
             CategoryPerformance(
                 category_id=str(row.category_id),
@@ -32,16 +34,16 @@ class CategoryAnalysisService:
                 cogs=round(float(row.cogs or 0), 2),
                 profit=round(float(row.profit or 0), 2),
                 margin_pct=round(float(row.margin_pct or 0), 1),
-                daily_velocity=round(float(row.units or 0) / days, 2),
+                daily_velocity=round(float(row.units or 0) / period_days, 2),
             )
             for row in rows
         ]
 
     @staticmethod
-    async def size_distribution(db: AsyncSession, days: int) -> list[CategorySizeDistribution]:
+    async def size_distribution(db: AsyncSession, period: str | None = None, days: int = 30) -> list[CategorySizeDistribution]:
         """Distribuição de vendas por tamanho dentro de cada categoria."""
-        since = datetime.now(timezone.utc) - timedelta(days=days)
-        rows = await product_repo.category_size_distribution(db, since)
+        start, end = resolve_period(period, days)
+        rows = await product_repo.category_size_distribution(db, start, end)
 
         grouped: dict[str, list] = defaultdict(list)
         for row in rows:
@@ -88,16 +90,20 @@ class CategoryAnalysisService:
         return result
 
     @staticmethod
-    async def buying_patterns(db: AsyncSession) -> list[dict]:
-        """Padrões de compra por categoria baseados nos últimos 90 dias."""
-        since_90 = datetime.now(timezone.utc) - timedelta(days=90)
+    async def buying_patterns(db: AsyncSession, period: str | None = None) -> list[dict]:
+        """Padrões de compra por categoria baseados no período selecionado."""
+        start, end = resolve_period(period or "last_3_months")
+        period_days = max((end - start).days, 1)
+        months = period_days / 30
         since_30 = datetime.now(timezone.utc) - timedelta(days=30)
 
-        perf_90 = await product_repo.category_performance(db, since_90)
-        size_rows = await product_repo.category_size_distribution(db, since_90)
+        perf = await product_repo.category_performance(db, start, end)
+        size_rows = await product_repo.category_size_distribution(db, start, end)
         stock_rows = await product_repo.category_stock(db)
+        product_count_rows = await product_repo.category_active_product_count(db)
 
         stock_map = {r.category_name: int(r.stock_units or 0) for r in stock_rows}
+        product_count_map = {r.category_name: int(r.product_count or 0) for r in product_count_rows}
         velocity_30 = {r.category_name: float(r.units or 0) / 30 for r in (
             await product_repo.category_performance(db, since_30)
         )}
@@ -107,11 +113,11 @@ class CategoryAnalysisService:
             size_grouped[row.category_name].append((row.size, int(row.qty or 0)))
 
         patterns = []
-        for row in perf_90:
+        for row in perf:
             cat = row.category_name
             total_sizes = sum(q for _, q in size_grouped.get(cat, []))
             top_sizes = sorted(size_grouped.get(cat, []), key=lambda x: x[1], reverse=True)[:4]
-            monthly_velocity = float(row.units or 0) / 3
+            monthly_velocity = float(row.units or 0) / max(months, 1)
             daily_v = velocity_30.get(cat, monthly_velocity / 30)
             stock = stock_map.get(cat, 0)
             coverage = round(stock / daily_v, 0) if daily_v > 0 else None
@@ -129,16 +135,32 @@ class CategoryAnalysisService:
                     for s, q in top_sizes
                 ],
                 "avg_margin_pct": round(float(row.margin_pct or 0), 1),
+                "active_product_count": product_count_map.get(cat, 0),
             })
 
         patterns.sort(key=lambda x: x["monthly_sales_avg"], reverse=True)
         return patterns
 
     @staticmethod
-    async def attribute_analysis(db: AsyncSession, days: int) -> ProductAttributeAnalysis:
+    async def size_stock(db: AsyncSession) -> list[dict]:
+        """Estoque atual por tamanho agrupado por categoria."""
+        rows = await product_repo.category_size_stock(db)
+        grouped: dict[str, list[dict]] = defaultdict(list)
+        for row in rows:
+            grouped[row.category_name].append({
+                "size": row.size or "Único",
+                "stock": int(row.stock or 0),
+            })
+        return [
+            {"category_name": cat, "sizes": sizes}
+            for cat, sizes in grouped.items()
+        ]
+
+    @staticmethod
+    async def attribute_analysis(db: AsyncSession, period: str | None = None, days: int = 30) -> ProductAttributeAnalysis:
         """Análise por marca e tipo de produto como drill-down secundário."""
-        since = datetime.now(timezone.utc) - timedelta(days=days)
-        by_brand_rows, by_type_rows = await product_repo.product_attribute_analysis(db, since)
+        start, end = resolve_period(period, days)
+        by_brand_rows, by_type_rows = await product_repo.product_attribute_analysis(db, start)
 
         def to_group(rows) -> list[AttributeGroup]:
             result = []

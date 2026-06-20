@@ -16,6 +16,11 @@ import BySize from './screens/an/BySize'
 import ByChannel from './screens/an/ByChannel'
 import Suggestions from './screens/an/Suggestions'
 import DRE from './screens/an/DRE'
+import Categorias from './screens/an/Categorias'
+import CategoryDetail from './screens/an/CategoryDetail'
+import Alertas from './screens/an/Alertas'
+import MarketingIntel from './screens/an/MarketingIntel'
+import ComprasReposicao from './screens/an/ComprasReposicao'
 import Marketing from './screens/Marketing'
 import More from './screens/mais/More'
 import Suppliers from './screens/mais/Suppliers'
@@ -41,12 +46,17 @@ export default function App() {
     'purchase-list':  <PurchaseList />,
     'expenses':       <Expenses />,
     'stock-moves':    <StockMoves />,
-    'dashboard':      <Dashboard />,
-    'top-products':   <TopProducts />,
-    'by-size':        <BySize />,
-    'by-channel':     <ByChannel />,
-    'suggestions':    <Suggestions />,
-    'dre':            <DRE />,
+    'dashboard':          <Dashboard />,
+    'top-products':       <TopProducts />,
+    'by-size':            <BySize />,
+    'by-channel':         <ByChannel />,
+    'suggestions':        <Suggestions />,
+    'dre':                <DRE />,
+    'an-categorias':      <Categorias />,
+    'an-category-detail': <CategoryDetail />,
+    'an-alertas':         <Alertas />,
+    'an-marketing-intel': <MarketingIntel />,
+    'an-compras':         <ComprasReposicao />,
     'marketing':      <Marketing />,
     'more':           <More />,
     'suppliers':      <Suppliers />,

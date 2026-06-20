@@ -24,8 +24,8 @@ async def stock_value(db: AsyncSession):
     return result.one()
 
 
-async def top_products(db: AsyncSession, since: datetime):
-    result = await db.execute(
+async def top_products(db: AsyncSession, since: datetime, end: datetime | None = None):
+    query = (
         select(
             Product.name,
             Product.sku,
@@ -41,11 +41,14 @@ async def top_products(db: AsyncSession, since: datetime):
         .order_by(func.sum(SaleItem.quantity).desc())
         .limit(15)
     )
+    if end:
+        query = query.where(Sale.sold_at < end)
+    result = await db.execute(query)
     return result.all()
 
 
-async def sales_by_size(db: AsyncSession, since: datetime):
-    result = await db.execute(
+async def sales_by_size(db: AsyncSession, since: datetime, end: datetime | None = None):
+    query = (
         select(ProductVariant.size, func.sum(SaleItem.quantity).label("qty"))
         .join(SaleItem, SaleItem.variant_id == ProductVariant.id)
         .join(Sale, SaleItem.sale_id == Sale.id)
@@ -53,6 +56,9 @@ async def sales_by_size(db: AsyncSession, since: datetime):
         .group_by(ProductVariant.size)
         .order_by(func.sum(SaleItem.quantity).desc())
     )
+    if end:
+        query = query.where(Sale.sold_at < end)
+    result = await db.execute(query)
     return result.all()
 
 
@@ -66,14 +72,14 @@ async def active_variants(db: AsyncSession) -> list[ProductVariant]:
     return list(result.scalars().all())
 
 
-async def top_products_by_margin(db: AsyncSession, since: datetime):
+async def top_products_by_margin(db: AsyncSession, since: datetime, end: datetime | None = None):
     """Produtos ordenados por margem percentual no período."""
     margin_expr = (
         func.sum((SaleItem.unit_price - SaleItem.unit_cost) * SaleItem.quantity)
         / func.nullif(func.sum(SaleItem.unit_price * SaleItem.quantity), 0)
         * 100
     )
-    result = await db.execute(
+    query = (
         select(
             Product.name,
             Product.sku,
@@ -91,6 +97,9 @@ async def top_products_by_margin(db: AsyncSession, since: datetime):
         .order_by(margin_expr.desc())
         .limit(15)
     )
+    if end:
+        query = query.where(Sale.sold_at < end)
+    result = await db.execute(query)
     return result.all()
 
 
@@ -113,6 +122,7 @@ async def stopped_products(db: AsyncSession, since: datetime):
         .where(Product.is_active == True)
         .where(ProductVariant.stock_quantity > 0)
         .where(Product.id.not_in(sold_product_ids))
+        .where(Product.created_at < since)
         .group_by(Product.id, Product.name, Product.sku)
         .having(func.sum(ProductVariant.stock_quantity) > 0)
         .order_by(func.sum(ProductVariant.stock_quantity).desc())
@@ -121,9 +131,9 @@ async def stopped_products(db: AsyncSession, since: datetime):
     return result.all()
 
 
-async def top_categories(db: AsyncSession, since: datetime):
+async def top_categories(db: AsyncSession, since: datetime, end: datetime | None = None):
     """Categorias mais vendidas por quantidade e receita no período."""
-    result = await db.execute(
+    query = (
         select(
             Category.name,
             func.sum(SaleItem.quantity).label("qty"),
@@ -138,17 +148,20 @@ async def top_categories(db: AsyncSession, since: datetime):
         .group_by(Category.id, Category.name)
         .order_by(func.sum(SaleItem.quantity).desc())
     )
+    if end:
+        query = query.where(Sale.sold_at < end)
+    result = await db.execute(query)
     return result.all()
 
 
-async def category_performance(db: AsyncSession, since: datetime):
+async def category_performance(db: AsyncSession, since: datetime, end: datetime | None = None):
     """Performance por categoria: unidades, receita, custo, margem e velocidade diária."""
     margin_expr = (
         func.sum((SaleItem.unit_price - SaleItem.unit_cost) * SaleItem.quantity)
         / func.nullif(func.sum(SaleItem.unit_price * SaleItem.quantity), 0)
         * 100
     )
-    result = await db.execute(
+    query = (
         select(
             Category.id.label("category_id"),
             Category.name.label("category_name"),
@@ -167,12 +180,15 @@ async def category_performance(db: AsyncSession, since: datetime):
         .group_by(Category.id, Category.name)
         .order_by(func.sum(SaleItem.unit_price * SaleItem.quantity).desc())
     )
+    if end:
+        query = query.where(Sale.sold_at < end)
+    result = await db.execute(query)
     return result.all()
 
 
-async def category_size_distribution(db: AsyncSession, since: datetime):
+async def category_size_distribution(db: AsyncSession, since: datetime, end: datetime | None = None):
     """Distribuição de vendas por categoria e tamanho."""
-    result = await db.execute(
+    query = (
         select(
             Category.name.label("category_name"),
             ProductVariant.size,
@@ -187,6 +203,9 @@ async def category_size_distribution(db: AsyncSession, since: datetime):
         .group_by(Category.name, ProductVariant.size)
         .order_by(Category.name, func.sum(SaleItem.quantity).desc())
     )
+    if end:
+        query = query.where(Sale.sold_at < end)
+    result = await db.execute(query)
     return result.all()
 
 
@@ -206,6 +225,41 @@ async def category_stock(db: AsyncSession):
         .where(Product.is_active == True)
         .group_by(Category.id, Category.name)
         .order_by(func.sum(ProductVariant.stock_quantity).desc())
+    )
+    return result.all()
+
+
+async def category_active_product_count(db: AsyncSession):
+    """Contagem de produtos distintos com estoque > 0 por categoria."""
+    result = await db.execute(
+        select(
+            Category.name.label("category_name"),
+            func.count(func.distinct(Product.id)).label("product_count"),
+        )
+        .join(Product, Product.category_id == Category.id)
+        .join(ProductVariant, ProductVariant.product_id == Product.id)
+        .where(Product.is_active == True)
+        .where(Product.category_id.is_not(None))
+        .where(ProductVariant.stock_quantity > 0)
+        .group_by(Category.name)
+    )
+    return result.all()
+
+
+async def category_size_stock(db: AsyncSession):
+    """Estoque atual por tamanho dentro de cada categoria."""
+    result = await db.execute(
+        select(
+            Category.name.label("category_name"),
+            ProductVariant.size,
+            func.coalesce(func.sum(ProductVariant.stock_quantity), 0).label("stock"),
+        )
+        .join(Product, Product.id == ProductVariant.product_id)
+        .join(Category, Category.id == Product.category_id)
+        .where(Product.is_active == True)
+        .where(Product.category_id.is_not(None))
+        .group_by(Category.name, ProductVariant.size)
+        .order_by(Category.name, ProductVariant.size)
     )
     return result.all()
 
