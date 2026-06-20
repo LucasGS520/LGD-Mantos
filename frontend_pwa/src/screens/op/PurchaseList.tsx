@@ -35,7 +35,7 @@ export default function PurchaseList() {
         <ScreenBody>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
             {(entries ?? []).map(e => (
-              <div key={e.id} style={{ padding: 14, background: 'var(--bg-1)', border: '1px solid var(--line-1)', borderRadius: 14 }}>
+              <div key={e.id} onClick={() => navigate('entry-detail', { entry: e })} style={{ padding: 14, background: 'var(--bg-1)', border: '1px solid var(--line-1)', borderRadius: 14, cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-3)' }}>#{e.id.slice(0, 8)}</span>
                   <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{fmtDate(e.entry_date)}</span>

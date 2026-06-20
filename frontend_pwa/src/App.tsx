@@ -6,8 +6,10 @@ import ProductDetail from './screens/op/ProductDetail'
 import ProductForm from './screens/op/ProductForm'
 import SaleModal from './screens/op/SaleModal'
 import SalesHistory from './screens/op/SalesHistory'
+import SaleDetail from './screens/op/SaleDetail'
 import EntryForm from './screens/op/EntryForm'
 import PurchaseList from './screens/op/PurchaseList'
+import EntryDetail from './screens/op/EntryDetail'
 import Expenses from './screens/op/Expenses'
 import StockMoves from './screens/op/StockMoves'
 import Dashboard from './screens/an/Dashboard'
@@ -42,8 +44,10 @@ export default function App() {
     'product-form':   <ProductForm />,
     'sale-modal':     <SaleModal />,
     'sales-history':  <SalesHistory />,
+    'sale-detail':    <SaleDetail />,
     'purchase-form':  <EntryForm />,
     'purchase-list':  <PurchaseList />,
+    'entry-detail':   <EntryDetail />,
     'expenses':       <Expenses />,
     'stock-moves':    <StockMoves />,
     'dashboard':          <Dashboard />,

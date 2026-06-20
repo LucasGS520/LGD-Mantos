@@ -82,7 +82,7 @@ export default function SalesHistory() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {daySales.map(s => (
                   <div key={s.id} style={{ background: 'var(--bg-1)', border: `1px solid ${confirmDeleteId === s.id ? 'rgba(232,88,79,0.3)' : 'var(--line-1)'}`, borderRadius: 12, overflow: 'hidden' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
+                    <div onClick={() => navigate('sale-detail', { sale: s })} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, cursor: 'pointer' }}>
                       <div style={{ width: 38, height: 38, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'var(--bg-3)', border: '1px solid var(--line-2)', flexShrink: 0 }}>
                         <Ico.cart size={18} stroke="var(--gold-500)" />
                       </div>
@@ -99,7 +99,7 @@ export default function SalesHistory() {
                       <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div className="tnum" style={{ fontSize: 14, fontWeight: 700, color: 'var(--gold-300)' }}>{fmtBRL(s.total)}</div>
                         <div
-                          onClick={() => setConfirmDeleteId(confirmDeleteId === s.id ? null : s.id)}
+                          onClick={e => { e.stopPropagation(); setConfirmDeleteId(confirmDeleteId === s.id ? null : s.id) }}
                           style={{ cursor: 'pointer', padding: 4, opacity: 0.5 }}
                         >
                           <Ico.trash size={15} stroke="var(--text-2)" />
