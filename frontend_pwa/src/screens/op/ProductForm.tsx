@@ -6,7 +6,7 @@ import { api } from '../../services/api'
 import type { Product, Supplier, Category } from '../../services/types'
 import { useNav } from '../../nav'
 
-interface VariantRow { size: string; color: string; qty: string }
+interface VariantRow { id?: string; size: string; color: string; qty: string }
 
 const SIZES = ['P', 'M', 'G', 'GG', 'G1', 'G2', 'G3']
 
@@ -49,12 +49,14 @@ export default function ProductForm() {
   // quick-create state
   const [showNewCat, setShowNewCat] = useState(false)
   const [newCatName, setNewCatName] = useState('')
+  const [newCatDesc, setNewCatDesc] = useState('')
   const [showNewSup, setShowNewSup] = useState(false)
   const [newSupName, setNewSupName] = useState('')
 
   const [sku, setSku] = useState('')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [brand, setBrand] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [supplierId, setSupplierId] = useState('')
   const [costPrice, setCostPrice] = useState('')
@@ -73,11 +75,13 @@ export default function ProductForm() {
           setSku(p.sku)
           setName(p.name)
           setDescription(p.description ?? '')
+          setBrand(p.brand ?? '')
           setCategoryId(p.category_id ?? '')
           setSupplierId(p.supplier_id ?? '')
           setCostPrice(String(p.cost_price))
           setSalePrice(String(p.sale_price))
           setVariants(p.variants.map(v => ({
+            id: v.id,
             size: v.size,
             color: v.color,
             qty: String(v.stock_quantity),
@@ -89,12 +93,13 @@ export default function ProductForm() {
   }, [productId])
 
   const createCategory = async () => {
-    if (!newCatName.trim()) return
+    if (!newCatName.trim() || !newCatDesc.trim()) return
     try {
-      const created = await api.post<Category>('/categories', { name: newCatName.trim() })
+      const created = await api.post<Category>('/categories', { name: newCatName.trim(), description: newCatDesc.trim() })
       setCategories(prev => [...prev, created])
       setCategoryId(created.id)
       setNewCatName('')
+      setNewCatDesc('')
       setShowNewCat(false)
     } catch {
       setError('Erro ao criar categoria')
@@ -126,11 +131,13 @@ export default function ProductForm() {
       const body = {
         name: name.trim(),
         description: description.trim() || null,
+        brand: brand.trim() || null,
         category_id: categoryId || null,
         supplier_id: supplierId || null,
         cost_price: parsePrice(costPrice),
         sale_price: parsePrice(salePrice),
         variants: variants.map(v => ({
+          ...(v.id ? { id: v.id } : {}),
           size: v.size.trim(),
           color: v.color.trim(),
           stock_quantity: Math.max(0, parseInt(v.qty) || 0),
@@ -187,6 +194,8 @@ export default function ProductForm() {
               />
             </div>
 
+            <Input label="Marca" value={brand} onChange={e => setBrand(e.target.value)} placeholder="ex: Adidas, Nike, Umbro" />
+
             {/* Categoria e Fornecedor com atalho de criação rápida */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
 
@@ -201,10 +210,16 @@ export default function ProductForm() {
                     <input
                       value={newCatName}
                       onChange={e => setNewCatName(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && createCategory()}
-                      placeholder="Nome da categoria"
+                      placeholder="Nome"
                       autoFocus
-                      style={quickInputStyle}
+                      style={{ ...quickInputStyle, flex: 1 }}
+                    />
+                    <input
+                      value={newCatDesc}
+                      onChange={e => setNewCatDesc(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && createCategory()}
+                      placeholder="Quais produtos se encaixam?"
+                      style={{ ...quickInputStyle, flex: 2 }}
                     />
                     <button onClick={createCategory} style={quickBtnStyle}>Criar</button>
                   </div>

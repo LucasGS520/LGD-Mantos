@@ -10,13 +10,12 @@ from app.shared.schemas.catalog import (
     SupplierOut,
     VariantIn,
     VariantOut,
+    VariantUpdateIn,
 )
+from app.shared.schemas.entry import EntryIn, EntryOut
 from app.shared.schemas.operations import (
     ExpenseIn,
     ExpenseOut,
-    POIn,
-    POItemOut,
-    POOut,
     SaleIn,
     SaleOut,
     StockMoveIn,
@@ -26,11 +25,10 @@ from app.shared.schemas.operations import (
 __all__ = [
     "CategoryCreate",
     "CategoryOut",
+    "EntryIn",
+    "EntryOut",
     "ExpenseIn",
     "ExpenseOut",
-    "POIn",
-    "POItemOut",
-    "POOut",
     "ProductCreate",
     "ProductOut",
     "ProductUpdate",
@@ -42,4 +40,5 @@ __all__ = [
     "SupplierOut",
     "VariantIn",
     "VariantOut",
+    "VariantUpdateIn",
 ]

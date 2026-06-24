@@ -166,13 +166,37 @@ class CatalogService:
 
     @staticmethod
     async def update_product(db: AsyncSession, product_id: str, data: ProductUpdate) -> Product:
-        """Atualiza apenas os campos enviados para um produto."""
+        """Atualiza campos do produto e, se enviadas, aplica atualizações de variantes."""
+        from sqlalchemy import select as sa_select
 
         product = await repo.get_product(db, product_id)
         if not product:
             raise HTTPException(404, "Produto nao encontrado")
-        for key, value in data.model_dump(exclude_none=True).items():
+
+        for key, value in data.model_dump(exclude_none=True, exclude={"variants"}).items():
             setattr(product, key, value)
+
+        if data.variants is not None:
+            for v in data.variants:
+                if v.id:
+                    result = await db.execute(
+                        sa_select(ProductVariant).where(ProductVariant.id == v.id)
+                    )
+                    variant = result.scalar_one_or_none()
+                    if variant:
+                        variant.size = v.size
+                        variant.color = v.color
+                        variant.stock_quantity = v.stock_quantity
+                else:
+                    db.add(ProductVariant(
+                        product_id=product.id,
+                        size=v.size,
+                        color=v.color,
+                        stock_quantity=v.stock_quantity,
+                    ))
+            await db.flush()
+            await db.refresh(product, ["variants"])
+
         return product
 
     @staticmethod

@@ -66,11 +66,10 @@ export function BottomNav({ active }: { active: TabId }) {
 // ─── Operação sub-nav (switches between op root screens) ───────
 type OpScreen = 'product-list' | 'sales-history' | 'purchase-list' | 'expenses' | 'stock-moves'
 const OP_TABS: { id: OpScreen; label: string }[] = [
-  { id: 'product-list',  label: 'Produtos' },
-  { id: 'sales-history', label: 'Vendas' },
-  { id: 'purchase-list', label: 'Compras' },
-  { id: 'expenses',      label: 'Despesas' },
-  { id: 'stock-moves',   label: 'Estoque' },
+  { id: 'product-list',  label: 'Estoque'   },
+  { id: 'sales-history', label: 'Vendas'    },
+  { id: 'purchase-list', label: 'Compras'   },
+  { id: 'expenses',      label: 'Despesas'  },
 ]
 
 export function OpSubNav({ active }: { active: OpScreen }) {

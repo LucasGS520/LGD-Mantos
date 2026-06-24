@@ -1,4 +1,4 @@
-"""Ponto de entrada HTTP da API LGD Mantos.
+""" Ponto de entrada HTTP da API LGD Mantos.
 
 Este módulo configura a aplicação FastAPI, registra os roteadores versionados e
 expõe os diretórios estáticos usados para arquivos enviados pelo sistema.
@@ -13,7 +13,6 @@ from fastapi.staticfiles import StaticFiles
 from app.core.ai.routes import router as ai_router
 from app.modules.analytics.routes.routes import router as analytics_router
 from app.modules.auth.routes import router as auth_router
-from app.modules.marketing.routes.routes import router as marketing_router
 from app.modules.operational.routes import router as operational_router
 
 app = FastAPI(title="LGD Mantos", version="2.0", docs_url="/api/docs")
@@ -23,7 +22,6 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(operational_router, prefix="/api/v1")
 app.include_router(analytics_router, prefix="/api/v1")
-app.include_router(marketing_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
 
 # Garante que a pasta de uploads exista antes de montar os arquivos estáticos.

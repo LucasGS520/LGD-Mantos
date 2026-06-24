@@ -1,1 +1,1 @@
-"""Pacote principal da aplicação backend LGD Mantos."""
+""" Pacote principal da aplicação backend LGD Mantos. """

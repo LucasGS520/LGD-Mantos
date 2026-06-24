@@ -30,7 +30,7 @@ class SalesService:
             total += item.unit_price * item.quantity
             pairs.append((variant, item))
 
-        sale = Sale(channel=data.channel, notes=data.notes, total=round(total, 2))
+        sale = Sale(sale_channel_id=data.sale_channel_id, notes=data.notes, total=round(total, 2))
         db.add(sale)
         await db.flush()
 

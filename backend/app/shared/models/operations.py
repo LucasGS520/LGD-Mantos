@@ -1,4 +1,4 @@
-"""Modelos ORM das operações de estoque, venda, despesa e compra."""
+"""Modelos ORM das operações de estoque, venda, despesa e entrada de mercadoria."""
 
 from datetime import datetime
 
@@ -35,11 +35,12 @@ class Sale(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     sold_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
-    channel: Mapped[str] = mapped_column(String(50), default="loja")
+    sale_channel_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("sale_channels.id"), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     total: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
 
     items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
+    sale_channel = relationship("SaleChannel", back_populates="sales")
 
 
 class SaleItem(Base):
@@ -72,35 +73,31 @@ class Expense(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
-class PurchaseOrder(Base):
-    """Pedido de compra feito a um fornecedor."""
+class MerchandiseEntry(Base):
+    """Registro de entrada de mercadoria recebida de um fornecedor."""
 
-    __tablename__ = "purchase_orders"
+    __tablename__ = "merchandise_entries"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    supplier_id: Mapped[str] = mapped_column(String(36), ForeignKey("suppliers.id"), nullable=False)
-    order_date: Mapped[str] = mapped_column(String(10), nullable=False)
-    status: Mapped[str] = mapped_column(
-        SAEnum("rascunho", "enviado", "recebido", "cancelado", name="po_status"),
-        default="rascunho",
-    )
+    supplier_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("suppliers.id"), nullable=True)
+    entry_date: Mapped[str] = mapped_column(String(10), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
-    # O cascade remove itens quando o pedido é excluído pelo ORM.
-    supplier = relationship("Supplier", back_populates="purchase_orders")
-    items = relationship("PurchaseOrderItem", back_populates="order", cascade="all, delete-orphan")
+    supplier = relationship("Supplier", back_populates="merchandise_entries")
+    items = relationship("MerchandiseEntryItem", back_populates="entry", cascade="all, delete-orphan")
 
 
-class PurchaseOrderItem(Base):
-    """Item comprado dentro de um pedido de compra."""
+class MerchandiseEntryItem(Base):
+    """Item de uma entrada de mercadoria, vinculado a uma variante de produto."""
 
-    __tablename__ = "purchase_order_items"
+    __tablename__ = "merchandise_entry_items"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    order_id: Mapped[str] = mapped_column(String(36), ForeignKey("purchase_orders.id"), nullable=False)
+    entry_id: Mapped[str] = mapped_column(String(36), ForeignKey("merchandise_entries.id"), nullable=False)
     variant_id: Mapped[str] = mapped_column(String(36), ForeignKey("product_variants.id"), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_cost: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
 
-    order = relationship("PurchaseOrder", back_populates="items")
+    entry = relationship("MerchandiseEntry", back_populates="items")
+    variant = relationship("ProductVariant")

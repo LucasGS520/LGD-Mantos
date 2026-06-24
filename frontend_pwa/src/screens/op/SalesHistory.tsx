@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Ico } from '../../components/Icons'
 import { KPI, ChannelChip, Section, LoadingBody, ErrorBody } from '../../components/UI'
 import { AppBar, BottomNav, FAB, OpSubNav, ScreenBody } from '../../components/Chrome'
 import { fmtBRL } from '../../fmt'
 import { api } from '../../services/api'
 import { useData } from '../../hooks/useData'
-import type { Sale } from '../../services/types'
+import type { Sale, SaleChannel } from '../../services/types'
 import { useNav } from '../../nav'
 
 function fmtDate(iso: string): string {
@@ -37,6 +37,13 @@ export default function SalesHistory() {
   const { data: sales, loading, error, reload } = useData<Sale[]>(() => api.get('/sales?limit=200'))
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [channelMap, setChannelMap] = useState<Record<string, SaleChannel>>({})
+
+  useEffect(() => {
+    api.get<SaleChannel[]>('/channels')
+      .then(chs => setChannelMap(Object.fromEntries(chs.map(c => [c.id, c]))))
+      .catch(() => {})
+  }, [])
 
   const totalRev = (sales ?? []).reduce((s, v) => s + v.total, 0)
   const groups = groupByDate(sales ?? [])
@@ -75,7 +82,7 @@ export default function SalesHistory() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {daySales.map(s => (
                   <div key={s.id} style={{ background: 'var(--bg-1)', border: `1px solid ${confirmDeleteId === s.id ? 'rgba(232,88,79,0.3)' : 'var(--line-1)'}`, borderRadius: 12, overflow: 'hidden' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
+                    <div onClick={() => navigate('sale-detail', { sale: s })} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, cursor: 'pointer' }}>
                       <div style={{ width: 38, height: 38, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'var(--bg-3)', border: '1px solid var(--line-2)', flexShrink: 0 }}>
                         <Ico.cart size={18} stroke="var(--gold-500)" />
                       </div>
@@ -85,14 +92,14 @@ export default function SalesHistory() {
                           <span style={{ fontSize: 11, color: 'var(--text-3)' }}>· {fmtTime(s.sold_at)}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <ChannelChip ch={s.channel} />
+                          <ChannelChip ch={s.sale_channel_id ? (channelMap[s.sale_channel_id]?.name ?? '') : ''} />
                           <span style={{ fontSize: 11.5, color: 'var(--text-3)' }}>{s.items.length} {s.items.length === 1 ? 'item' : 'itens'}</span>
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div className="tnum" style={{ fontSize: 14, fontWeight: 700, color: 'var(--gold-300)' }}>{fmtBRL(s.total)}</div>
                         <div
-                          onClick={() => setConfirmDeleteId(confirmDeleteId === s.id ? null : s.id)}
+                          onClick={e => { e.stopPropagation(); setConfirmDeleteId(confirmDeleteId === s.id ? null : s.id) }}
                           style={{ cursor: 'pointer', padding: 4, opacity: 0.5 }}
                         >
                           <Ico.trash size={15} stroke="var(--text-2)" />
