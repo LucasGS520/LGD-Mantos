@@ -17,6 +17,7 @@ class RunStatus(BaseModel):
 
     run_id: str
     status: str
+    objective: str
     created_at: datetime
     updated_at: datetime
     error: str | None = None

@@ -9,7 +9,6 @@ from app.modules.agents.approval.schemas import (
     ApprovalDetail,
     ApprovalListItem,
     DecisionRequest,
-    RunStatusResponse,
 )
 from app.modules.agents.approval.service import ApprovalService
 
@@ -108,24 +107,3 @@ async def request_revision(
     return await ApprovalService.request_revision(db, approval_id, comment=body.comment or "")
 
 
-# ---------------------------------------------------------------------------
-# Status de runs (polling assíncrono)
-# ---------------------------------------------------------------------------
-
-@router.get("/runs/{run_id}", response_model=RunStatusResponse)
-async def get_run_status(
-    run_id: str,
-    db: AsyncSession = Depends(get_db),
-    _=Depends(verify_token),
-):
-    """Retorna o status atual de um agent run — use para polling após iniciar um run."""
-    run = await ApprovalService.get_run_status(db, run_id)
-    return RunStatusResponse(
-        run_id=run.id,
-        status=run.status,
-        objective=run.objective,
-        created_at=run.created_at,
-        updated_at=run.updated_at,
-        error=run.error,
-        result=run.result,
-    )
