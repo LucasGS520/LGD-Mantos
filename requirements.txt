@@ -15,3 +15,7 @@ httpx==0.28.1
 
 # Suporte a imagens.
 pillow==11.0.0
+
+# Framework de agentes IA e cliente Ollama.
+agno==2.6.19
+ollama==0.6.2
