@@ -8,7 +8,15 @@ import asyncio, sys
 sys.path.insert(0, "/app")
 from sqlalchemy import select
 from app.core.database import engine, Base, AsyncSessionLocal
-import app.shared.models as M
+
+# Importa todos os modelos para registrá-los em Base.metadata antes do create_all.
+import app.shared.models as _shared_models  # noqa: F401 — catalog + operations
+
+# Modelos da camada de agentes precisam ser importados explicitamente para evitar
+# circular imports que ocorreriam se fossem re-exportados por shared.models.__init__.
+import app.modules.agents.knowledge.models as _knowledge_models  # noqa: F401
+import app.modules.agents.marketing_ops.models as _marketing_ops_models  # noqa: F401
+
 
 async def init():
     """Cria a estrutura inicial do banco e popula registros mínimos de apoio."""
