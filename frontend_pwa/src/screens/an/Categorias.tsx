@@ -44,8 +44,8 @@ export default function Categorias() {
                   <Tooltip
                     cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                     contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 12 }}
-                    formatter={(v: number) => [fmtBRLshort(v), 'Receita']}
-                    labelFormatter={(_: string, payload: any[]) => payload?.[0]?.payload?.fullName ?? ''}
+                    formatter={(v) => [fmtBRLshort(Number(v ?? 0)), 'Receita']}
+                    labelFormatter={(_, payload: any) => payload?.[0]?.payload?.fullName ?? ''}
                   />
                   <Bar dataKey="value" radius={[0, 6, 6, 0]}>
                     {chartData.map((_, i) => (

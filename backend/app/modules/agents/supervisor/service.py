@@ -31,6 +31,7 @@ from app.modules.agents.agents.schemas import (
 from app.modules.agents.agents.strategy_agent import build_strategy_agent, build_strategy_agent_input
 from app.modules.agents.knowledge.service import KnowledgeService
 from app.modules.agents.marketing_ops.models import AgentRun, Approval, Campaign, CreativeBrief, Post
+from app.modules.agents.policy_engine import PolicyEngine
 from app.modules.analytics.services.agent_context_service import AgentContextService
 from app.modules.analytics.services.marketing_intelligence_service import MarketingIntelligenceService
 from app.shared.models.catalog import Product
@@ -90,20 +91,37 @@ class SupervisorService:
                 strategy_output = await _run_strategy_agent(objective, data_output, strategy_ctx)
                 logger.info("[%s] StrategyAgent concluído: campanha '%s'", run_id, strategy_output.campaign.name)
 
+                # --- Valida produto da campanha (PolicyEngine) ---
+                # O SKU vem do LLM: precisa existir no catálogo e ter estoque,
+                # senão o run falha aqui — antes de gerar qualquer conteúdo.
+                product = await _resolve_campaign_product(db, strategy_output.campaign.product_sku)
+                if product is None:
+                    raise ValueError(
+                        f"StrategyAgent referenciou SKU inexistente ou inativo: "
+                        f"'{strategy_output.campaign.product_sku}'."
+                    )
+                total_stock = sum(v.stock_quantity for v in product.variants)
+                stock_policy = PolicyEngine.validate_campaign_product_has_stock(total_stock)
+                if not stock_policy.ok:
+                    raise ValueError(f"PolicyEngine bloqueou a campanha: {stock_policy.reason}")
+
                 # --- Persiste Campaign draft ---
-                campaign = await _save_campaign(db, run_id, strategy_output)
+                campaign = await _save_campaign(db, run_id, strategy_output, product.id)
 
                 # --- ContentAgent ---
                 logger.info("[%s] ContentAgent iniciado", run_id)
                 content_output = await _run_content_agent(strategy_output, brand_ctx)
                 logger.info("[%s] ContentAgent concluído", run_id)
 
+                # --- Valida copy gerado (PolicyEngine) ---
+                _validate_content_policies(content_output)
+
                 # --- Persiste Post draft ---
                 post = await _save_post(db, campaign.id, content_output, strategy_output)
 
                 # --- CreativeAgent ---
                 logger.info("[%s] CreativeAgent iniciado", run_id)
-                product_photos = await _load_product_photos(db, strategy_output.campaign.product_sku)
+                product_photos = _extract_product_photos(product)
                 creative_output = await _run_creative_agent(
                     strategy_output, content_output, product_photos, creative_ctx
                 )
@@ -221,24 +239,67 @@ async def _run_creative_agent(
     raise ValueError(f"CreativeAgent retornou output inesperado: {type(response.content)}")
 
 
-async def _load_product_photos(db: AsyncSession, product_sku: str) -> list[dict]:
-    """Busca as fotos do produto pelo SKU. Retorna lista vazia se não encontrado."""
+async def _resolve_campaign_product(db: AsyncSession, product_sku: str) -> Product | None:
+    """Resolve o SKU indicado pelo StrategyAgent para um produto ativo do catálogo.
+
+    Carrega as variantes junto para permitir o cálculo de estoque total.
+    Retorna None se o SKU não existir ou o produto estiver inativo — o LLM
+    pode alucinar SKUs, então essa validação é obrigatória.
+    """
+    from sqlalchemy.orm import selectinload
+
     result = await db.execute(
-        select(Product).where(Product.sku == product_sku).where(Product.is_active == True)
+        select(Product)
+        .options(selectinload(Product.variants))
+        .where(Product.sku == product_sku)
+        .where(Product.is_active == True)
     )
-    product = result.scalar_one_or_none()
-    if not product or not product.photos:
+    return result.scalar_one_or_none()
+
+
+def _extract_product_photos(product: Product) -> list[dict]:
+    """Extrai a lista de fotos do produto já resolvido. Retorna lista vazia se não houver."""
+    if not product.photos:
         return []
     photos = product.photos if isinstance(product.photos, list) else []
     return [p for p in photos if isinstance(p, dict)]
 
 
-async def _save_campaign(db: AsyncSession, run_id: str, strategy_output: StrategyAgentOutput) -> Campaign:
+def _validate_content_policies(content_output: ContentAgentOutput) -> None:
+    """Aplica as validações determinísticas de conteúdo do PolicyEngine.
+
+    Verifica legenda, título e todas as variações de copy. Qualquer bloqueio
+    interrompe o run com o motivo — preço ou promessa de estoque nunca podem
+    vir do LLM.
+    """
+    texts = [content_output.caption, content_output.headline, content_output.cta_text]
+    for variation in content_output.variations:
+        texts.extend([variation.caption, variation.headline])
+
+    for text in texts:
+        if not text:
+            continue
+        for check in (
+            PolicyEngine.validate_content_has_no_invented_price,
+            PolicyEngine.validate_content_has_no_stock_promise,
+        ):
+            policy = check(text)
+            if not policy.ok:
+                raise ValueError(f"PolicyEngine bloqueou o copy gerado: {policy.reason}")
+
+
+async def _save_campaign(
+    db: AsyncSession,
+    run_id: str,
+    strategy_output: StrategyAgentOutput,
+    product_id: str,
+) -> Campaign:
     c = strategy_output.campaign
     campaign = Campaign(
         agent_run_id=run_id,
         name=c.name,
         objective=c.objective,
+        product_id=product_id,
         channel=c.channel,
         format=c.format,
         angle=c.angle,

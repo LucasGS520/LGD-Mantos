@@ -1,15 +1,16 @@
-# Graph Report - .  (2026-07-16)
+# Graph Report - LGD-Mantos  (2026-07-16)
 
 ## Corpus Check
-- cluster-only mode — file stats not available
+- 161 files · ~162,298 words
+- Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1306 nodes · 2748 edges · 90 communities (70 shown, 20 thin omitted)
-- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 178 edges (avg confidence: 0.7)
+- 1311 nodes · 2717 edges · 91 communities (71 shown, 20 thin omitted)
+- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 175 edges (avg confidence: 0.7)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `908d9ab6`
+- Built from commit: `aeae6706`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -60,7 +61,6 @@
 - agent_context_service.py
 - .agent_context
 - create_sale
-- channels.py
 - config.py
 - Supplier
 - schemas.py
@@ -77,7 +77,6 @@
 - add_variant
 - update_product
 - StockService
-- init_db.py
 - main.py
 - upload_photo
 - tsconfig.json
@@ -102,14 +101,14 @@
 - vercel.json
 
 ## God Nodes (most connected - your core abstractions)
-1. `useNav()` - 70 edges
+1. `useNav()` - 68 edges
 2. `useData()` - 39 edges
-3. `AppBar()` - 38 edges
-4. `ScreenBody()` - 37 edges
-5. `api` - 36 edges
-6. `Ico` - 32 edges
-7. `fmtBRL()` - 31 edges
-8. `LoadingBody()` - 28 edges
+3. `AppBar()` - 37 edges
+4. `ScreenBody()` - 36 edges
+5. `api` - 35 edges
+6. `Ico` - 31 edges
+7. `fmtBRL()` - 29 edges
+8. `LoadingBody()` - 27 edges
 9. `Product` - 25 edges
 10. `CatalogService` - 24 edges
 
@@ -128,11 +127,11 @@
 ## Import Cycles
 - None detected.
 
-## Communities (90 total, 20 thin omitted)
+## Communities (91 total, 20 thin omitted)
 
 ### Community 0 - "useNav"
-Cohesion: 0.08
-Nodes (43): AppBarProps, BottomNav(), FABProps, IcoFn, OP_TABS, OpScreen, OpSubNav(), ScreenBodyProps (+35 more)
+Cohesion: 0.09
+Nodes (22): App(), Input(), Nav, NavCtx, NavEntry, NavProvider(), TAB_ROOTS, TabId (+14 more)
 
 ### Community 1 - "KnowledgeDocument"
 Cohesion: 0.05
@@ -143,28 +142,28 @@ Cohesion: 0.06
 Nodes (32): create_channel(), Cria um canal de venda., Atualiza nome, descrição e cor de um canal., update_channel(), CatalogService, AsyncSession, Category, Product (+24 more)
 
 ### Community 3 - "CategoryAnalysisService"
-Cohesion: 0.07
-Nodes (38): category_buying_patterns(), category_performance(), category_size_distribution(), category_size_stock(), category_stock_coverage(), product_attribute_analysis(), AsyncSession, Rotas de análise centradas em categoria. (+30 more)
+Cohesion: 0.05
+Nodes (45): category_buying_patterns(), category_performance(), category_size_distribution(), category_size_stock(), category_stock_coverage(), product_attribute_analysis(), AsyncSession, Rotas de análise centradas em categoria. (+37 more)
 
 ### Community 4 - "repositories.py"
 Cohesion: 0.06
 Nodes (47): get_category(), get_channel(), get_entry(), get_expense(), get_product(), get_product_by_sku(), get_product_variant(), get_sale() (+39 more)
 
 ### Community 5 - "types.ts"
-Cohesion: 0.06
-Nodes (34): classify(), ComprasReposicao(), EnrichedPattern, GROUP_META, GroupId, Signal, GroupConfig, GROUPS (+26 more)
+Cohesion: 0.18
+Nodes (8): classify(), ComprasReposicao(), EnrichedPattern, GROUP_META, GroupId, Signal, BuyingPattern, CategorySizeStock
 
 ### Community 6 - "__init__.py"
 Cohesion: 0.10
 Nodes (35): AgentContextResponse, AttentionBlock, OpportunitiesBlock, BaseModel, Contratos de resposta do payload de contexto para agentes de IA., ShopHealth, DailyRevenue, DashboardResponse (+27 more)
 
 ### Community 7 - "CategoryDetail.tsx"
-Cohesion: 0.10
-Nodes (28): AlertRow(), AlertRowProps, CovBadge(), MetricInfo(), MetricInfoProps, NavItem(), Period, periodLabel() (+20 more)
+Cohesion: 0.06
+Nodes (46): AlertRow(), AlertRowProps, CovBadge(), MetricInfo(), MetricInfoProps, NavItem(), Period, periodLabel() (+38 more)
 
 ### Community 8 - "App.tsx"
-Cohesion: 0.09
-Nodes (27): App(), AppBar(), ScreenBody(), Badge(), Btn(), Card(), Section(), Textarea() (+19 more)
+Cohesion: 0.06
+Nodes (35): BadgeProps, BadgeTone, Btn(), BtnKind, BtnProps, Card(), CardProps, ChannelChipProps (+27 more)
 
 ### Community 9 - "entry.py"
 Cohesion: 0.11
@@ -179,8 +178,8 @@ Cohesion: 0.12
 Nodes (17): PolicyEngine, PolicyResult, Policy Engine — código determinístico que bloqueia ações perigosas.  Regra: es, Bloqueia publicação sem aprovação humana., Bloqueia publicação em canal não autorizado., Agentes nunca podem alterar estoque., Agentes nunca podem alterar preço., Agentes nunca podem registrar vendas. (+9 more)
 
 ### Community 12 - "useData"
-Cohesion: 0.12
-Nodes (24): FAB(), ChannelChip(), ErrorBody(), SearchBar(), fmtNum(), useData(), ByChannel(), CHANNEL_FALLBACK (+16 more)
+Cohesion: 0.15
+Nodes (31): AppBar(), FAB(), OpSubNav(), ScreenBody(), Badge(), ErrorBody(), LoadingBody(), PhotoPlaceholder() (+23 more)
 
 ### Community 13 - "__init__.py"
 Cohesion: 0.14
@@ -195,28 +194,28 @@ Cohesion: 0.07
 Nodes (28): dependencies, react, react-dom, recharts, devDependencies, @types/react, @types/react-dom, typescript (+20 more)
 
 ### Community 16 - "UI.tsx"
-Cohesion: 0.08
-Nodes (24): BadgeProps, BadgeTone, BtnKind, BtnProps, CardProps, ChannelChipProps, ErrorBodyProps, fmtBRL() (+16 more)
+Cohesion: 0.22
+Nodes (10): do_run_migrations(), Ambiente do Alembic — conecta o Alembic aos modelos e ao banco do projeto.  A UR, Gera SQL sem conectar ao banco (modo --sql)., Executa as migrations dentro de uma conexão síncrona fornecida pelo engine assín, Cria engine assíncrono (asyncpg) e delega a execução das migrations., Ponto de entrada padrão — roda as migrations de forma assíncrona., run_async_migrations(), run_migrations_offline() (+2 more)
 
 ### Community 17 - ".queue_campaign"
 Cohesion: 0.10
 Nodes (20): PublishingQueue, Fila de publicação futura — inativa no MVP, campos preparados para o PublishingA, list_queue(), AsyncSession, queue_campaign(), Rotas da fila de publicação — ativa a tabela publishing_queue para uso real., Lista a fila de publicação com filtro opcional por status., Enfileira uma campanha aprovada para publicação.      Requer que a campanha te (+12 more)
 
 ### Community 18 - "PurchaseService"
-Cohesion: 0.11
-Nodes (20): create_purchase(), list_purchases(), AsyncSession, POIn, Rotas HTTP para pedidos de compra e recebimento de mercadoria., Lista pedidos de compra recentes., Cria pedido de compra para um fornecedor., Confirma recebimento de compra e aplica entrada no estoque. (+12 more)
+Cohesion: 0.20
+Nodes (8): build_creative_agent(), Agent, CreativeAgent — cria direção visual e prompts de imagem.  Recebe a estratégia,, Cria uma instância fresca do CreativeAgent para cada run., get_agent_model(), Configuração centralizada da camada de agentes — modelo e runtime Agno.  Ponto ú, Retorna o modelo LLM configurado para uso nos agentes., Ollama
 
 ### Community 19 - "SupervisorService"
-Cohesion: 0.16
-Nodes (17): AgentRun, Registro de uma execução do workflow multi-agente., _create_approval(), _load_product_photos(), AgentRun, AsyncSession, SupervisorService — orquestra o pipeline multi-agente de marketing.  Fluxo com, Busca as fotos do produto pelo SKU. Retorna lista vazia se não encontrado. (+9 more)
+Cohesion: 0.14
+Nodes (20): AgentRun, Registro de uma execução do workflow multi-agente., _create_approval(), _extract_product_photos(), AgentRun, AsyncSession, Product, SupervisorService — orquestra o pipeline multi-agente de marketing.  Fluxo com (+12 more)
 
 ### Community 20 - "nav.tsx"
-Cohesion: 0.11
-Nodes (17): KPI(), Nav, NavCtx, NavEntry, NavProvider(), ScreenId, TAB_ROOTS, TabId (+9 more)
+Cohesion: 0.10
+Nodes (31): ChannelChip(), KPI(), fmtBRL(), fmtBRLshort(), useNav(), Alertas(), Categorias(), CategoryDetail() (+23 more)
 
 ### Community 21 - "DataAgentOutput"
-Cohesion: 0.11
-Nodes (19): build_data_agent(), build_data_agent_input(), Agent, DataAgent — identifica oportunidades de marketing nos dados operacionais.  Rec, Cria uma instância fresca do DataAgent para cada run., Monta o payload de entrada para o DataAgent., DataAgentOutput, build_strategy_agent() (+11 more)
+Cohesion: 0.15
+Nodes (15): build_data_agent(), build_data_agent_input(), Agent, DataAgent — identifica oportunidades de marketing nos dados operacionais.  Rec, Cria uma instância fresca do DataAgent para cada run., Monta o payload de entrada para o DataAgent., DataAgentOutput, build_strategy_agent() (+7 more)
 
 ### Community 22 - "compilerOptions"
 Cohesion: 0.09
@@ -251,16 +250,16 @@ Cohesion: 0.16
 Nodes (16): CategoryOut, ProductCreate, ProductOut, BaseModel, Schemas Pydantic usados pelas rotas de catálogo., Entrada para cadastrar produto e suas variantes iniciais., Resposta pública completa de produto, com fotos e variantes., Resposta pública de uma categoria cadastrada. (+8 more)
 
 ### Community 30 - "schemas.py"
-Cohesion: 0.19
-Nodes (14): build_creative_agent(), build_creative_agent_input(), Agent, CreativeAgent — cria direção visual e prompts de imagem.  Recebe a estratégia,, Cria uma instância fresca do CreativeAgent para cada run., Monta o payload de entrada para o CreativeAgent., CampaignStrategy, ContentAgentOutput (+6 more)
+Cohesion: 0.15
+Nodes (20): build_content_agent(), build_content_agent_input(), Agent, ContentAgent — gera copy e textos para o post de marketing.  Recebe a estratég, Cria uma instância fresca do ContentAgent para cada run., Monta o payload de entrada para o ContentAgent., build_creative_agent_input(), Monta o payload de entrada para o CreativeAgent. (+12 more)
 
 ### Community 31 - "Icons.tsx"
-Cohesion: 0.15
-Nodes (13): IcoKey, IconBaseProps, IcoProps, ItemProps, ALL_MOVE_META, fmtMoveDate(), HIST_TAB_TYPE, HIST_TABS (+5 more)
+Cohesion: 0.09
+Nodes (27): AppBarProps, BottomNav(), FABProps, IcoFn, OP_TABS, OpScreen, ScreenBodyProps, TABS (+19 more)
 
 ### Community 32 - "operations.py"
 Cohesion: 0.18
-Nodes (14): ExpenseOut, BaseModel, Schemas Pydantic das operações de estoque, vendas, despesas e entrada de mercado, Resposta pública de movimentação de estoque registrada., Entrada de um item vendido em uma venda., Entrada para registrar uma venda com seus itens., Resposta pública de um item de venda., Resposta pública de venda com total e itens. (+6 more)
+Nodes (14): ExpenseOut, BaseModel, Schemas Pydantic das operações de estoque, vendas, despesas e entrada de mercado, Resposta pública de movimentação de estoque registrada., Entrada de um item vendido em uma venda.      Nota: `unit_cost` enviado pelo c, Entrada para registrar uma venda com seus itens., Resposta pública de um item de venda., Resposta pública de venda com total e itens. (+6 more)
 
 ### Community 33 - "Marketing.tsx"
 Cohesion: 0.17
@@ -283,8 +282,8 @@ Cohesion: 0.17
 Nodes (9): create_token(), Funções simples de autenticação baseada em token JWT., Cria um token de acesso para o usuário proprietário do sistema., Valida o token enviado no cabeçalho Authorization das rotas protegidas., verify_token(), login(), LoginIn, BaseModel (+1 more)
 
 ### Community 38 - "services.py"
-Cohesion: 0.26
-Nodes (8): ChannelAnalysisService, Análise de canais de venda e distribuição por tamanho., DashboardService, Indicadores do dashboard executivo., FinanceService, DRE e métricas financeiras., AnalyticsService, Mantido para compatibilidade. Importar dos services individuais.
+Cohesion: 0.20
+Nodes (8): caveman, Claude - Contexto e Instruções, graphify, Regras de economia para fluxos com subagentes (implementador/revisor, Explore, Plan), Regras, Instruções de Execução e Uso de Tools (NÃO IGNORAR), Regras obrigatórias de economia, Sobre o Projeto *LGD Mantos*, Uso de Tools
 
 ### Community 39 - "ExpenseService"
 Cohesion: 0.21
@@ -299,28 +298,24 @@ Cohesion: 0.20
 Nodes (9): Approval, Campaign, CreativeBrief, Post, Modelos ORM da camada Marketing Ops.  Estes modelos são o workspace dos agente, Briefing criativo com direção visual e prompt de imagem gerado pelo CreativeAgen, Registro de decisão humana sobre campanha, post ou briefing criativo., Campanha de marketing gerada pelo StrategyAgent. (+1 more)
 
 ### Community 42 - "StrategyAgentOutput"
-Cohesion: 0.28
-Nodes (8): build_content_agent(), build_content_agent_input(), Agent, ContentAgent — gera copy e textos para o post de marketing.  Recebe a estratég, Cria uma instância fresca do ContentAgent para cada run., Monta o payload de entrada para o ContentAgent., StrategyAgentOutput, _run_content_agent()
+Cohesion: 0.22
+Nodes (7): ByChannel(), CHANNEL_FALLBACK, getViability(), LEVEL_COLOR, Viability, ViabilityLevel, ByChannelItem
 
 ### Community 43 - "agent_context_service.py"
-Cohesion: 0.33
-Nodes (6): AgentContextService, Empacota dados analíticos estruturados para consumo de agentes de IA.  Regra:, DataQualityService, Avalia completude e consistência dos dados operacionais da loja., MarketingIntelligenceService, Classifica produtos em listas de ação para decisões de conteúdo e promoção.
+Cohesion: 0.21
+Nodes (9): AgentContextService, Empacota dados analíticos estruturados para consumo de agentes de IA.  Regra:, DashboardService, Indicadores do dashboard executivo., DataQualityService, Avalia completude e consistência dos dados operacionais da loja., MarketingIntelligenceService, Classifica produtos em listas de ação para decisões de conteúdo e promoção. (+1 more)
 
 ### Community 44 - ".agent_context"
-Cohesion: 0.31
-Nodes (5): AsyncSession, ProductAnalysisService, AsyncSession, Análise de produtos: rankings, sugestões de compra e análise de estoque., Análise completa de produtos: margem, parados, risco de ruptura e categorias.
+Cohesion: 0.43
+Nodes (4): AsyncSession, ProductAnalysisService, AsyncSession, Análise completa de produtos: margem, parados, risco de ruptura e categorias.
 
 ### Community 45 - "create_sale"
 Cohesion: 0.28
 Nodes (8): create_sale(), delete_sale(), list_sales(), AsyncSession, Rotas HTTP para consulta e registro de vendas., Lista vendas recentes respeitando o limite informado., Registra uma venda e delega a baixa de estoque ao serviço., Remove uma venda e estorna o estoque dos itens correspondentes.
 
-### Community 46 - "channels.py"
-Cohesion: 0.32
-Nodes (5): AsyncSession, Rotas de análise por canal de venda e por tamanho., sales_by_channel(), sales_by_size(), AsyncSession
-
 ### Community 47 - "config.py"
-Cohesion: 0.29
-Nodes (6): Config, Configurações carregadas do ambiente para o backend., Define o arquivo `.env` como fonte adicional de configuração local., Agrupa variáveis de ambiente usadas pela API.      Os valores padrão existem p, Settings, BaseSettings
+Cohesion: 0.14
+Nodes (12): Config, Configurações carregadas do ambiente para o backend., Converte CORS_ORIGINS em lista, ignorando entradas vazias., Define o arquivo `.env` como fonte adicional de configuração local., Agrupa variáveis de ambiente usadas pela API.      Segurança: DATABASE_URL, APP_, Settings, _detect_state(), main() (+4 more)
 
 ### Community 48 - "Supplier"
 Cohesion: 0.33
@@ -331,8 +326,8 @@ Cohesion: 0.33
 Nodes (6): OpsMetrics, BaseModel, Schemas de observabilidade da camada de agentes., Entrada resumida de um agent run para o log de operações., Métricas consolidadas do sistema de agentes., RunLogEntry
 
 ### Community 50 - "routes.py"
-Cohesion: 0.29
-Nodes (5): agent_context(), AsyncSession, Rota de contexto para agentes de IA — payload analítico agregado e curado., Retorna pacote estruturado com saúde da loja, alertas e oportunidades., Roteador principal de analytics — agrega todos os sub-routers do módulo.
+Cohesion: 0.22
+Nodes (6): agent_context(), AsyncSession, Rota de contexto para agentes de IA — payload analítico agregado e curado., Retorna pacote estruturado com saúde da loja, alertas e oportunidades., Rotas de análise financeira e DRE., Roteador principal de analytics — agrega todos os sub-routers do módulo.
 
 ### Community 51 - "data_quality"
 Cohesion: 0.29
@@ -351,8 +346,8 @@ Cohesion: 0.33
 Nodes (4): dashboard(), AsyncSession, Rota do dashboard executivo., AsyncSession
 
 ### Community 55 - "finance.py"
-Cohesion: 0.33
-Nodes (4): dre(), AsyncSession, Rotas de análise financeira e DRE., AsyncSession
+Cohesion: 0.29
+Nodes (5): dre(), AsyncSession, FinanceService, AsyncSession, DRE e métricas financeiras.
 
 ### Community 56 - "products.py"
 Cohesion: 0.40
@@ -382,10 +377,6 @@ Nodes (4): Atualiza dados editáveis de um produto., update_product(), ProductUp
 Cohesion: 0.50
 Nodes (3): Serviços de negócio para controle de estoque., Aplica movimentações de entrada e saída de estoque., StockService
 
-### Community 63 - "init_db.py"
-Cohesion: 0.50
-Nodes (3): init(), Rotina de inicialização do banco local.  Cria as tabelas declaradas nos modelo, Cria a estrutura inicial do banco e popula registros mínimos de apoio.
-
 ### Community 64 - "main.py"
 Cohesion: 0.50
 Nodes (3): health(), Ponto de entrada HTTP da API LGD Mantos.  Este módulo configura a aplicação Fa, Retorna um status simples para checagens de disponibilidade da API.
@@ -395,7 +386,7 @@ Cohesion: 0.67
 Nodes (3): UploadFile, Recebe upload de foto e associa o arquivo ao produto., upload_photo()
 
 ## Knowledge Gaps
-- **148 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+143 more)
+- **151 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+146 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **20 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -403,15 +394,15 @@ Nodes (3): UploadFile, Recebe upload de foto e associa o arquivo ao produto., up
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Product` connect `Product` to `CatalogService`, `repositories.py`, `SupervisorService`, `data_quality_repository.py`, `Base`?**
-  _High betweenness centrality (0.156) - this node is a cross-community bridge._
+  _High betweenness centrality (0.153) - this node is a cross-community bridge._
+- **Why does `SupervisorService` connect `SupervisorService` to `Product`, `agent_context_service.py`, `PolicyEngine`, `DataAgentOutput`, `schemas.py`?**
+  _High betweenness centrality (0.136) - this node is a cross-community bridge._
 - **Why does `Base` connect `Base` to `KnowledgeDocument`, `repositories.py`, `Approval`, `Product`, `Supplier`, `.queue_campaign`, `SupervisorService`, `database.py`?**
-  _High betweenness centrality (0.135) - this node is a cross-community bridge._
-- **Why does `SupervisorService` connect `SupervisorService` to `Product`, `StrategyAgentOutput`, `agent_context_service.py`, `DataAgentOutput`, `schemas.py`?**
-  _High betweenness centrality (0.125) - this node is a cross-community bridge._
+  _High betweenness centrality (0.117) - this node is a cross-community bridge._
 - **What connects `Pacote principal da aplicação backend LGD Mantos.`, `Infraestrutura central do backend, como configuração, banco e autenticação.`, `Funções simples de autenticação baseada em token JWT.` to the rest of the system?**
-  _504 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _505 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `useNav` be split into smaller, more focused modules?**
-  _Cohesion score 0.08385744234800839 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09359605911330049 - nodes in this community are weakly interconnected._
 - **Should `KnowledgeDocument` be split into smaller, more focused modules?**
   _Cohesion score 0.05370101596516691 - nodes in this community are weakly interconnected._
 - **Should `CatalogService` be split into smaller, more focused modules?**

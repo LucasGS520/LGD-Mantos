@@ -8,6 +8,10 @@ services:
       POSTGRES_DB: lgd_mantos
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: lgdmantos123
+    ports:
+      # Porta alta no host para não conflitar com outros Postgres locais.
+      # Usada por ferramentas de desenvolvimento (Alembic, psql) fora do Docker.
+      - "55432:5432"
     volumes:
       # Mantém os dados do PostgreSQL entre reinicializações dos containers.
       - pgdata:/var/lib/postgresql/data

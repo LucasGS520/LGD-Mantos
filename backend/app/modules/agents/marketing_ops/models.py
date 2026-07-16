@@ -50,7 +50,7 @@ class AgentRun(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     objective: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[str] = mapped_column(AgentRunStatus, nullable=False, default="pending")
+    status: Mapped[str] = mapped_column(AgentRunStatus, nullable=False, default="pending", index=True)
     result: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -69,7 +69,7 @@ class Campaign(Base):
     __tablename__ = "campaigns"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    agent_run_id: Mapped[str] = mapped_column(String(36), ForeignKey("agent_runs.id"), nullable=False)
+    agent_run_id: Mapped[str] = mapped_column(String(36), ForeignKey("agent_runs.id"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     objective: Mapped[str] = mapped_column(Text, nullable=False)
     product_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("products.id"), nullable=True)
@@ -99,7 +99,7 @@ class Post(Base):
     __tablename__ = "posts"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    campaign_id: Mapped[str] = mapped_column(String(36), ForeignKey("campaigns.id"), nullable=False)
+    campaign_id: Mapped[str] = mapped_column(String(36), ForeignKey("campaigns.id"), nullable=False, index=True)
     caption: Mapped[str | None] = mapped_column(Text, nullable=True)
     headline: Mapped[str | None] = mapped_column(Text, nullable=True)
     cta_text: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -123,7 +123,7 @@ class CreativeBrief(Base):
     __tablename__ = "creative_briefs"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    campaign_id: Mapped[str] = mapped_column(String(36), ForeignKey("campaigns.id"), nullable=False)
+    campaign_id: Mapped[str] = mapped_column(String(36), ForeignKey("campaigns.id"), nullable=False, index=True)
     visual_briefing: Mapped[str | None] = mapped_column(Text, nullable=True)
     image_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
     carousel_idea: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -147,10 +147,10 @@ class Approval(Base):
     __tablename__ = "approvals"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    campaign_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("campaigns.id"), nullable=True)
+    campaign_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("campaigns.id"), nullable=True, index=True)
     post_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("posts.id"), nullable=True)
     creative_brief_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("creative_briefs.id"), nullable=True)
-    status: Mapped[str] = mapped_column(ApprovalStatus, nullable=False, default="pending")
+    status: Mapped[str] = mapped_column(ApprovalStatus, nullable=False, default="pending", index=True)
     comment: Mapped[str | None] = mapped_column(Text, nullable=True)
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -170,7 +170,7 @@ class PublishingQueue(Base):
     __tablename__ = "publishing_queue"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    campaign_id: Mapped[str] = mapped_column(String(36), ForeignKey("campaigns.id"), nullable=False)
+    campaign_id: Mapped[str] = mapped_column(String(36), ForeignKey("campaigns.id"), nullable=False, index=True)
     channel: Mapped[str] = mapped_column(String(100), nullable=False)
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(PublishingStatus, nullable=False, default="waiting_approval")

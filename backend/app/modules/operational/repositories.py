@@ -104,21 +104,40 @@ async def list_products(
     return list(result.scalars().all())
 
 
-async def get_variant(db: AsyncSession, variant_id: str) -> ProductVariant | None:
-    """Busca uma variante vendável pelo identificador interno."""
+async def get_variant(
+    db: AsyncSession, variant_id: str, for_update: bool = False
+) -> ProductVariant | None:
+    """Busca uma variante vendável pelo identificador interno.
 
-    result = await db.execute(select(ProductVariant).where(ProductVariant.id == variant_id))
+    Com `for_update=True`, trava a linha (SELECT ... FOR UPDATE) até o fim da
+    transação — obrigatório em fluxos que alteram `stock_quantity`, para evitar
+    que duas operações simultâneas leiam o mesmo saldo e gravem por cima.
+    """
+
+    query = select(ProductVariant).where(ProductVariant.id == variant_id)
+    if for_update:
+        query = query.with_for_update()
+    result = await db.execute(query)
     return result.scalar_one_or_none()
 
 
-async def get_variant_with_product(db: AsyncSession, variant_id: str) -> ProductVariant | None:
-    """Busca uma variante carregando o produto pai junto."""
+async def get_variant_with_product(
+    db: AsyncSession, variant_id: str, for_update: bool = False
+) -> ProductVariant | None:
+    """Busca uma variante carregando o produto pai junto.
 
-    result = await db.execute(
+    O lock de `for_update` se aplica apenas à linha da variante; o produto é
+    carregado em consulta separada sem lock (leitura apenas).
+    """
+
+    query = (
         select(ProductVariant)
         .options(selectinload(ProductVariant.product))
         .where(ProductVariant.id == variant_id)
     )
+    if for_update:
+        query = query.with_for_update()
+    result = await db.execute(query)
     return result.scalar_one_or_none()
 
 

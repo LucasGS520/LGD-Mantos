@@ -32,7 +32,7 @@ class KnowledgeDocument(Base):
     __tablename__ = "knowledge_documents"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    doc_type: Mapped[str] = mapped_column(KnowledgeDocType, nullable=False)
+    doc_type: Mapped[str] = mapped_column(KnowledgeDocType, nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

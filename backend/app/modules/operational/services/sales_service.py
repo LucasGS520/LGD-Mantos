@@ -22,7 +22,8 @@ class SalesService:
         total = 0.0
         pairs = []
         for item in data.items:
-            variant = await repo.get_variant(db, item.variant_id)
+            # Lock de linha: impede que duas vendas simultâneas baixem o mesmo estoque.
+            variant = await repo.get_variant_with_product(db, item.variant_id, for_update=True)
             if not variant:
                 raise HTTPException(404, f"Variante {item.variant_id}")
             if variant.stock_quantity < item.quantity:
@@ -35,13 +36,17 @@ class SalesService:
         await db.flush()
 
         for variant, item in pairs:
+            # O custo unitário é sempre resolvido no servidor a partir do cadastro
+            # do produto — nunca confiamos no valor enviado pelo cliente, pois ele
+            # alimenta os cálculos de margem e DRE.
+            server_cost = float(variant.product.cost_price) if variant.product else 0.0
             db.add(
                 SaleItem(
                     sale_id=sale.id,
                     variant_id=variant.id,
                     quantity=item.quantity,
                     unit_price=item.unit_price,
-                    unit_cost=item.unit_cost,
+                    unit_cost=server_cost,
                 )
             )
             # A venda sempre gera uma saída de estoque rastreável no histórico.
@@ -68,7 +73,7 @@ class SalesService:
             raise HTTPException(404, "Venda não encontrada")
 
         for item in sale.items:
-            variant = await repo.get_variant(db, item.variant_id)
+            variant = await repo.get_variant(db, item.variant_id, for_update=True)
             if variant:
                 variant.stock_quantity += item.quantity
                 db.add(StockMovement(

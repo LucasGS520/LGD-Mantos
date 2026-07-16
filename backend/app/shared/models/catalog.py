@@ -66,8 +66,8 @@ class Product(Base):
     sku: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    category_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("categories.id"), nullable=True)
-    supplier_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("suppliers.id"), nullable=True)
+    category_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("categories.id"), nullable=True, index=True)
+    supplier_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("suppliers.id"), nullable=True, index=True)
     cost_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, default=0)
     sale_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, default=0)
     photos: Mapped[list | None] = mapped_column(JSON, default=list)
@@ -91,7 +91,7 @@ class ProductVariant(Base):
     __tablename__ = "product_variants"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    product_id: Mapped[str] = mapped_column(String(36), ForeignKey("products.id"), nullable=False)
+    product_id: Mapped[str] = mapped_column(String(36), ForeignKey("products.id"), nullable=False, index=True)
     size: Mapped[str] = mapped_column(String(20), nullable=False)
     color: Mapped[str] = mapped_column(String(50), nullable=False, default="Unico")
     stock_quantity: Mapped[int] = mapped_column(Integer, default=0)

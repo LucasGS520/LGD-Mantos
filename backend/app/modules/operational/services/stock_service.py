@@ -15,7 +15,7 @@ class StockService:
     async def stock_movement(db: AsyncSession, data: StockMoveIn) -> StockMovement:
         """Registra movimentação manual e ajusta o saldo da variante."""
 
-        variant = await repo.get_variant(db, data.variant_id)
+        variant = await repo.get_variant(db, data.variant_id, for_update=True)
         if not variant:
             raise HTTPException(404, "Variante nao encontrada")
 

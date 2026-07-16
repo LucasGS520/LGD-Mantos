@@ -51,7 +51,7 @@ export default function Dashboard() {
                     <Tooltip
                       cursor={{ stroke: 'rgba(255,255,255,0.12)', strokeWidth: 1 }}
                       contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 12 }}
-                      formatter={(v: number) => [fmtBRLshort(v), 'Receita']}
+                      formatter={(v) => [fmtBRLshort(Number(v ?? 0)), 'Receita']}
                       labelStyle={{ color: 'var(--text-3)', fontSize: 11 }}
                     />
                     <Area type="monotone" dataKey="value" stroke="#D4A847" strokeWidth={2} fill="url(#dgGold)" dot={false} />

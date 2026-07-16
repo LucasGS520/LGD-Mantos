@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.core.config import settings
 from app.modules.agents.routes import router as agents_router
 from app.modules.analytics.routes.routes import router as analytics_router
 from app.modules.auth.routes import router as auth_router
@@ -17,7 +18,14 @@ from app.modules.operational.routes import router as operational_router
 
 app = FastAPI(title="LGD Mantos", version="2.0", docs_url="/api/docs")
 
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+# Origens permitidas vêm da configuração (CORS_ORIGINS no ambiente).
+# Em desenvolvimento local o padrão cobre o Vite (localhost:5173).
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(operational_router, prefix="/api/v1")

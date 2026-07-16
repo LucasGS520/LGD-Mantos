@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react'
-import { useNav } from '../nav'
+import { useNav, type ScreenId } from '../nav'
 
 // ─── Period ────────────────────────────────────────────────────
 export const PERIODS = [
@@ -191,7 +191,7 @@ export function CovBadge({ days }: { days: number | null }) {
 
 // ─── NavItem ──────────────────────────────────────────────────
 export function NavItem({ icon, label, sub, badge, target }: {
-  icon: ReactNode; label: string; sub?: string; badge?: number; target: string
+  icon: ReactNode; label: string; sub?: string; badge?: number; target: ScreenId
 }) {
   const { navigate } = useNav()
   return (

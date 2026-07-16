@@ -90,7 +90,7 @@ export default function CategoryDetail() {
                   <Tooltip
                     cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                     contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 12 }}
-                    formatter={(v: number, _: string, props: any) => [`${v} un (${props.payload?.pct ?? 0}%)`, 'Vendas']}
+                    formatter={(v, _, props: any) => [`${Number(v ?? 0)} un (${props.payload?.pct ?? 0}%)`, 'Vendas']}
                   />
                   <Bar dataKey="qty" radius={[6, 6, 0, 0]}>
                     {sizeChartData.map((_, i) => (

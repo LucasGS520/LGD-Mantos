@@ -92,7 +92,7 @@ class EntryService:
 
             elif item.existing_variant is not None:
                 ev = item.existing_variant
-                variant = await repo.get_variant_with_product(db, ev.variant_id)
+                variant = await repo.get_variant_with_product(db, ev.variant_id, for_update=True)
                 if not variant:
                     raise HTTPException(404, f"Variante não encontrada: {ev.variant_id}")
 

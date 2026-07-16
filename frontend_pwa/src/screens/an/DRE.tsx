@@ -151,7 +151,7 @@ export default function DRE() {
                     <Tooltip
                       cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                       contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 12 }}
-                      formatter={(v: number, name: string) => [fmtBRLshort(v), name === 'receita' ? 'Receita' : 'Lucro']}
+                      formatter={(v, name) => [fmtBRLshort(Number(v ?? 0)), name === 'receita' ? 'Receita' : 'Lucro']}
                     />
                     <Legend formatter={(v: string) => v === 'receita' ? 'Receita' : 'Lucro'} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                     <Bar dataKey="receita" fill="rgba(212,168,71,0.4)" radius={[4, 4, 0, 0]} />
@@ -174,7 +174,7 @@ export default function DRE() {
                       </Pie>
                       <Tooltip
                         contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 12 }}
-                        formatter={(v: number) => [fmtBRLshort(v), '']}
+                        formatter={(v) => [fmtBRLshort(Number(v ?? 0)), '']}
                       />
                     </PieChart>
                   </ResponsiveContainer>

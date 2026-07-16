@@ -15,7 +15,7 @@ class StockMovement(Base):
     __tablename__ = "stock_movements"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    variant_id: Mapped[str] = mapped_column(String(36), ForeignKey("product_variants.id"), nullable=False)
+    variant_id: Mapped[str] = mapped_column(String(36), ForeignKey("product_variants.id"), nullable=False, index=True)
     movement_type: Mapped[str] = mapped_column(
         SAEnum("entrada", "saida", name="mvt_type"),
         nullable=False,
@@ -23,7 +23,7 @@ class StockMovement(Base):
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_cost: Mapped[float | None] = mapped_column(Numeric(10, 2), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
 
     variant = relationship("ProductVariant", back_populates="stock_movements")
 
@@ -34,8 +34,8 @@ class Sale(Base):
     __tablename__ = "sales"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    sold_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
-    sale_channel_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("sale_channels.id"), nullable=True)
+    sold_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+    sale_channel_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("sale_channels.id"), nullable=True, index=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     total: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
 
@@ -49,8 +49,8 @@ class SaleItem(Base):
     __tablename__ = "sale_items"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    sale_id: Mapped[str] = mapped_column(String(36), ForeignKey("sales.id"), nullable=False)
-    variant_id: Mapped[str] = mapped_column(String(36), ForeignKey("product_variants.id"), nullable=False)
+    sale_id: Mapped[str] = mapped_column(String(36), ForeignKey("sales.id"), nullable=False, index=True)
+    variant_id: Mapped[str] = mapped_column(String(36), ForeignKey("product_variants.id"), nullable=False, index=True)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     unit_cost: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False, default=0)
@@ -65,11 +65,11 @@ class Expense(Base):
     __tablename__ = "expenses"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    date: Mapped[str] = mapped_column(String(10), nullable=False)
+    date: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
     category: Mapped[str] = mapped_column(String(100), nullable=False)
     amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    supplier_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("suppliers.id"), nullable=True)
+    supplier_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("suppliers.id"), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
@@ -79,8 +79,8 @@ class MerchandiseEntry(Base):
     __tablename__ = "merchandise_entries"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    supplier_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("suppliers.id"), nullable=True)
-    entry_date: Mapped[str] = mapped_column(String(10), nullable=False)
+    supplier_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("suppliers.id"), nullable=True, index=True)
+    entry_date: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
@@ -94,8 +94,8 @@ class MerchandiseEntryItem(Base):
     __tablename__ = "merchandise_entry_items"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
-    entry_id: Mapped[str] = mapped_column(String(36), ForeignKey("merchandise_entries.id"), nullable=False)
-    variant_id: Mapped[str] = mapped_column(String(36), ForeignKey("product_variants.id"), nullable=False)
+    entry_id: Mapped[str] = mapped_column(String(36), ForeignKey("merchandise_entries.id"), nullable=False, index=True)
+    variant_id: Mapped[str] = mapped_column(String(36), ForeignKey("product_variants.id"), nullable=False, index=True)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_cost: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
 

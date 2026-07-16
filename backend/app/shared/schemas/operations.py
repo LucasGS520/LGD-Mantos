@@ -31,7 +31,12 @@ class StockMoveOut(BaseModel):
 
 
 class SaleItemIn(BaseModel):
-    """Entrada de um item vendido em uma venda."""
+    """Entrada de um item vendido em uma venda.
+
+    Nota: `unit_cost` enviado pelo cliente é ignorado — o custo é resolvido
+    no servidor a partir do cadastro do produto. O campo permanece aceito
+    apenas para compatibilidade com clientes antigos.
+    """
 
     variant_id: str
     quantity: int

@@ -92,9 +92,10 @@ export default function ByChannel() {
                     </Pie>
                     <Tooltip
                       contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 12 }}
-                      formatter={(v: number, _: string, props: any) => {
-                        const pct = totalRevenue > 0 ? ((v / totalRevenue) * 100).toFixed(1) : '0'
-                        return [`${fmtBRLshort(v)} (${pct}%)`, props.name]
+                      formatter={(v, _, props: any) => {
+                        const num = Number(v ?? 0)
+                        const pct = totalRevenue > 0 ? ((num / totalRevenue) * 100).toFixed(1) : '0'
+                        return [`${fmtBRLshort(num)} (${pct}%)`, props.name]
                       }}
                     />
                   </PieChart>
@@ -178,7 +179,7 @@ export default function ByChannel() {
                       <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: fee > 0 ? 6 : 0, lineHeight: 1.4 }}>
                         {fee > 20 && 'Taxa acima de 20% — custo muito alto por venda.'}
                         {fee > 10 && fee <= 20 && 'Taxa entre 10–20% — avalie se a margem compensa.'}
-                        {via.level !== 'green' && goal && goalPct !== null && goalPct < 80 && ` Meta atingida: ${goalPct.toFixed(0)}%`}
+                        {goal && goalPct !== null && goalPct < 80 && ` Meta atingida: ${goalPct.toFixed(0)}%`}
                       </div>
                     )}
 
