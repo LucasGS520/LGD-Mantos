@@ -1,0 +1,9 @@
+C:\Users\Usuario\Projects\LGD-Mantos\CLAUDE.md
+C:\Users\Usuario\Projects\LGD-Mantos\README.md
+C:\Users\Usuario\Projects\LGD-Mantos\STACK_LGD.md
+C:\Users\Usuario\Projects\LGD-Mantos\backend\requirements.txt
+C:\Users\Usuario\Projects\LGD-Mantos\docker-compose.yml
+C:\Users\Usuario\Projects\LGD-Mantos\frontend_pwa\index.html
+C:\Users\Usuario\Projects\LGD-Mantos\requirements.txt
+C:\Users\Usuario\Projects\LGD-Mantos\frontend_pwa\public\favicon.png
+C:\Users\Usuario\Projects\LGD-Mantos\frontend_pwa\public\logo_lgd.png
