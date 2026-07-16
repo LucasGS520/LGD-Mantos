@@ -11,6 +11,7 @@ export type ScreenId =
   | 'dashboard' | 'top-products' | 'by-size' | 'by-channel' | 'suggestions' | 'dre'
   | 'an-categorias' | 'an-category-detail' | 'an-alertas' | 'an-marketing-intel' | 'an-compras'
   | 'marketing'
+  | 'mk-new-run' | 'mk-run-detail' | 'mk-approval-detail' | 'mk-knowledge-form'
   | 'more' | 'suppliers' | 'supplier-form' | 'categories' | 'category-form' | 'sale-channels' | 'channel-form' | 'settings' | 'about'
 
 export type TabId = 'op' | 'an' | 'mk' | 'mais'

@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     APP_PASSWORD: str = "minhaloja123"
     APP_SECRET: str = "dev-secret-change-in-production"
-    ANTHROPIC_API_KEY: str = ""
+    OLLAMA_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.1:8b"
 
     class Config:
         """Define o arquivo `.env` como fonte adicional de configuração local."""

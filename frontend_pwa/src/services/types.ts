@@ -306,3 +306,90 @@ export interface MarketingRequest {
 export interface MarketingResponse {
   content: string
 }
+
+// ─── Agents / Marketing Ops ────────────────────────────────────────────────
+
+export interface AgentRun {
+  run_id: string
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  objective: string
+  created_at: string
+  updated_at: string
+  error?: string | null
+  result?: Record<string, string | null> | null
+}
+
+export interface AgentApprovalItem {
+  id: string
+  status: 'pending' | 'approved' | 'rejected' | 'revision_requested'
+  campaign_id: string | null
+  campaign_name: string | null
+  campaign_channel: string | null
+  created_at: string
+}
+
+export interface AgentPostSummary {
+  id: string
+  caption: string | null
+  headline: string | null
+  cta_text: string | null
+  format: string | null
+  copy_variations: { style: string; caption: string; headline: string }[] | null
+  status: string
+}
+
+export interface AgentCreativeBriefSummary {
+  id: string
+  visual_briefing: string | null
+  image_prompt: string | null
+  carousel_idea: string | null
+  reel_script: string | null
+  photo_analysis: Record<string, unknown> | null
+  status: string
+}
+
+export interface AgentCampaign {
+  id: string
+  name: string
+  objective: string
+  channel: string | null
+  format: string | null
+  angle: string | null
+  cta: string | null
+  risk_level: string | null
+  status: string
+  posts: AgentPostSummary[]
+  creative_briefs: AgentCreativeBriefSummary[]
+}
+
+export interface AgentApprovalDetail {
+  id: string
+  status: string
+  comment: string | null
+  decided_at: string | null
+  created_at: string
+  campaign: AgentCampaign | null
+}
+
+export interface OpsMetrics {
+  total_runs: number
+  runs_pending: number
+  runs_running: number
+  runs_completed: number
+  runs_failed: number
+  success_rate: number
+  pending_approvals: number
+  approved_campaigns: number
+  rejected_campaigns: number
+  knowledge_docs_active: number
+}
+
+export interface KnowledgeDoc {
+  id: string
+  doc_type: string
+  title: string
+  content: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}

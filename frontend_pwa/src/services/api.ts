@@ -4,6 +4,7 @@ import type {
   ProductAnalysis, DataQuality,
   CategoryPerformance, CategorySizeDistribution, CategoryCoverage, BuyingPattern, CategorySizeStock,
   MarketingIntelligence,
+  AgentRun, AgentApprovalItem, AgentApprovalDetail, OpsMetrics, KnowledgeDoc,
 } from './types'
 
 const ENV_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.trim()
@@ -130,6 +131,52 @@ export const api = {
 
   getMarketingIntelligence: () =>
     req<MarketingIntelligence>('GET', '/analytics/marketing-intelligence'),
+
+  // ─── Agents / Marketing Ops ──────────────────────────────────
+  getAgentRuns: (status?: string) =>
+    req<AgentRun[]>('GET', `/agents/runs${status ? `?status=${status}` : ''}`),
+
+  createAgentRun: (objective: string) =>
+    req<AgentRun>('POST', '/agents/runs', { objective }),
+
+  getAgentRun: (runId: string) =>
+    req<AgentRun>('GET', `/agents/runs/${runId}`),
+
+  getPendingApprovals: () =>
+    req<AgentApprovalItem[]>('GET', '/agents/approvals/pending'),
+
+  getApprovals: (status?: string) =>
+    req<AgentApprovalItem[]>('GET', `/agents/approvals${status ? `?status=${status}` : ''}`),
+
+  getApprovalDetail: (id: string) =>
+    req<AgentApprovalDetail>('GET', `/agents/approvals/${id}`),
+
+  approveApproval: (id: string, comment?: string) =>
+    req<AgentApprovalDetail>('POST', `/agents/approvals/${id}/approve`, { comment: comment ?? null }),
+
+  rejectApproval: (id: string, comment: string) =>
+    req<AgentApprovalDetail>('POST', `/agents/approvals/${id}/reject`, { comment }),
+
+  requestRevision: (id: string, comment: string) =>
+    req<AgentApprovalDetail>('POST', `/agents/approvals/${id}/revision`, { comment }),
+
+  getOpsMetrics: () =>
+    req<OpsMetrics>('GET', '/agents/ops/metrics'),
+
+  getKnowledgeDocs: (docType?: string) => {
+    const q = new URLSearchParams({ active_only: 'false' })
+    if (docType) q.set('doc_type', docType)
+    return req<KnowledgeDoc[]>('GET', `/agents/knowledge?${q}`)
+  },
+
+  createKnowledgeDoc: (body: { doc_type: string; title: string; content: string; is_active: boolean }) =>
+    req<KnowledgeDoc>('POST', '/agents/knowledge', body),
+
+  updateKnowledgeDoc: (id: string, body: Partial<{ title: string; content: string; is_active: boolean }>) =>
+    req<KnowledgeDoc>('PUT', `/agents/knowledge/${id}`, body),
+
+  deleteKnowledgeDoc: (id: string) =>
+    req<void>('DELETE', `/agents/knowledge/${id}`),
 
   async login(password: string): Promise<string> {
     const res = await fetch(`${BASE}/auth/login`, {

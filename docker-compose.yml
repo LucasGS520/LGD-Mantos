@@ -18,6 +18,48 @@ services:
       timeout: 4s
       retries: 6
 
+  ollama:
+    # Servidor de inferência local que roda o llama3.1:8b para os agentes.
+    image: ollama/ollama
+    container_name: lgd_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      # Mantém os pesos do modelo entre reinicializações (evita re-download de ~5 GB).
+      - ollama_data:/root/.ollama
+    healthcheck:
+      # Verifica se o servidor Ollama está aceitando requisições.
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    # Para usar GPU NVIDIA, descomente as linhas abaixo e certifique-se de que
+    # o Docker Desktop tem suporte a GPU habilitado nas configurações.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  model-init:
+    # Roda uma única vez para baixar o modelo llama3.1:8b no volume ollama_data.
+    # Se o modelo já existir, o Ollama ignora o pull sem re-baixar.
+    image: ollama/ollama
+    container_name: lgd_model_init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "llama3.1:8b"]
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: "no"
+
   backend:
     # API FastAPI com reload para desenvolvimento local.
     build:
@@ -30,6 +72,8 @@ services:
       - "8000:8000"
     depends_on:
       db:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     volumes:
       # Monta o código local para refletir alterações sem reconstruir a imagem.
@@ -63,3 +107,5 @@ volumes:
   pgdata:
   # Volume persistente para uploads de produtos.
   uploads_data:
+  # Volume persistente com os pesos do modelo Ollama (~5 GB para llama3.1:8b).
+  ollama_data:

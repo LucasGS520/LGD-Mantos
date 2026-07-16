@@ -24,6 +24,10 @@ import Alertas from './screens/an/Alertas'
 import MarketingIntel from './screens/an/MarketingIntel'
 import ComprasReposicao from './screens/an/ComprasReposicao'
 import Marketing from './screens/Marketing'
+import NewRun from './screens/mk/NewRun'
+import RunDetail from './screens/mk/RunDetail'
+import ApprovalDetail from './screens/mk/ApprovalDetail'
+import KnowledgeDocForm from './screens/mk/KnowledgeDocForm'
 import More from './screens/mais/More'
 import Suppliers from './screens/mais/Suppliers'
 import SupplierForm from './screens/mais/SupplierForm'
@@ -61,7 +65,11 @@ export default function App() {
     'an-alertas':         <Alertas />,
     'an-marketing-intel': <MarketingIntel />,
     'an-compras':         <ComprasReposicao />,
-    'marketing':      <Marketing />,
+    'marketing':           <Marketing />,
+    'mk-new-run':          <NewRun />,
+    'mk-run-detail':       <RunDetail />,
+    'mk-approval-detail':  <ApprovalDetail />,
+    'mk-knowledge-form':   <KnowledgeDocForm />,
     'more':           <More />,
     'suppliers':      <Suppliers />,
     'supplier-form':  <SupplierForm />,
