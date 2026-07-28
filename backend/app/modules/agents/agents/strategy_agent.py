@@ -23,6 +23,8 @@ _INSTRUCTIONS = [
     "Nunca prometa estoque ou tamanho que não foi confirmado pelos dados.",
     "O ângulo de venda deve ser genuíno — baseado no que os dados mostram sobre o produto.",
     "Escolha o canal mais adequado ao produto e ao momento (Instagram para visuais, WhatsApp para urgência, etc.).",
+    "O campo product_sku deve ser copiado EXATAMENTE, caractere por caractere, do SKU da oportunidade escolhida. Nunca invente, reordene ou altere um SKU.",
+    "O campo format deve conter APENAS o nome curto do formato (feed, story, reels, carrossel ou combinação breve) — nunca uma descrição ou frase. O campo channel deve ser só o nome do canal (Instagram, WhatsApp, TikTok).",
     "Sempre responda em português brasileiro.",
 ]
 
@@ -43,8 +45,13 @@ def build_strategy_agent_input(
     objective: str,
     data_output: DataAgentOutput,
     brand_context: str,
+    valid_skus: list[str] | None = None,
 ) -> str:
-    """Monta o payload de entrada para o StrategyAgent."""
+    """Monta o payload de entrada para o StrategyAgent.
+
+    `valid_skus` vem do catálogo real (consultado pelo Supervisor) e é incluído
+    no prompt como lista fechada — reduz alucinação de SKU pelo LLM.
+    """
 
     primary = data_output.primary
     primary_block = ""
@@ -66,12 +73,20 @@ OPORTUNIDADE PRINCIPAL RECOMENDADA:
         for op in other_opportunities:
             other_block += f"- {op.product_name} ({op.sku}): {op.opportunity_type} — {op.reason}\n"
 
+    skus_block = ""
+    if valid_skus:
+        skus_block = (
+            "\nSKUS VÁLIDOS DO CATÁLOGO (o campo product_sku DEVE ser exatamente um destes):\n"
+            + "\n".join(f"- {sku}" for sku in valid_skus)
+            + "\n"
+        )
+
     return f"""OBJETIVO DA CAMPANHA:
 {objective}
 
 RESUMO DO PANORAMA (DataAgent):
 {data_output.summary}
-{primary_block}{other_block}
+{primary_block}{other_block}{skus_block}
 
 CONTEXTO DE MARCA (Knowledge Layer):
 {brand_context}

@@ -36,3 +36,26 @@ async def queue_campaign(
     return await PublishingService.queue_campaign(
         db, body.campaign_id, body.channel, body.scheduled_at
     )
+
+
+@router.post("/{entry_id}/published", response_model=PublishingQueueItem)
+async def mark_published(
+    entry_id: str,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(verify_token),
+):
+    """Marca o item como publicado após a postagem manual no canal.
+
+    Ação humana explícita — grava `published_at` e fecha o ciclo da campanha.
+    """
+    return await PublishingService.mark_published(db, entry_id)
+
+
+@router.delete("/{entry_id}", status_code=204)
+async def remove_from_queue(
+    entry_id: str,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(verify_token),
+):
+    """Cancela (remove) um item ainda não publicado da fila."""
+    await PublishingService.remove_from_queue(db, entry_id)

@@ -5,12 +5,17 @@ import type {
   CategoryPerformance, CategorySizeDistribution, CategoryCoverage, BuyingPattern, CategorySizeStock,
   MarketingIntelligence,
   AgentRun, AgentApprovalItem, AgentApprovalDetail, OpsMetrics, KnowledgeDoc,
+  PublishingQueueItem,
 } from './types'
 
+// Base da API: usa VITE_API_URL quando definida (dev fora do proxy, ambientes
+// especiais); caso contrário assume caminho relativo — em produção o PWA e a API
+// vivem no mesmo domínio atrás do reverse proxy (Caddy), e em desenvolvimento o
+// Vite encaminha /api para o backend local (ver proxy em vite.config.ts).
 const ENV_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.trim()
 const BASE = (ENV_BASE && ENV_BASE.length > 0
   ? ENV_BASE
-  : 'https://lgd-mantos.onrender.com/api/v1').replace(/\/+$/, '')
+  : '/api/v1').replace(/\/+$/, '')
 
 let _onUnauthorized: (() => void) | null = null
 
@@ -159,6 +164,21 @@ export const api = {
 
   requestRevision: (id: string, comment: string) =>
     req<AgentApprovalDetail>('POST', `/agents/approvals/${id}/revision`, { comment }),
+
+  regenerateApproval: (id: string) =>
+    req<AgentRun>('POST', `/agents/approvals/${id}/regenerate`),
+
+  getPublishingQueue: (status?: string) =>
+    req<PublishingQueueItem[]>('GET', `/agents/publishing${status ? `?status=${status}` : ''}`),
+
+  queueCampaignForPublishing: (campaignId: string, channel: string) =>
+    req<PublishingQueueItem>('POST', '/agents/publishing/queue', { campaign_id: campaignId, channel }),
+
+  markQueueItemPublished: (entryId: string) =>
+    req<PublishingQueueItem>('POST', `/agents/publishing/${entryId}/published`),
+
+  removeQueueItem: (entryId: string) =>
+    req<void>('DELETE', `/agents/publishing/${entryId}`),
 
   getOpsMetrics: () =>
     req<OpsMetrics>('GET', '/agents/ops/metrics'),

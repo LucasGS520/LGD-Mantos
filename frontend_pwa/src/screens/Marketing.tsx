@@ -4,7 +4,7 @@ import { Badge, Card, KPI, LoadingBody, ErrorBody, Section } from '../components
 import { Ico } from '../components/Icons'
 import { useNav } from '../nav'
 import { api } from '../services/api'
-import type { AgentRun, AgentApprovalItem, OpsMetrics, KnowledgeDoc } from '../services/types'
+import type { AgentRun, AgentApprovalItem, OpsMetrics, KnowledgeDoc, PublishingQueueItem } from '../services/types'
 
 // ─── Utilities ─────────────────────────────────────────────────────────────
 
@@ -285,12 +285,117 @@ function ConhecimentoTab() {
   )
 }
 
+// ─── Fila de Publicação Tab ────────────────────────────────────────────────
+
+function FilaTab() {
+  const [items, setItems] = useState<PublishingQueueItem[] | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      setItems(await api.getPublishingQueue())
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro ao carregar')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  // Marca como publicada (após você postar manualmente no canal) ou cancela.
+  const act = async (id: string, action: 'publish' | 'remove') => {
+    setBusy(id)
+    try {
+      if (action === 'publish') await api.markQueueItemPublished(id)
+      else await api.removeQueueItem(id)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro na ação')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  if (loading) return <LoadingBody />
+  if (error && !items) return <ErrorBody msg={error} onRetry={load} />
+
+  const fmtStatus: Record<string, { tone: BadgeTone; label: string }> = {
+    approved:  { tone: 'warn',    label: 'Aguardando postagem' },
+    published: { tone: 'success', label: 'Publicada' },
+    failed:    { tone: 'danger',  label: 'Falhou' },
+  }
+
+  return (
+    <>
+      {error && (
+        <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(232,88,79,0.08)', border: '1px solid rgba(232,88,79,0.25)', color: '#F5847B', fontSize: 13 }}>
+          {error}
+        </div>
+      )}
+      <Section title="Fila de Publicação" top={16}>
+        {(!items || items.length === 0) ? (
+          <Card>
+            <div style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: '12px 0' }}>
+              Nenhuma campanha na fila. Aprove uma campanha e use "Enfileirar publicação".
+            </div>
+          </Card>
+        ) : (
+          <div style={{ display: 'grid', gap: 8 }}>
+            {items.map(item => {
+              const st = fmtStatus[item.status] ?? { tone: 'neutral' as BadgeTone, label: item.status }
+              return (
+                <Card key={item.id}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-1)' }}>{item.channel}</div>
+                      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 3 }}>
+                        {item.published_at
+                          ? `Publicada em ${fmtDt(item.published_at)}`
+                          : `Na fila desde ${fmtDt(item.created_at)}`}
+                      </div>
+                    </div>
+                    <Badge tone={st.tone} dot>{st.label}</Badge>
+                  </div>
+                  {item.status === 'approved' && (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                      <button
+                        onClick={() => act(item.id, 'remove')}
+                        disabled={busy === item.id}
+                        style={{ flex: 1, padding: '8px 0', borderRadius: 10, border: '1px solid var(--line-2)', background: 'var(--bg-2)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={() => act(item.id, 'publish')}
+                        disabled={busy === item.id}
+                        style={{ flex: 2, padding: '8px 0', borderRadius: 10, border: '1px solid rgba(212,168,71,0.35)', background: 'rgba(212,168,71,0.12)', color: 'var(--gold-300)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        {busy === item.id ? 'Processando…' : 'Marcar como publicada'}
+                      </button>
+                    </div>
+                  )}
+                </Card>
+              )
+            })}
+          </div>
+        )}
+      </Section>
+    </>
+  )
+}
+
 // ─── Hub ───────────────────────────────────────────────────────────────────
 
-type MkTab = 'campanhas' | 'aprovacoes' | 'conhecimento'
+type MkTab = 'campanhas' | 'aprovacoes' | 'fila' | 'conhecimento'
 const MK_TABS: { id: MkTab; label: string }[] = [
   { id: 'campanhas',   label: 'Campanhas'  },
   { id: 'aprovacoes',  label: 'Aprovações' },
+  { id: 'fila',        label: 'Fila'       },
   { id: 'conhecimento',label: 'Conhecimento'},
 ]
 
@@ -322,6 +427,7 @@ export default function Marketing() {
       <ScreenBody pad={18}>
         {tab === 'campanhas'    && <CampanhasTab />}
         {tab === 'aprovacoes'   && <AprovacoesTab />}
+        {tab === 'fila'         && <FilaTab />}
         {tab === 'conhecimento' && <ConhecimentoTab />}
       </ScreenBody>
 

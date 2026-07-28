@@ -33,8 +33,10 @@ ApprovalStatus = SAEnum(
     name="approval_status",
 )
 
+# Itens só entram na fila DEPOIS da aprovação humana (validada pelo
+# PolicyEngine no enfileiramento) — por isso não existe estado pré-aprovação.
 PublishingStatus = SAEnum(
-    "waiting_approval", "approved", "published", "failed",
+    "approved", "published", "failed",
     name="publishing_status",
 )
 
@@ -165,7 +167,12 @@ class Approval(Base):
 # ---------------------------------------------------------------------------
 
 class PublishingQueue(Base):
-    """Fila de publicação futura — inativa no MVP, campos preparados para o PublishingAgent."""
+    """Fila de publicação de campanhas aprovadas.
+
+    Ciclo: `approved` (enfileirada após aprovação humana) → `published`
+    (postagem confirmada, com `published_at`) ou `failed`. A publicação em si é
+    sempre disparada por ação humana — nunca automática (block_auto_publish).
+    """
 
     __tablename__ = "publishing_queue"
 
@@ -173,7 +180,7 @@ class PublishingQueue(Base):
     campaign_id: Mapped[str] = mapped_column(String(36), ForeignKey("campaigns.id"), nullable=False, index=True)
     channel: Mapped[str] = mapped_column(String(100), nullable=False)
     scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    status: Mapped[str] = mapped_column(PublishingStatus, nullable=False, default="waiting_approval")
+    status: Mapped[str] = mapped_column(PublishingStatus, nullable=False, default="approved")
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 

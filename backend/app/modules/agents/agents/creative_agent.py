@@ -30,6 +30,9 @@ _INSTRUCTIONS = [
     "NUNCA aprove assets por conta própria. A aprovação é sempre do usuário humano.",
     "Se o formato for carrossel, crie uma ideia de sequência lógica de slides.",
     "Se o formato for reels, crie um roteiro resumido: gancho → corpo → CTA.",
+    "CADA campo do output deve conter o CONTEÚDO COMPLETO e utilizável — NUNCA um título, rótulo ou placeholder.",
+    "ERRADO: image_prompt = 'Prompt de Imagem para Geração'. CERTO: image_prompt = descrição concreta da cena com produto, composição, iluminação, paleta de cores e estilo fotográfico.",
+    "visual_briefing deve ter no mínimo 3 frases concretas; image_prompt deve descrever a cena por completo.",
     "Sempre responda em português brasileiro com vocabulário do universo de moda/esportes.",
 ]
 
@@ -51,10 +54,24 @@ def build_creative_agent_input(
     content_output: ContentAgentOutput,
     product_photos: list[dict],
     creative_context: str,
+    revision_feedback: str | None = None,
 ) -> str:
-    """Monta o payload de entrada para o CreativeAgent."""
+    """Monta o payload de entrada para o CreativeAgent.
+
+    `revision_feedback` é o comentário humano de um pedido de revisão — quando
+    presente, orienta a re-geração da direção criativa.
+    """
 
     c = strategy_output.campaign
+
+    feedback_block = ""
+    if revision_feedback and revision_feedback.strip():
+        feedback_block = f"""
+
+FEEDBACK DE REVISÃO DO USUÁRIO (MÁXIMA PRIORIDADE):
+A direção criativa anterior foi enviada para revisão com o comentário:
+"{revision_feedback.strip()}"
+Gere uma direção NOVA que atenda exatamente a esse feedback."""
 
     photos_block = "Nenhuma foto cadastrada para este produto."
     if product_photos:
@@ -91,10 +108,13 @@ FOTOS REAIS DO PRODUTO:
 {photos_block}
 
 CONTEXTO CRIATIVO (Knowledge Layer):
-{creative_context}
+{creative_context}{feedback_block}
 
 Com base em tudo acima:
 1. Crie um briefing visual completo.
 2. Crie um prompt de imagem detalhado.
 3. Recomende como usar as fotos criadas e disponíveis.
-4. Se aplicável: ideia de carrossel ou roteiro de reels."""
+4. Se aplicável: ideia de carrossel ou roteiro de reels.
+
+IMPORTANTE: preencha cada campo com o conteúdo em si, pronto para uso —
+nunca com um título ou descrição do que o campo deveria conter."""

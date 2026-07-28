@@ -28,7 +28,7 @@ function riskBadge(risk: string | null): BadgeTone {
 }
 
 export default function ApprovalDetailScreen() {
-  const { params, back } = useNav()
+  const { params, back, navigate } = useNav()
   const approvalId = params.approvalId as string
   const [comment, setComment] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -42,6 +42,43 @@ export default function ApprovalDetailScreen() {
 
   const approval = decided ?? data
   const isPending = approval?.status === 'pending'
+  const isRevision = approval?.status === 'revision_requested'
+  const isApproved = approval?.status === 'approved'
+  const [queued, setQueued] = useState(false)
+
+  // Enfileira a campanha aprovada para publicação no canal definido na estratégia.
+  const handleQueue = async () => {
+    if (submitting || !approval?.campaign) return
+    setSubmitting(true)
+    setActionError(null)
+    try {
+      await api.queueCampaignForPublishing(
+        approval.campaign.id,
+        approval.campaign.channel || 'Instagram',
+      )
+      setQueued(true)
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Erro ao enfileirar')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // Dispara a re-geração com o comentário da revisão como feedback e
+  // acompanha o novo run na tela de detalhe.
+  const handleRegenerate = async () => {
+    if (submitting) return
+    setSubmitting(true)
+    setActionError(null)
+    try {
+      const run = await api.regenerateApproval(approvalId)
+      navigate('mk-run-detail', { runId: run.run_id })
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Erro ao re-gerar')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const handle = async (action: 'approve' | 'reject' | 'revision') => {
     if (action !== 'approve' && !comment.trim()) {
@@ -230,6 +267,56 @@ export default function ApprovalDetailScreen() {
               </Btn>
             </div>
             {submitting && <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-3)', marginTop: 8 }}>Processando…</div>}
+          </Section>
+        )}
+
+        {/* Publicação: campanha aprovada pode entrar na fila */}
+        {isApproved && (
+          <Section title="Publicação" top={24}>
+            <Card>
+              {queued ? (
+                <div style={{ fontSize: 13, color: 'var(--text-1)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Ico.check size={16} stroke="var(--gold-500)" />
+                  Campanha na fila de publicação — acompanhe na aba Fila do Marketing.
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.5, marginBottom: 12 }}>
+                    Adiciona a campanha à fila de publicação do canal {approval?.campaign?.channel || 'Instagram'}.
+                    A postagem é sempre disparada por você — nada é publicado automaticamente.
+                  </div>
+                  {actionError && (
+                    <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(232,88,79,0.08)', border: '1px solid rgba(232,88,79,0.25)', color: '#F5847B', fontSize: 13, marginBottom: 10 }}>
+                      {actionError}
+                    </div>
+                  )}
+                  <Btn kind="primary" full onClick={handleQueue}>
+                    {submitting ? 'Enfileirando…' : 'Enfileirar publicação'}
+                  </Btn>
+                </>
+              )}
+            </Card>
+          </Section>
+        )}
+
+        {/* Re-geração pós-revisão: usa o comentário registrado como feedback */}
+        {isRevision && (
+          <Section title="Re-geração" top={24}>
+            <Card>
+              <div style={{ fontSize: 12.5, color: 'var(--text-2)', lineHeight: 1.5, marginBottom: 12 }}>
+                Os agentes vão re-gerar o copy e a direção criativa desta campanha
+                usando o comentário da revisão como instrução. A estratégia é preservada
+                e uma nova aprovação será criada.
+              </div>
+              {actionError && (
+                <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(232,88,79,0.08)', border: '1px solid rgba(232,88,79,0.25)', color: '#F5847B', fontSize: 13, marginBottom: 10 }}>
+                  {actionError}
+                </div>
+              )}
+              <Btn kind="primary" full icon={Ico.sparkle} onClick={handleRegenerate}>
+                {submitting ? 'Disparando…' : 'Re-gerar com este feedback'}
+              </Btn>
+            </Card>
           </Section>
         )}
 

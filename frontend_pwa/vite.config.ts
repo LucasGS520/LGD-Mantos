@@ -8,6 +8,14 @@ export default defineConfig({
       usePolling: true,
       interval: 500,
     },
+    // Em desenvolvimento, encaminha chamadas de API e arquivos estáticos para o
+    // backend local — espelha o comportamento do reverse proxy (Caddy) em produção,
+    // permitindo que o frontend use caminhos relativos (/api/v1) em todo ambiente.
+    proxy: {
+      '/api': 'http://localhost:8000',
+      '/uploads': 'http://localhost:8000',
+      '/static': 'http://localhost:8000',
+    },
   },
   plugins: [
     react(),

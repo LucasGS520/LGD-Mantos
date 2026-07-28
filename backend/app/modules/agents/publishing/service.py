@@ -1,6 +1,6 @@
 """PublishingService — gerencia a fila de publicação de campanhas aprovadas."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -61,3 +61,42 @@ class PublishingService:
             q = q.where(PublishingQueue.status == status)
         result = await db.execute(q)
         return result.scalars().all()
+
+    @staticmethod
+    async def mark_published(db: AsyncSession, entry_id: str) -> PublishingQueue:
+        """Marca um item da fila como publicado — ação humana explícita.
+
+        Fecha o ciclo de publicação do MVP: o usuário posta manualmente no canal
+        e registra aqui, gravando `published_at` para rastreabilidade. Quando a
+        integração real com canais existir, esse endpoint permanece como fallback.
+        """
+        entry = await db.get(PublishingQueue, entry_id)
+        if not entry:
+            raise HTTPException(status_code=404, detail="Item da fila não encontrado")
+        if entry.status == "published":
+            raise HTTPException(status_code=409, detail="Item já está publicado")
+        if entry.status != "approved":
+            raise HTTPException(
+                status_code=409,
+                detail=f"Só itens 'approved' podem ser publicados (status atual: '{entry.status}')",
+            )
+
+        entry.status = "published"
+        entry.published_at = datetime.now(timezone.utc)
+        await db.commit()
+        await db.refresh(entry)
+        return entry
+
+    @staticmethod
+    async def remove_from_queue(db: AsyncSession, entry_id: str) -> None:
+        """Remove um item ainda não publicado da fila (cancelamento humano)."""
+        entry = await db.get(PublishingQueue, entry_id)
+        if not entry:
+            raise HTTPException(status_code=404, detail="Item da fila não encontrado")
+        if entry.status == "published":
+            raise HTTPException(
+                status_code=409,
+                detail="Item já publicado não pode ser removido — o registro é histórico.",
+            )
+        await db.delete(entry)
+        await db.commit()

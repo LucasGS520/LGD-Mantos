@@ -21,7 +21,6 @@ class AgentContextService:
         marketing = await MarketingIntelligenceService.marketing_intelligence(db)
         product_analysis = await ProductAnalysisService.product_analysis(db)
         data_quality = await DataQualityService.data_quality(db)
-        purchase_suggestions = await ProductAnalysisService.purchase_suggestions(db)
 
         return {
             "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -42,5 +41,4 @@ class AgentContextService:
                 "promotion_candidates": marketing["promotion_candidates"][:5],
                 "highlight_candidates": marketing["highlight_candidates"][:5],
             },
-            "purchase_suggestions": purchase_suggestions[:5],
         }

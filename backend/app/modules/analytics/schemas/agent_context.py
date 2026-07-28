@@ -28,4 +28,3 @@ class AgentContextResponse(BaseModel):
     shop_health: ShopHealth
     attention: AttentionBlock
     opportunities: OpportunitiesBlock
-    purchase_suggestions: list[dict]

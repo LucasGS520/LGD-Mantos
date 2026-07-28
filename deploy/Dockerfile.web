@@ -1,0 +1,28 @@
+# Dockerfile.web — imagem única de "borda" da produção: builda o PWA e o serve
+# via Caddy, que também faz reverse proxy da API e emite HTTPS automático.
+#
+# Contexto de build esperado: a RAIZ do repositório (ver docker-compose.prod.yml).
+
+# ── Estágio 1: build do frontend ────────────────────────────────────────────
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+# Instala dependências primeiro para aproveitar o cache de camadas do Docker.
+COPY frontend_pwa/package*.json ./
+RUN npm ci
+
+COPY frontend_pwa/ ./
+
+# Em produção o PWA usa caminho relativo (/api/v1) — mesmo domínio da API,
+# atrás do Caddy. Pode ser sobrescrito com --build-arg em cenários especiais.
+ARG VITE_API_URL=/api/v1
+ENV VITE_API_URL=$VITE_API_URL
+
+RUN npm run build
+
+# ── Estágio 2: Caddy servindo o PWA + proxy da API ──────────────────────────
+FROM caddy:2-alpine
+
+COPY deploy/Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/dist /srv

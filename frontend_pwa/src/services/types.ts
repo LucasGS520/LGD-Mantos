@@ -393,3 +393,13 @@ export interface KnowledgeDoc {
   created_at: string
   updated_at: string
 }
+
+export interface PublishingQueueItem {
+  id: string
+  campaign_id: string
+  channel: string
+  scheduled_at: string | null
+  status: 'approved' | 'published' | 'failed'
+  published_at: string | null
+  created_at: string
+}

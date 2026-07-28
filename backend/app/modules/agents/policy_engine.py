@@ -5,6 +5,7 @@ Cada validação é uma checagem explícita de regras de negócio.
 Os agentes consultam o PolicyEngine antes de qualquer ação sensível.
 """
 
+import re
 from dataclasses import dataclass
 
 
@@ -31,8 +32,13 @@ class PolicyEngine:
 
     @staticmethod
     def validate_content_has_no_invented_price(text: str) -> PolicyResult:
-        """Bloqueia copy que menciona preço sem contexto verificado."""
-        price_patterns = ["r$", "reais", "desconto de", "% off", "promoção de"]
+        """Bloqueia copy que menciona preço sem contexto verificado.
+
+        A palavra "reais" só bloqueia quando acompanhada de número (ex.:
+        "por 199 reais") — expressões legítimas como "fotos reais do produto"
+        não são preço e não podem gerar falso positivo.
+        """
+        price_patterns = ["r$", "desconto de", "% off", "promoção de"]
         lowered = text.lower()
         for pattern in price_patterns:
             if pattern in lowered:
@@ -40,6 +46,11 @@ class PolicyEngine:
                     f"Copy menciona preço ou desconto ('{pattern}'). "
                     "Preços devem vir dos dados operacionais, não do LLM."
                 )
+        if re.search(r"\d[\d.,]*\s*reais\b", lowered):
+            return PolicyResult.block(
+                "Copy menciona valor em reais. "
+                "Preços devem vir dos dados operacionais, não do LLM."
+            )
         return PolicyResult.allow()
 
     @staticmethod

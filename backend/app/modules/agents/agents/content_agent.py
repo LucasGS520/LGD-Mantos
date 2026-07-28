@@ -24,6 +24,7 @@ _INSTRUCTIONS = [
     "Gere copy com energia comercial genuína — baseada no que o produto realmente oferece.",
     "Gere 2 variações alternativas com estilos diferentes: urgência, aspiracional ou informativo.",
     "Mantenha as legendas em tamanho adequado para o canal (Instagram: 150-300 chars principal).",
+    "Revise a ortografia de todo o texto antes de responder — nomes de produto devem ser copiados exatamente como informados, sem palavras inventadas ou letras trocadas.",
     "Sempre responda em português brasileiro com linguagem adequada ao público da loja.",
 ]
 
@@ -43,10 +44,25 @@ def build_content_agent() -> Agent:
 def build_content_agent_input(
     strategy_output: StrategyAgentOutput,
     brand_context: str,
+    revision_feedback: str | None = None,
 ) -> str:
-    """Monta o payload de entrada para o ContentAgent."""
+    """Monta o payload de entrada para o ContentAgent.
+
+    `revision_feedback` é o comentário humano de um pedido de revisão — quando
+    presente, entra no prompt como instrução de máxima prioridade para a
+    re-geração do copy.
+    """
 
     c = strategy_output.campaign
+    feedback_block = ""
+    if revision_feedback and revision_feedback.strip():
+        feedback_block = f"""
+
+FEEDBACK DE REVISÃO DO USUÁRIO (MÁXIMA PRIORIDADE):
+O copy anterior desta campanha foi enviado para revisão com o comentário:
+"{revision_feedback.strip()}"
+Gere um copy NOVO que atenda exatamente a esse feedback, mantendo a estratégia."""
+
     return f"""ESTRATÉGIA DA CAMPANHA (StrategyAgent):
 - Nome: {c.name}
 - Produto: {c.product_name} (SKU: {c.product_sku})
@@ -55,7 +71,7 @@ def build_content_agent_input(
 - Formato: {c.format}
 - Ângulo de venda: {c.angle}
 - CTA definido: {c.cta}
-- Justificativa: {c.reasoning}
+- Justificativa: {c.reasoning}{feedback_block}
 
 CONTEXTO DE MARCA (Knowledge Layer):
 {brand_context}
