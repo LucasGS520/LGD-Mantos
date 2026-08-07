@@ -1,5 +1,9 @@
 # Master Plan Tracker — LGD Mantos
 
+## Referência atual para Agentes de Marketing
+
+- **[AGENTES_MARKETING_SPEC.md](AGENTES_MARKETING_SPEC.md)** — especificação de produto, regras, fluxo, MVP e fases recomendadas para a camada `agents`. Esta é a base para a próxima etapa de desenvolvimento; o plano histórico abaixo registra o que já foi validado.
+
 ```yaml
 active_plan: PLAN-20260716-1846-consolidacao-agentes-marketing
 last_updated: 2026-07-17 02:35
