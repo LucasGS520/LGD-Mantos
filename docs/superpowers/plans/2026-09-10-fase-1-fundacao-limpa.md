@@ -399,8 +399,9 @@ ROTAS_REMOVIDAS = [
     "/api/v1/agents/knowledge",
     "/api/v1/agents/ops/metrics",
     "/api/v1/analytics/agent-context",
-    "/api/v1/analytics/marketing-intelligence",
 ]
+# Nota: /api/v1/analytics/marketing-intelligence ainda existe neste ponto — só
+# é renomeado na Task 5, que acrescenta a rota a esta lista.
 
 
 @pytest.mark.parametrize("rota", ROTAS_REMOVIDAS)
@@ -1129,17 +1130,29 @@ por
 router.include_router(product_classification_router)
 ```
 
-- [ ] **Step 6: Rodar os testes e confirmar que passam**
+- [ ] **Step 6: Fechar a lista de rotas removidas**
+
+Agora que a rota antiga deixou de existir, acrescentá-la à lista
+`ROTAS_REMOVIDAS` em `backend/tests/test_agents_removed.py`, junto com o
+comentário que a Task 2 deixou no lugar:
+
+```python
+    "/api/v1/agents/ops/metrics",
+    "/api/v1/analytics/agent-context",
+    "/api/v1/analytics/marketing-intelligence",
+]
+```
+
+- [ ] **Step 7: Rodar os testes e confirmar que passam**
 
 ```bash
 cd backend && pytest tests/test_product_classification.py tests/test_agents_removed.py -v
 ```
 
-Esperado: todos PASS. `test_agents_removed.py` inclui
-`/api/v1/analytics/marketing-intelligence` na lista de rotas que devem responder
-404 — se ele passar, o rename foi completo.
+Esperado: todos PASS. Se `test_agents_removed.py` passar com a rota antiga na
+lista, o rename foi completo.
 
-- [ ] **Step 7: Rodar a suíte inteira**
+- [ ] **Step 8: Rodar a suíte inteira**
 
 ```bash
 cd backend && pytest -v
@@ -1147,7 +1160,7 @@ cd backend && pytest -v
 
 Esperado: tudo verde.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add -A backend
