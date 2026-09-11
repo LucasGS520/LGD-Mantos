@@ -29,6 +29,19 @@ from sqlalchemy import text
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def _prepare_database():
     """Cria o banco de teste (se não existir) e o schema completo dos modelos."""
+    # Trava de segurança: a suíte trunca tabelas antes de cada teste. Se a
+    # DATABASE_URL resolvida apontar para qualquer banco que não seja o de
+    # testes, abortar antes de tocar em qualquer dado — um .env de
+    # desenvolvimento carregado pelo shell faria a suíte apagar dados reais.
+    from app.core.config import settings
+
+    if "lgd_mantos_test" not in settings.DATABASE_URL:
+        raise RuntimeError(
+            "DATABASE_URL nao aponta para o banco de testes: "
+            f"{settings.DATABASE_URL!r}. A suite trunca tabelas antes de cada "
+            "teste e recusa rodar fora de 'lgd_mantos_test'."
+        )
+
     admin = await asyncpg.connect(
         user="postgres",
         password="lgdmantos123",

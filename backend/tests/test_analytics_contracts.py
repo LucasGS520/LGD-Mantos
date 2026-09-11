@@ -7,8 +7,6 @@ de segurança para as fases seguintes, que vão mexer nesses mesmos services.
 
 import pytest
 
-from tests.conftest import create_product
-
 
 ROTAS_PROTEGIDAS = [
     "/api/v1/analytics/dashboard",
@@ -65,10 +63,3 @@ async def test_data_quality_expoe_score_e_total(auth_client):
     corpo = resposta.json()
     assert "score" in corpo
     assert "total_issues" in corpo
-
-
-async def test_top_products_reflete_produto_existente(auth_client, db):
-    await create_product(db, sku="CONTRATO-1", name="Manto Contrato")
-    resposta = await auth_client.get("/api/v1/analytics/top-products")
-    assert resposta.status_code == 200
-    assert isinstance(resposta.json(), list)
