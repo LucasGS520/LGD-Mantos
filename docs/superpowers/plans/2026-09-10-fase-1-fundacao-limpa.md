@@ -236,7 +236,8 @@ git commit -m "refactor: remove o modulo de agents de marketing do backend"
 ## Task 2: Reescrever o conftest e repor a cobertura de testes
 
 **Files:**
-- Modify: `backend/tests/conftest.py`
+- Create: `backend/tests/conftest.py` (a Task 1 apagou o arquivo antigo, que era
+  inteiramente da camada de agents — este nasce do zero com o conteúdo abaixo)
 - Create: `backend/tests/test_agents_removed.py`
 - Create: `backend/tests/test_analytics_contracts.py`
 
@@ -246,12 +247,13 @@ git commit -m "refactor: remove o modulo de agents de marketing do backend"
   usados pelas tasks 5 e seguintes; e o helper `auth_client()` que devolve um
   `httpx.AsyncClient` já autenticado contra a aplicação ASGI.
 
-- [ ] **Step 1: Reescrever `backend/tests/conftest.py` por inteiro**
+- [ ] **Step 1: Criar `backend/tests/conftest.py`**
 
-O arquivo atual seta variáveis de ambiente do Ollama, importa modelos de agents,
-trunca sete tabelas de marketing e expõe a fábrica `create_campaign_bundle`. Nada
-disso sobrevive. O helper `create_product` permanece, e um cliente HTTP
-autenticado é acrescentado porque os testes de contrato precisam dele.
+O arquivo antigo — que setava variáveis de ambiente do Ollama, importava modelos
+de agents, truncava sete tabelas de marketing e expunha a fábrica
+`create_campaign_bundle` — foi apagado na Task 1. Escrever este do zero, com o
+conteúdo abaixo: o helper `create_product` volta, e um cliente HTTP autenticado
+é acrescentado porque os testes de contrato precisam dele.
 
 ```python
 """Configuração compartilhada dos testes.
