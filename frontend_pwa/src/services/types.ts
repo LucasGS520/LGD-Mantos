@@ -403,3 +403,24 @@ export interface PublishingQueueItem {
   published_at: string | null
   created_at: string
 }
+
+// ─── Configurações e Status do sistema ─────────────────────────────────────
+
+// Limiares de alerta configuráveis (tela Configurações). O payload de escrita
+// exige os três campos — não há atualização parcial (ver PreferencesUpdate no backend).
+export interface AppPreferences {
+  rupture_days: number
+  stopped_days: number
+  critical_stock: number
+  updated_at: string
+}
+
+export type AppPreferencesInput = Pick<AppPreferences, 'rupture_days' | 'stopped_days' | 'critical_stock'>
+
+// Resposta de GET /health — rota pública, usada pela tela Status do sistema.
+export interface HealthStatus {
+  status: string
+  version: string
+  database: 'ok' | 'error'
+  server_time: string
+}

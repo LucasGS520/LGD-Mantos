@@ -12,7 +12,7 @@ export type ScreenId =
   | 'an-categorias' | 'an-category-detail' | 'an-alertas' | 'an-marketing-intel' | 'an-compras'
   | 'marketing'
   | 'mk-new-run' | 'mk-run-detail' | 'mk-approval-detail' | 'mk-knowledge-form'
-  | 'more' | 'suppliers' | 'supplier-form' | 'categories' | 'category-form' | 'sale-channels' | 'channel-form' | 'settings' | 'about'
+  | 'more' | 'suppliers' | 'supplier-form' | 'categories' | 'category-form' | 'sale-channels' | 'channel-form' | 'settings' | 'system-status' | 'about'
 
 export type TabId = 'op' | 'an' | 'mk' | 'mais'
 

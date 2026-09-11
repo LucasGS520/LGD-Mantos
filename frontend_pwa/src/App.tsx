@@ -36,6 +36,7 @@ import CategoryForm from './screens/mais/CategoryForm'
 import SaleChannels from './screens/mais/SaleChannels'
 import SaleChannelForm from './screens/mais/SaleChannelForm'
 import Settings from './screens/mais/Settings'
+import SystemStatus from './screens/mais/SystemStatus'
 import About from './screens/mais/About'
 
 export default function App() {
@@ -78,6 +79,7 @@ export default function App() {
     'sale-channels':  <SaleChannels />,
     'channel-form':   <SaleChannelForm />,
     'settings':       <Settings />,
+    'system-status':  <SystemStatus />,
     'about':          <About />,
   }
 

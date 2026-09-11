@@ -79,6 +79,7 @@ export const Ico = {
   eyeOff:    (p: IcoProps) => <Icon {...p}><path d="M3 3l18 18M10 6.5A10 10 0 0112 6c6 0 10 7 10 7a17 17 0 01-3 4M6 6c-2 1.5-4 6-4 6s4 7 10 7c1.7 0 3.3-.6 4.7-1.5M9.9 9.9a3 3 0 004.2 4.2"/></Icon>,
   lock:      (p: IcoProps) => <Icon {...p}><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></Icon>,
   wifi:      (p: IcoProps) => <Icon {...p}><path d="M2 9a17 17 0 0120 0M5 13a12 12 0 0114 0M8.5 17a6 6 0 017 0M12 21v.01"/></Icon>,
+  download:  (p: IcoProps) => <Icon {...p}><path d="M12 4v12M6 12l6 6 6-6M4 20h16"/></Icon>,
 } as const
 
 export type IcoKey = keyof typeof Ico
