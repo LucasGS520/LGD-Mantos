@@ -12,7 +12,6 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.version import API_VERSION
-from app.modules.agents.routes import router as agents_router
 from app.modules.analytics.routes.routes import router as analytics_router
 from app.modules.auth.routes import router as auth_router
 from app.modules.export.routes import router as export_router
@@ -39,7 +38,6 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(operational_router, prefix="/api/v1")
 app.include_router(analytics_router, prefix="/api/v1")
-app.include_router(agents_router, prefix="/api/v1")
 app.include_router(settings_router, prefix="/api/v1")
 app.include_router(export_router, prefix="/api/v1")
 app.include_router(system_router, prefix="/api/v1")

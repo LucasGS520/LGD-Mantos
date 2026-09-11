@@ -19,8 +19,6 @@ from app.core.database import Base
 # Sem esses imports o autogenerate enxergaria um schema vazio.
 import app.shared.models.catalog  # noqa: F401
 import app.shared.models.operations  # noqa: F401
-import app.modules.agents.knowledge.models  # noqa: F401
-import app.modules.agents.marketing_ops.models  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
