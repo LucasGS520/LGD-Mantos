@@ -12,22 +12,13 @@ import PurchaseList from './screens/op/PurchaseList'
 import EntryDetail from './screens/op/EntryDetail'
 import Expenses from './screens/op/Expenses'
 import StockMoves from './screens/op/StockMoves'
-import Dashboard from './screens/an/Dashboard'
-import TopProducts from './screens/an/TopProducts'
-import BySize from './screens/an/BySize'
-import ByChannel from './screens/an/ByChannel'
-import Suggestions from './screens/an/Suggestions'
-import DRE from './screens/an/DRE'
-import Categorias from './screens/an/Categorias'
-import CategoryDetail from './screens/an/CategoryDetail'
-import Alertas from './screens/an/Alertas'
-import MarketingIntel from './screens/an/MarketingIntel'
-import ComprasReposicao from './screens/an/ComprasReposicao'
-import Marketing from './screens/Marketing'
-import NewRun from './screens/mk/NewRun'
-import RunDetail from './screens/mk/RunDetail'
-import ApprovalDetail from './screens/mk/ApprovalDetail'
-import KnowledgeDocForm from './screens/mk/KnowledgeDocForm'
+import Overview from './screens/intel/Overview'
+import Health from './screens/intel/Health'
+import Products from './screens/intel/Products'
+import CategoryDetail from './screens/intel/CategoryDetail'
+import Stock from './screens/intel/Stock'
+import Finance from './screens/intel/Finance'
+import Channels from './screens/intel/Channels'
 import More from './screens/mais/More'
 import Suppliers from './screens/mais/Suppliers'
 import SupplierForm from './screens/mais/SupplierForm'
@@ -36,6 +27,7 @@ import CategoryForm from './screens/mais/CategoryForm'
 import SaleChannels from './screens/mais/SaleChannels'
 import SaleChannelForm from './screens/mais/SaleChannelForm'
 import Settings from './screens/mais/Settings'
+import SystemStatus from './screens/mais/SystemStatus'
 import About from './screens/mais/About'
 
 export default function App() {
@@ -54,22 +46,13 @@ export default function App() {
     'entry-detail':   <EntryDetail />,
     'expenses':       <Expenses />,
     'stock-moves':    <StockMoves />,
-    'dashboard':          <Dashboard />,
-    'top-products':       <TopProducts />,
-    'by-size':            <BySize />,
-    'by-channel':         <ByChannel />,
-    'suggestions':        <Suggestions />,
-    'dre':                <DRE />,
-    'an-categorias':      <Categorias />,
-    'an-category-detail': <CategoryDetail />,
-    'an-alertas':         <Alertas />,
-    'an-marketing-intel': <MarketingIntel />,
-    'an-compras':         <ComprasReposicao />,
-    'marketing':           <Marketing />,
-    'mk-new-run':          <NewRun />,
-    'mk-run-detail':       <RunDetail />,
-    'mk-approval-detail':  <ApprovalDetail />,
-    'mk-knowledge-form':   <KnowledgeDocForm />,
+    'intel-overview':        <Overview />,
+    'intel-health':          <Health />,
+    'intel-products':        <Products />,
+    'intel-category-detail': <CategoryDetail />,
+    'intel-stock':           <Stock />,
+    'intel-finance':         <Finance />,
+    'intel-channels':        <Channels />,
     'more':           <More />,
     'suppliers':      <Suppliers />,
     'supplier-form':  <SupplierForm />,
@@ -78,6 +61,7 @@ export default function App() {
     'sale-channels':  <SaleChannels />,
     'channel-form':   <SaleChannelForm />,
     'settings':       <Settings />,
+    'system-status':  <SystemStatus />,
     'about':          <About />,
   }
 

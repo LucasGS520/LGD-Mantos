@@ -10,7 +10,7 @@ pydantic-settings==2.6.1
 # Migrations de schema do banco.
 alembic==1.18.5
 
-# Autenticação, uploads e cliente HTTP externo para IA.
+# Autenticação, uploads e cliente HTTP assíncrono (usado nos testes de API).
 python-jose[cryptography]==3.3.0
 python-multipart==0.0.20
 aiofiles==24.1.0
@@ -19,8 +19,3 @@ httpx==0.28.1
 # Suporte a imagens.
 pillow==11.0.0
 
-# Framework de agentes IA e cliente Ollama.
-# O pacote `openai` é exigido pelo Agno para o modelo Ollama (cliente compatível).
-agno==2.6.19
-ollama==0.6.2
-openai==2.45.0

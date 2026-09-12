@@ -1,7 +1,17 @@
+import { useEffect, useState } from 'react'
 import { AppBar, ScreenBody } from '../../components/Chrome'
 import { Card } from '../../components/UI'
+import { api } from '../../services/api'
 
 export default function About() {
+  // Versão da API vem do health — não hardcoded, para não divergir da versão real
+  // do servidor (ver __APP_VERSION__/__BUILD_HASH__ para a versão do próprio app).
+  const [apiVersion, setApiVersion] = useState<string | null>(null)
+
+  useEffect(() => {
+    api.getHealth().then(h => setApiVersion(h.version)).catch(() => {})
+  }, [])
+
   return (
     <>
       <AppBar back title="Sobre o app" />
@@ -16,9 +26,10 @@ export default function About() {
 
         <Card padding={0}>
           {[
-            { label: 'Versão',     value: 'v1.0.0'         },
-            { label: 'Plataforma', value: 'PWA / Web'       },
-            { label: 'Backend',    value: 'FastAPI + PostgreSQL' },
+            { label: 'Versão do app', value: `v${__APP_VERSION__} · ${__BUILD_HASH__}` },
+            { label: 'Versão da API', value: apiVersion ? `v${apiVersion}` : '—' },
+            { label: 'Plataforma',    value: 'PWA / Web' },
+            { label: 'Backend',       value: 'FastAPI + PostgreSQL' },
           ].map((row, i) => (
             <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderTop: i === 0 ? undefined : '1px solid var(--line-1)' }}>
               <span style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 600 }}>{row.label}</span>

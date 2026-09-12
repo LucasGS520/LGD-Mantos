@@ -3,9 +3,8 @@ import type {
   Dashboard, DRE, TopProduct, BySizeItem, ByChannelItem,
   ProductAnalysis, DataQuality,
   CategoryPerformance, CategorySizeDistribution, CategoryCoverage, BuyingPattern, CategorySizeStock,
-  MarketingIntelligence,
-  AgentRun, AgentApprovalItem, AgentApprovalDetail, OpsMetrics, KnowledgeDoc,
-  PublishingQueueItem,
+  ProductClassification,
+  AppPreferences, AppPreferencesInput, HealthStatus,
 } from './types'
 
 // Base da API: usa VITE_API_URL quando definida (dev fora do proxy, ambientes
@@ -21,6 +20,17 @@ let _onUnauthorized: (() => void) | null = null
 
 export function setUnauthorizedHandler(fn: () => void): void {
   _onUnauthorized = fn
+}
+
+// Monta a querystring para endpoints de analytics que aceitam `period` OU
+// `days` (ex.: /analytics/top-products, /analytics/by-size). O backend dá
+// prioridade a `period` quando ambos chegam (ver resolve_period), então aqui
+// só mandamos `days` quando não há period definido.
+function periodOuDiasQuery(period?: string, days?: number): string {
+  const q = new URLSearchParams()
+  if (period) q.set('period', period)
+  else if (days !== undefined) q.set('days', String(days))
+  return q.toString()
 }
 
 async function readJsonBody<T>(res: Response): Promise<T | null> {
@@ -66,6 +76,47 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
   return data
 }
 
+/**
+ * Baixa um arquivo autenticado (CSV/ZIP de exportação) e dispara o download no
+ * navegador. Usa fetch (não um <a href> direto) porque o download exige o header
+ * Authorization — e libera a object URL logo depois de iniciar o download, para
+ * não reter o arquivo inteiro em memória além do necessário.
+ */
+async function downloadFile(path: string, fallbackName: string): Promise<void> {
+  const token = Session.load()
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(`${BASE}${path}`, { method: 'GET', headers })
+
+  if (res.status === 401) {
+    Session.clear()
+    _onUnauthorized?.()
+    throw new Error('Sessão expirada. Faça login novamente.')
+  }
+  if (!res.ok) {
+    let msg = `Erro ${res.status}`
+    const d = await readJsonBody<{ detail?: unknown }>(res)
+    if (d?.detail) msg = typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail)
+    throw new Error(msg)
+  }
+
+  const disposition = res.headers.get('Content-Disposition') ?? ''
+  const filename = disposition.match(/filename="?([^"]+)"?/)?.[1] ?? fallbackName
+
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  // Pequeno atraso antes de revogar: alguns navegadores iniciam o download de forma
+  // assíncrona a partir do clique — revogar cedo demais pode cancelar o download.
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
 export const api = {
   get: <T>(path: string) => req<T>('GET', path),
   post: <T>(path: string, body: unknown) => req<T>('POST', path, body),
@@ -104,11 +155,15 @@ export const api = {
     return req<DRE>('GET', `/analytics/finance/dre${qs ? `?${qs}` : ''}`)
   },
 
-  getTopProducts: (period: string) =>
-    req<TopProduct[]>('GET', `/analytics/top-products?period=${period}`),
+  // period tem prioridade sobre days no backend (ver resolve_period) — por isso
+  // days só é enviado quando period não é informado. Aceitar os dois evita que
+  // telas com janela fixa (ex.: Products.tsx, "últimos 30 dias") precisem cair
+  // pra api.get() cru e perder a tipagem de retorno.
+  getTopProducts: (period?: string, days?: number) =>
+    req<TopProduct[]>('GET', `/analytics/top-products?${periodOuDiasQuery(period, days)}`),
 
-  getBySize: (period: string) =>
-    req<BySizeItem[]>('GET', `/analytics/by-size?period=${period}`),
+  getBySize: (period?: string, days?: number) =>
+    req<BySizeItem[]>('GET', `/analytics/by-size?${periodOuDiasQuery(period, days)}`),
 
   getByChannel: (period: string) =>
     req<ByChannelItem[]>('GET', `/analytics/by-channel?period=${period}`),
@@ -134,69 +189,24 @@ export const api = {
   getCategorySizeStock: () =>
     req<CategorySizeStock[]>('GET', '/analytics/categories/size-stock'),
 
-  getMarketingIntelligence: () =>
-    req<MarketingIntelligence>('GET', '/analytics/marketing-intelligence'),
+  getProductClassification: () =>
+    req<ProductClassification>('GET', '/analytics/product-classification'),
 
-  // ─── Agents / Marketing Ops ──────────────────────────────────
-  getAgentRuns: (status?: string) =>
-    req<AgentRun[]>('GET', `/agents/runs${status ? `?status=${status}` : ''}`),
+  // ─── Configurações e Status do sistema ───────────────────────────────────
+  getPreferences: () =>
+    req<AppPreferences>('GET', '/settings/preferences'),
 
-  createAgentRun: (objective: string) =>
-    req<AgentRun>('POST', '/agents/runs', { objective }),
+  updatePreferences: (data: AppPreferencesInput) =>
+    req<AppPreferences>('PUT', '/settings/preferences', data),
 
-  getAgentRun: (runId: string) =>
-    req<AgentRun>('GET', `/agents/runs/${runId}`),
+  getHealth: () =>
+    req<HealthStatus>('GET', '/health'),
 
-  getPendingApprovals: () =>
-    req<AgentApprovalItem[]>('GET', '/agents/approvals/pending'),
+  exportDataset: (dataset: string) =>
+    downloadFile(`/export/${dataset}`, `lgd-${dataset}.csv`),
 
-  getApprovals: (status?: string) =>
-    req<AgentApprovalItem[]>('GET', `/agents/approvals${status ? `?status=${status}` : ''}`),
-
-  getApprovalDetail: (id: string) =>
-    req<AgentApprovalDetail>('GET', `/agents/approvals/${id}`),
-
-  approveApproval: (id: string, comment?: string) =>
-    req<AgentApprovalDetail>('POST', `/agents/approvals/${id}/approve`, { comment: comment ?? null }),
-
-  rejectApproval: (id: string, comment: string) =>
-    req<AgentApprovalDetail>('POST', `/agents/approvals/${id}/reject`, { comment }),
-
-  requestRevision: (id: string, comment: string) =>
-    req<AgentApprovalDetail>('POST', `/agents/approvals/${id}/revision`, { comment }),
-
-  regenerateApproval: (id: string) =>
-    req<AgentRun>('POST', `/agents/approvals/${id}/regenerate`),
-
-  getPublishingQueue: (status?: string) =>
-    req<PublishingQueueItem[]>('GET', `/agents/publishing${status ? `?status=${status}` : ''}`),
-
-  queueCampaignForPublishing: (campaignId: string, channel: string) =>
-    req<PublishingQueueItem>('POST', '/agents/publishing/queue', { campaign_id: campaignId, channel }),
-
-  markQueueItemPublished: (entryId: string) =>
-    req<PublishingQueueItem>('POST', `/agents/publishing/${entryId}/published`),
-
-  removeQueueItem: (entryId: string) =>
-    req<void>('DELETE', `/agents/publishing/${entryId}`),
-
-  getOpsMetrics: () =>
-    req<OpsMetrics>('GET', '/agents/ops/metrics'),
-
-  getKnowledgeDocs: (docType?: string) => {
-    const q = new URLSearchParams({ active_only: 'false' })
-    if (docType) q.set('doc_type', docType)
-    return req<KnowledgeDoc[]>('GET', `/agents/knowledge?${q}`)
-  },
-
-  createKnowledgeDoc: (body: { doc_type: string; title: string; content: string; is_active: boolean }) =>
-    req<KnowledgeDoc>('POST', '/agents/knowledge', body),
-
-  updateKnowledgeDoc: (id: string, body: Partial<{ title: string; content: string; is_active: boolean }>) =>
-    req<KnowledgeDoc>('PUT', `/agents/knowledge/${id}`, body),
-
-  deleteKnowledgeDoc: (id: string) =>
-    req<void>('DELETE', `/agents/knowledge/${id}`),
+  exportBackup: () =>
+    downloadFile('/export/backup', 'lgd-backup.zip'),
 
   async login(password: string): Promise<string> {
     const res = await fetch(`${BASE}/auth/login`, {

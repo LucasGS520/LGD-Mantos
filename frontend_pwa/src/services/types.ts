@@ -277,8 +277,8 @@ export interface CategorySizeStock {
   sizes: { size: string; stock: number }[]
 }
 
-// Analytics — Marketing Intelligence
-export interface MarketingVariant {
+// Analytics — Classificação de produtos (substitui a antiga Marketing Intelligence)
+export interface ClassifiedVariant {
   product_name: string
   sku: string
   size: string | null
@@ -289,117 +289,33 @@ export interface MarketingVariant {
   reason: string
 }
 
-export interface MarketingIntelligence {
-  post_candidates: MarketingVariant[]
-  highlight_candidates: MarketingVariant[]
-  promotion_candidates: MarketingVariant[]
-  avoid_post: MarketingVariant[]
-  restock_first: MarketingVariant[]
+/** Cinco situações de estoque devolvidas por GET /analytics/product-classification.
+ *  A sexta situação — produto parado — vem de ProductAnalysis.stopped. */
+export interface ProductClassification {
+  alta_saida_estoque_saudavel: ClassifiedVariant[]
+  margem_alta: ClassifiedVariant[]
+  baixa_saida_estoque_alto: ClassifiedVariant[]
+  estoque_critico: ClassifiedVariant[]
+  sem_estoque: ClassifiedVariant[]
 }
 
-// Marketing
-export interface MarketingRequest {
-  message: string
-  product_ids?: string[]
-}
+// ─── Configurações e Status do sistema ─────────────────────────────────────
 
-export interface MarketingResponse {
-  content: string
-}
-
-// ─── Agents / Marketing Ops ────────────────────────────────────────────────
-
-export interface AgentRun {
-  run_id: string
-  status: 'pending' | 'running' | 'completed' | 'failed'
-  objective: string
-  created_at: string
-  updated_at: string
-  error?: string | null
-  result?: Record<string, string | null> | null
-}
-
-export interface AgentApprovalItem {
-  id: string
-  status: 'pending' | 'approved' | 'rejected' | 'revision_requested'
-  campaign_id: string | null
-  campaign_name: string | null
-  campaign_channel: string | null
-  created_at: string
-}
-
-export interface AgentPostSummary {
-  id: string
-  caption: string | null
-  headline: string | null
-  cta_text: string | null
-  format: string | null
-  copy_variations: { style: string; caption: string; headline: string }[] | null
-  status: string
-}
-
-export interface AgentCreativeBriefSummary {
-  id: string
-  visual_briefing: string | null
-  image_prompt: string | null
-  carousel_idea: string | null
-  reel_script: string | null
-  photo_analysis: Record<string, unknown> | null
-  status: string
-}
-
-export interface AgentCampaign {
-  id: string
-  name: string
-  objective: string
-  channel: string | null
-  format: string | null
-  angle: string | null
-  cta: string | null
-  risk_level: string | null
-  status: string
-  posts: AgentPostSummary[]
-  creative_briefs: AgentCreativeBriefSummary[]
-}
-
-export interface AgentApprovalDetail {
-  id: string
-  status: string
-  comment: string | null
-  decided_at: string | null
-  created_at: string
-  campaign: AgentCampaign | null
-}
-
-export interface OpsMetrics {
-  total_runs: number
-  runs_pending: number
-  runs_running: number
-  runs_completed: number
-  runs_failed: number
-  success_rate: number
-  pending_approvals: number
-  approved_campaigns: number
-  rejected_campaigns: number
-  knowledge_docs_active: number
-}
-
-export interface KnowledgeDoc {
-  id: string
-  doc_type: string
-  title: string
-  content: string
-  is_active: boolean
-  created_at: string
+// Limiares de alerta configuráveis (tela Configurações). O payload de escrita
+// exige os três campos — não há atualização parcial (ver PreferencesUpdate no backend).
+export interface AppPreferences {
+  rupture_days: number
+  stopped_days: number
+  critical_stock: number
   updated_at: string
 }
 
-export interface PublishingQueueItem {
-  id: string
-  campaign_id: string
-  channel: string
-  scheduled_at: string | null
-  status: 'approved' | 'published' | 'failed'
-  published_at: string | null
-  created_at: string
+export type AppPreferencesInput = Pick<AppPreferences, 'rupture_days' | 'stopped_days' | 'critical_stock'>
+
+// Resposta de GET /health — rota pública, usada pela tela Status do sistema.
+export interface HealthStatus {
+  status: string
+  version: string
+  database: 'ok' | 'error'
+  server_time: string
 }

@@ -50,6 +50,10 @@ frontend_pwa/.cache/
 frontend_pwa/.parcel-cache/
 frontend_pwa/coverage/
 
+# Cache incremental do compilador TypeScript — muda a cada build e não deve
+# ser versionado (achado na revisão final da Fase 1: sujava o diff da revisão).
+*.tsbuildinfo
+
 # Node package manager artifacts
 npm-debug.log*
 yarn-debug.log*

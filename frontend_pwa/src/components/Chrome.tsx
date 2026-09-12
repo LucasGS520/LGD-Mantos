@@ -27,10 +27,9 @@ export function AppBar({ title, subtitle, back, action, dense }: AppBarProps) {
 
 // ─── BottomNav ─────────────────────────────────────────────────
 const TABS: { id: TabId; label: string; icon: (p: IcoProps) => JSX.Element }[] = [
-  { id: 'op',   label: 'Operação',  icon: Ico.box },
-  { id: 'an',   label: 'Análise',   icon: Ico.chart },
-  { id: 'mk',   label: 'Marketing', icon: Ico.megaphone },
-  { id: 'mais', label: 'Mais',      icon: Ico.more },
+  { id: 'op',    label: 'Operação',     icon: Ico.box },
+  { id: 'intel', label: 'Inteligência', icon: Ico.chart },
+  { id: 'mais',  label: 'Mais',         icon: Ico.more },
 ]
 
 export function BottomNav({ active }: { active: TabId }) {
@@ -42,7 +41,7 @@ export function BottomNav({ active }: { active: TabId }) {
       backdropFilter: 'blur(18px)',
       paddingTop: 8,
       paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
-      display: 'grid', gridTemplateColumns: 'repeat(4,1fr)',
+      display: 'grid', gridTemplateColumns: 'repeat(3,1fr)',
       flexShrink: 0,
     }}>
       {TABS.map(t => {

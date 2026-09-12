@@ -29,7 +29,6 @@ function Icon({ d, size = 22, stroke = 'currentColor', fill = 'none', sw = 1.6, 
 export const Ico = {
   box:       (p: IcoProps) => <Icon {...p}><path d="M3 7.5L12 3l9 4.5M3 7.5v9L12 21l9-4.5v-9M3 7.5L12 12m9-4.5L12 12m0 0v9"/></Icon>,
   chart:     (p: IcoProps) => <Icon {...p}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></Icon>,
-  megaphone: (p: IcoProps) => <Icon {...p}><path d="M3 10v4l11 5V5L3 10zM3 10H2a1 1 0 00-1 1v2a1 1 0 001 1h1m11-5l5-3v14l-5-3M7 14v3a2 2 0 002 2h0a2 2 0 002-2"/></Icon>,
   more:      (p: IcoProps) => <Icon {...p}><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/></Icon>,
   search:    (p: IcoProps) => <Icon {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></Icon>,
   filter:    (p: IcoProps) => <Icon {...p}><path d="M3 5h18M6 12h12M10 19h4"/></Icon>,
@@ -79,6 +78,7 @@ export const Ico = {
   eyeOff:    (p: IcoProps) => <Icon {...p}><path d="M3 3l18 18M10 6.5A10 10 0 0112 6c6 0 10 7 10 7a17 17 0 01-3 4M6 6c-2 1.5-4 6-4 6s4 7 10 7c1.7 0 3.3-.6 4.7-1.5M9.9 9.9a3 3 0 004.2 4.2"/></Icon>,
   lock:      (p: IcoProps) => <Icon {...p}><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></Icon>,
   wifi:      (p: IcoProps) => <Icon {...p}><path d="M2 9a17 17 0 0120 0M5 13a12 12 0 0114 0M8.5 17a6 6 0 017 0M12 21v.01"/></Icon>,
+  download:  (p: IcoProps) => <Icon {...p}><path d="M12 4v12M6 12l6 6 6-6M4 20h16"/></Icon>,
 } as const
 
 export type IcoKey = keyof typeof Ico

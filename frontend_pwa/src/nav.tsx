@@ -8,18 +8,15 @@ export type ScreenId =
   | 'sale-modal' | 'sales-history' | 'sale-detail'
   | 'purchase-form' | 'purchase-list' | 'entry-detail'
   | 'expenses' | 'stock-moves'
-  | 'dashboard' | 'top-products' | 'by-size' | 'by-channel' | 'suggestions' | 'dre'
-  | 'an-categorias' | 'an-category-detail' | 'an-alertas' | 'an-marketing-intel' | 'an-compras'
-  | 'marketing'
-  | 'mk-new-run' | 'mk-run-detail' | 'mk-approval-detail' | 'mk-knowledge-form'
-  | 'more' | 'suppliers' | 'supplier-form' | 'categories' | 'category-form' | 'sale-channels' | 'channel-form' | 'settings' | 'about'
+  | 'intel-overview' | 'intel-health' | 'intel-products' | 'intel-category-detail'
+  | 'intel-stock' | 'intel-finance' | 'intel-channels'
+  | 'more' | 'suppliers' | 'supplier-form' | 'categories' | 'category-form' | 'sale-channels' | 'channel-form' | 'settings' | 'system-status' | 'about'
 
-export type TabId = 'op' | 'an' | 'mk' | 'mais'
+export type TabId = 'op' | 'intel' | 'mais'
 
 export const TAB_ROOTS: Record<TabId, ScreenId> = {
   op: 'product-list',
-  an: 'dashboard',
-  mk: 'marketing',
+  intel: 'intel-overview',
   mais: 'more',
 }
 

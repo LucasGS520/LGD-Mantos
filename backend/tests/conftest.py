@@ -1,9 +1,9 @@
-"""Configuração compartilhada dos testes da camada de agentes.
+"""Configuração compartilhada dos testes.
 
 Estratégia de banco:
 - Usa um banco Postgres de TESTE isolado (`lgd_mantos_test`) no mesmo container
-  Docker de desenvolvimento (porta 55432) — os modelos usam JSONB, então SQLite
-  em memória não é compatível.
+  Docker de desenvolvimento (porta 55432) — o SQLite em memória não serve porque
+  os modelos usam tipos específicos do Postgres.
 - As variáveis de ambiente são definidas ANTES de qualquer import da aplicação:
   o `settings` exige APP_SECRET/APP_PASSWORD e o engine é criado no import.
 - O schema é criado uma vez por sessão de testes via Base.metadata.create_all;
@@ -19,17 +19,29 @@ os.environ.setdefault(
 )
 os.environ.setdefault("APP_PASSWORD", "senha-somente-testes")
 os.environ.setdefault("APP_SECRET", "segredo-somente-testes")
-os.environ.setdefault("OLLAMA_URL", "http://localhost:11434")
-os.environ.setdefault("OLLAMA_MODEL", "llama3.1:8b")
 
 import asyncpg
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def _prepare_database():
     """Cria o banco de teste (se não existir) e o schema completo dos modelos."""
+    # Trava de segurança: a suíte trunca tabelas antes de cada teste. Se a
+    # DATABASE_URL resolvida apontar para qualquer banco que não seja o de
+    # testes, abortar antes de tocar em qualquer dado — um .env de
+    # desenvolvimento carregado pelo shell faria a suíte apagar dados reais.
+    from app.core.config import settings
+
+    if "lgd_mantos_test" not in settings.DATABASE_URL:
+        raise RuntimeError(
+            "DATABASE_URL nao aponta para o banco de testes: "
+            f"{settings.DATABASE_URL!r}. A suite trunca tabelas antes de cada "
+            "teste e recusa rodar fora de 'lgd_mantos_test'."
+        )
+
     admin = await asyncpg.connect(
         user="postgres",
         password="lgdmantos123",
@@ -49,8 +61,6 @@ async def _prepare_database():
     from app.core.database import Base, engine
     import app.shared.models.catalog  # noqa: F401
     import app.shared.models.operations  # noqa: F401
-    import app.modules.agents.knowledge.models  # noqa: F401
-    import app.modules.agents.marketing_ops.models  # noqa: F401
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -64,9 +74,7 @@ async def _clean_tables(_prepare_database):
 
     async with engine.begin() as conn:
         await conn.execute(text(
-            "TRUNCATE agent_runs, campaigns, posts, creative_briefs, approvals, "
-            "publishing_queue, knowledge_documents, product_variants, products "
-            "RESTART IDENTITY CASCADE"
+            "TRUNCATE product_variants, products RESTART IDENTITY CASCADE"
         ))
     yield
 
@@ -78,6 +86,28 @@ async def db():
 
     async with AsyncSessionLocal() as session:
         yield session
+
+
+@pytest_asyncio.fixture
+async def client():
+    """Cliente HTTP sem autenticação, falando direto com a app ASGI."""
+    import main
+
+    transport = ASGITransport(app=main.app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+
+@pytest_asyncio.fixture
+async def auth_client(client):
+    """Cliente HTTP já autenticado — faz login e fixa o header Authorization."""
+    resposta = await client.post(
+        "/api/v1/auth/login", json={"password": "senha-somente-testes"}
+    )
+    assert resposta.status_code == 200, resposta.text
+    token = resposta.json()["token"]
+    client.headers["Authorization"] = f"Bearer {token}"
+    yield client
 
 
 # ---------------------------------------------------------------------------
@@ -102,54 +132,3 @@ async def create_product(db, sku="MANTO-TESTE", name="Manto de Teste", stock=5, 
     await db.commit()
     await db.refresh(product)
     return product
-
-
-async def create_campaign_bundle(db, product=None, status="pending_approval"):
-    """Cria AgentRun + Campaign + Post + CreativeBrief + Approval pendente."""
-    from app.modules.agents.marketing_ops.models import (
-        AgentRun, Approval, Campaign, CreativeBrief, Post,
-    )
-
-    run = AgentRun(objective="Teste", status="completed")
-    db.add(run)
-    await db.flush()
-
-    campaign = Campaign(
-        agent_run_id=run.id,
-        name="Campanha Teste",
-        objective="Testar o ciclo de aprovação",
-        product_id=product.id if product else None,
-        channel="Instagram",
-        format="feed",
-        angle="Ângulo de teste",
-        cta="Chama na DM",
-        risk_level="low",
-        status=status,
-    )
-    db.add(campaign)
-    await db.flush()
-
-    post = Post(
-        campaign_id=campaign.id,
-        caption="Legenda original",
-        headline="Headline original",
-        cta_text="CTA original",
-        format="feed",
-        copy_variations=[],
-        status=status,
-    )
-    brief = CreativeBrief(
-        campaign_id=campaign.id,
-        visual_briefing="Briefing original",
-        image_prompt="Prompt original",
-        status=status,
-    )
-    db.add_all([post, brief])
-    await db.flush()
-
-    approval = Approval(campaign_id=campaign.id, status="pending")
-    db.add(approval)
-    await db.commit()
-    for obj in (run, campaign, post, brief, approval):
-        await db.refresh(obj)
-    return run, campaign, post, brief, approval

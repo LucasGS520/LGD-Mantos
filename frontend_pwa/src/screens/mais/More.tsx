@@ -56,9 +56,9 @@ export default function More() {
 
         <Section title="App" top={18}>
           <Card padding={0}>
-            <Item first icon={Ico.settings} label="Configurações"  hint="Senha, backup, notificações"              onClick={() => navigate('settings')} />
-            <Item icon={Ico.refresh}  label="Sincronização"  hint="Dados sincronizados com o servidor"       onClick={() => navigate('settings')} />
-            <Item icon={Ico.doc}      label="Sobre o app"    onClick={() => navigate('about')} end={<span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>v1.0.0</span>} />
+            <Item first icon={Ico.settings} label="Configurações"    hint="Alertas, exportação e segurança"       onClick={() => navigate('settings')} />
+            <Item icon={Ico.wifi}     label="Status do sistema" hint="Conexão, versão e atualizações"        onClick={() => navigate('system-status')} />
+            <Item icon={Ico.doc}      label="Sobre o app"       onClick={() => navigate('about')} end={<span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>v{__APP_VERSION__}</span>} />
           </Card>
         </Section>
 
