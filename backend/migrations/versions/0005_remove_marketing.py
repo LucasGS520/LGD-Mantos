@@ -59,22 +59,31 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Recria a estrutura vazia. Não restaura dados."""
+    # create_type=False é obrigatório: sem ele, cada op.create_table() abaixo
+    # emite seu próprio CREATE TYPE para a coluna de enum, colidindo com os
+    # tipos que o bloco enum.create() logo adiante já criou. O erro seria
+    # DuplicateObjectError: type "agent_run_status" already exists.
     agent_run_status = postgresql.ENUM(
         'pending', 'running', 'completed', 'failed', name='agent_run_status',
+        create_type=False,
     )
     content_status = postgresql.ENUM(
         'draft', 'pending_approval', 'approved', 'rejected', name='content_status',
+        create_type=False,
     )
     approval_status = postgresql.ENUM(
         'pending', 'approved', 'rejected', 'revision_requested', name='approval_status',
+        create_type=False,
     )
     publishing_status = postgresql.ENUM(
         'approved', 'published', 'failed', name='publishing_status',
+        create_type=False,
     )
     knowledge_doc_type = postgresql.ENUM(
         'brand_voice', 'persona', 'commercial_rules', 'visual_reference',
         'approved_caption', 'approved_prompt', 'campaign_context',
         'product_style_notes', name='knowledge_doc_type',
+        create_type=False,
     )
 
     bind = op.get_bind()
