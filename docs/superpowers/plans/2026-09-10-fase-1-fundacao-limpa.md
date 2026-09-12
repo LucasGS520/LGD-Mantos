@@ -1130,7 +1130,12 @@ router = APIRouter()
 
 @router.get("/product-classification")
 async def product_classification(db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
-    """Classifica produtos em seis situações de estoque, margem e velocidade."""
+    """Classifica produtos em cinco situações de estoque, margem e velocidade.
+
+    A sexta situação — produto parado — vem de /analytics/products/analysis
+    (chave `stopped`), que já a calcula com janela configurável. Ver a nota de
+    interfaces da Task 5 no plano.
+    """
     return await ProductClassificationService.product_classification(db)
 ```
 
