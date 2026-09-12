@@ -22,6 +22,7 @@ ROTAS_PROTEGIDAS = [
     "/api/v1/analytics/categories/buying-patterns",
     "/api/v1/analytics/categories/size-stock",
     "/api/v1/analytics/products/attributes",
+    "/api/v1/analytics/product-classification",
 ]
 
 
