@@ -1,7 +1,7 @@
 # docker-compose.prod.yml — stack de PRODUÇÃO do LGD Mantos em VPS único.
 #
 # Diferenças em relação ao docker-compose.yml (desenvolvimento):
-#   - Nenhuma porta interna exposta ao host (banco e Ollama só na rede interna).
+#   - Nenhuma porta interna exposta ao host (banco só na rede interna).
 #   - Backend sem --reload e sem montagem do código-fonte.
 #   - PWA buildado e servido pelo Caddy (serviço `web`), com HTTPS automático.
 #   - Única exposição pública: portas 80/443 do Caddy.
@@ -31,34 +31,6 @@ services:
       timeout: 4s
       retries: 6
 
-  ollama:
-    # Inferência local dos agentes de marketing (llama3.1:8b em CPU).
-    image: ollama/ollama
-    container_name: lgd_ollama
-    restart: unless-stopped
-    volumes:
-      - ollama_data:/root/.ollama
-    healthcheck:
-      test: ["CMD-SHELL", "ollama list || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 20s
-
-  model-init:
-    # Baixa o modelo uma única vez para o volume (no-op se já existir).
-    image: ollama/ollama
-    container_name: lgd_model_init
-    depends_on:
-      ollama:
-        condition: service_healthy
-    environment:
-      OLLAMA_HOST: http://ollama:11434
-    entrypoint: ["ollama", "pull", "llama3.1:8b"]
-    volumes:
-      - ollama_data:/root/.ollama
-    restart: "no"
-
   backend:
     # API FastAPI em modo produção (sem reload, código dentro da imagem).
     build:
@@ -69,8 +41,6 @@ services:
     env_file: .env
     depends_on:
       db:
-        condition: service_healthy
-      ollama:
         condition: service_healthy
     volumes:
       # Único volume: fotos enviadas pelo módulo operacional (persistentes).
@@ -98,6 +68,5 @@ services:
 volumes:
   pgdata:
   uploads_data:
-  ollama_data:
   caddy_data:
   caddy_config:
