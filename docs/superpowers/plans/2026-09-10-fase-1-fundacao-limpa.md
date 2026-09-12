@@ -605,22 +605,31 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Recria a estrutura vazia. Não restaura dados."""
+    # create_type=False é obrigatório: sem ele, cada op.create_table() abaixo
+    # emite seu próprio CREATE TYPE para a coluna de enum, colidindo com os
+    # tipos que o bloco enum.create() logo adiante já criou. O erro seria
+    # DuplicateObjectError: type "agent_run_status" already exists.
     agent_run_status = postgresql.ENUM(
         'pending', 'running', 'completed', 'failed', name='agent_run_status',
+        create_type=False,
     )
     content_status = postgresql.ENUM(
         'draft', 'pending_approval', 'approved', 'rejected', name='content_status',
+        create_type=False,
     )
     approval_status = postgresql.ENUM(
         'pending', 'approved', 'rejected', 'revision_requested', name='approval_status',
+        create_type=False,
     )
     publishing_status = postgresql.ENUM(
         'approved', 'published', 'failed', name='publishing_status',
+        create_type=False,
     )
     knowledge_doc_type = postgresql.ENUM(
         'brand_voice', 'persona', 'commercial_rules', 'visual_reference',
         'approved_caption', 'approved_prompt', 'campaign_context',
         'product_style_notes', name='knowledge_doc_type',
+        create_type=False,
     )
 
     bind = op.get_bind()
@@ -733,7 +742,26 @@ docker exec lgd_db psql -U postgres -d lgd_mantos -c "\dT" | grep -E "agent_run_
 
 Esperado: nenhuma saída.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Verificar a cadeia completa num banco descartável**
+
+`0001_baseline` cria as tabelas de marketing e `0005` as dropa. Se a cadeia
+estiver quebrada, descobrir agora custa muito menos que na Task 13. O `downgrade()`
+também precisa ser exercitado aqui — fora deste teste, ele nunca roda.
+
+```bash
+docker exec lgd_db psql -U postgres -c "DROP DATABASE IF EXISTS lgd_chain_check;"
+docker exec lgd_db psql -U postgres -c "CREATE DATABASE lgd_chain_check;"
+cd backend && export DATABASE_URL="postgresql+asyncpg://postgres:lgdmantos123@localhost:55432/lgd_chain_check" APP_PASSWORD="dummy" APP_SECRET="dummy"
+alembic upgrade head        # esperado: 0001 -> 0002 -> 0003 -> 0004 -> 0005, sem erro
+alembic downgrade 0004      # esperado: recria as 7 tabelas vazias, sem erro
+alembic upgrade head        # esperado: dropa de novo, sem erro
+docker exec lgd_db psql -U postgres -c "DROP DATABASE lgd_chain_check;"
+```
+
+Entre o `downgrade` e o `upgrade` de volta, conferir que as sete tabelas
+reapareceram; ao final, que sumiram de novo.
+
+- [ ] **Step 6: Commit**
 
 ```bash
 git add backend/migrations/versions/0005_remove_marketing.py
