@@ -15,9 +15,8 @@ ROTAS_REMOVIDAS = [
     "/api/v1/agents/knowledge",
     "/api/v1/agents/ops/metrics",
     "/api/v1/analytics/agent-context",
+    "/api/v1/analytics/marketing-intelligence",
 ]
-# Nota: /api/v1/analytics/marketing-intelligence ainda existe neste ponto — só
-# é renomeado na Task 5, que acrescenta a rota a esta lista.
 
 
 @pytest.mark.parametrize("rota", ROTAS_REMOVIDAS)
