@@ -107,8 +107,9 @@ coleção de relatórios.
 categorias e formulário, canais de venda e formulário, configurações, status do
 sistema e sobre.
 
-O enum `ScreenId` cai de 38 para 29 entradas (login, mais onze de `op`, oito de
-`intel` e dez de `mais`).
+O enum `ScreenId` cai de 38 para 30 entradas no alvo final (login, mais onze de
+`op`, oito de `intel` e dez de `mais`). Ao fim da Fase 1 são 29: a oitava tela da
+aba, `intel-signal-detail`, só nasce na Fase 4.
 
 ### 3.3 Backend: o módulo `intelligence`
 
