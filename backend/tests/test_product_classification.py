@@ -40,6 +40,18 @@ async def test_produto_sem_saida_com_estoque_cai_em_baixa_saida(auth_client, db)
     assert "PARADO" in skus
 
 
+async def test_produto_margem_alta_e_disponivel_cai_em_margem_alta(auth_client, db):
+    """create_product usa cost_price=80.0 e sale_price=199.9 (margem ~60%,
+    acima de _MARGIN_HIGH=35.0). Com stock=5 (padrão) satisfaz _STOCK_SAFE e,
+    sem venda registrada, sold_30d=0 — o produto cai tanto em margem_alta
+    quanto em baixa_saida_estoque_alto, já que as listas não são exclusivas.
+    """
+    await create_product(db, sku="MARGEM", name="Manto Margem")
+    resposta = await auth_client.get("/api/v1/analytics/product-classification")
+    skus = [item["sku"] for item in resposta.json()["margem_alta"]]
+    assert "MARGEM" in skus
+
+
 async def test_item_classificado_traz_os_campos_consumidos_pelo_frontend(auth_client, db):
     await create_product(db, sku="CAMPOS", name="Manto Campos", stock=0)
     resposta = await auth_client.get("/api/v1/analytics/product-classification")

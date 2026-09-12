@@ -14,5 +14,11 @@ router = APIRouter()
 
 @router.get("/product-classification")
 async def product_classification(db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
-    """Classifica produtos em seis situações de estoque, margem e velocidade."""
+    """Classifica produtos em cinco situações de estoque, margem e velocidade.
+
+    A sexta situação — produto parado — não vem daqui: é calculada por
+    ProductAnalysisService.product_analysis sob a chave `stopped`, com janela
+    configurável pelo operador. Duplicá-la aqui criaria duas fontes de verdade
+    para o mesmo conceito.
+    """
     return await ProductClassificationService.product_classification(db)
