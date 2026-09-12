@@ -107,7 +107,7 @@ coleção de relatórios.
 categorias e formulário, canais de venda e formulário, configurações, status do
 sistema e sobre.
 
-O enum `ScreenId` cai de 38 para 30 entradas (login, mais onze de `op`, oito de
+O enum `ScreenId` cai de 38 para 29 entradas (login, mais onze de `op`, oito de
 `intel` e dez de `mais`).
 
 ### 3.3 Backend: o módulo `intelligence`

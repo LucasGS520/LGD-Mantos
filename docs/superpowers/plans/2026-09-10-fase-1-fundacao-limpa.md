@@ -1999,7 +1999,7 @@ Apagar os quatro imports (`TopProducts`, `BySize`, `Suggestions`,
 grep -c "|" frontend_pwa/src/nav.tsx
 ```
 
-Contar manualmente as entradas do tipo `ScreenId`: devem ser trinta — `login`,
+Contar manualmente as entradas do tipo `ScreenId`: devem ser vinte e nove — `login`,
 onze de `op`, sete de `intel` e dez de `mais`.
 
 - [ ] **Step 6: Verificar que o build passa**
@@ -2125,4 +2125,4 @@ Qualquer uma destas condições significa que a Fase 1 não está pronta:
 - Alguma das sete telas da aba Inteligência fica inalcançável a partir da Visão
   Geral — foi o defeito original de `top-products`, `by-size` e `suggestions`, e
   não pode se repetir.
-- O enum `ScreenId` tem mais de trinta entradas.
+- O enum `ScreenId` tem mais de vinte e nove entradas.
