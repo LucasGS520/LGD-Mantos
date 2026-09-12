@@ -22,6 +22,17 @@ export function setUnauthorizedHandler(fn: () => void): void {
   _onUnauthorized = fn
 }
 
+// Monta a querystring para endpoints de analytics que aceitam `period` OU
+// `days` (ex.: /analytics/top-products, /analytics/by-size). O backend dá
+// prioridade a `period` quando ambos chegam (ver resolve_period), então aqui
+// só mandamos `days` quando não há period definido.
+function periodOuDiasQuery(period?: string, days?: number): string {
+  const q = new URLSearchParams()
+  if (period) q.set('period', period)
+  else if (days !== undefined) q.set('days', String(days))
+  return q.toString()
+}
+
 async function readJsonBody<T>(res: Response): Promise<T | null> {
   const text = await res.text()
   if (!text.trim()) return null
@@ -144,11 +155,15 @@ export const api = {
     return req<DRE>('GET', `/analytics/finance/dre${qs ? `?${qs}` : ''}`)
   },
 
-  getTopProducts: (period: string) =>
-    req<TopProduct[]>('GET', `/analytics/top-products?period=${period}`),
+  // period tem prioridade sobre days no backend (ver resolve_period) — por isso
+  // days só é enviado quando period não é informado. Aceitar os dois evita que
+  // telas com janela fixa (ex.: Products.tsx, "últimos 30 dias") precisem cair
+  // pra api.get() cru e perder a tipagem de retorno.
+  getTopProducts: (period?: string, days?: number) =>
+    req<TopProduct[]>('GET', `/analytics/top-products?${periodOuDiasQuery(period, days)}`),
 
-  getBySize: (period: string) =>
-    req<BySizeItem[]>('GET', `/analytics/by-size?period=${period}`),
+  getBySize: (period?: string, days?: number) =>
+    req<BySizeItem[]>('GET', `/analytics/by-size?${periodOuDiasQuery(period, days)}`),
 
   getByChannel: (period: string) =>
     req<ByChannelItem[]>('GET', `/analytics/by-channel?period=${period}`),

@@ -28,8 +28,8 @@ export default function Products() {
     () => api.getCategoryPerformance(period), period
   )
   const { data: coverage } = useData<CategoryCoverage[]>(api.getCategoryStockCoverage)
-  const { data: ranking } = useData<TopProduct[]>(() => api.get('/analytics/top-products?days=30'))
-  const { data: tamanhos } = useData<BySizeItem[]>(() => api.get('/analytics/by-size?days=30'))
+  const { data: ranking } = useData<TopProduct[]>(() => api.getTopProducts(undefined, 30))
+  const { data: tamanhos } = useData<BySizeItem[]>(() => api.getBySize(undefined, 30))
   const { data: classificacao } = useData<ProductClassification>(api.getProductClassification)
   // A sexta situação (produto parado) vem daqui, não da classificação — ver a
   // nota de interfaces da Task 5 do brief.
