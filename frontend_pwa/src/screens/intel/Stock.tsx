@@ -182,10 +182,10 @@ export default function Stock() {
             <Card padding={24} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 22, marginBottom: 8 }}>✓</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#5DD49E', marginBottom: 4 }}>
-                Tudo em ordem
+                Análise por categoria em dia
               </div>
               <div style={{ fontSize: 13, color: 'var(--text-3)' }}>
-                Nenhuma categoria com necessidade de compra no momento.
+                Nenhuma categoria precisa de compra agora. Itens individuais para repor, se houver, aparecem na lista acima.
               </div>
             </Card>
           ) : (
