@@ -56,7 +56,7 @@ export default function BySize() {
           )}
         </ScreenBody>
       )}
-      <BottomNav active="an" />
+      <BottomNav active="intel" />
     </>
   )
 }

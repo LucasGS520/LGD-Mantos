@@ -206,7 +206,7 @@ export default function Alertas() {
           </SectionChart>
         </ScreenBody>
       )}
-      <BottomNav active="an" />
+      <BottomNav active="intel" />
     </>
   )
 }

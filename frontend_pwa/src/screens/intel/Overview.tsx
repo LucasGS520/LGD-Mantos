@@ -74,7 +74,7 @@ export default function Dashboard() {
                   icon={<Ico.warning size={16} />}
                   text={`${analysis!.rupture_risk.length} variante${analysis!.rupture_risk.length > 1 ? 's' : ''} com risco de ruptura de estoque`}
                   cta="Ver alertas"
-                  onCta={() => navigate('an-alertas')}
+                  onCta={() => navigate('intel-health')}
                 />
               )}
               {(analysis?.stopped?.length ?? 0) > 0 && (
@@ -83,7 +83,7 @@ export default function Dashboard() {
                   icon={<Ico.alert size={16} />}
                   text={`${analysis!.stopped.length} produto${analysis!.stopped.length > 1 ? 's' : ''} parado${analysis!.stopped.length > 1 ? 's' : ''} (sem venda em 60 dias)`}
                   cta="Ver alertas"
-                  onCta={() => navigate('an-alertas')}
+                  onCta={() => navigate('intel-health')}
                 />
               )}
             </div>
@@ -109,16 +109,16 @@ export default function Dashboard() {
 
           {/* Navegação */}
           <div style={{ borderTop: '1px solid var(--line-1)', paddingTop: 4 }}>
-            <NavItem icon={<Ico.pie size={18} stroke="var(--gold-500)" />} label="Categorias" sub="Análise de desempenho por categoria" target="an-categorias" />
-            <NavItem icon={<Ico.truck size={18} stroke="var(--gold-500)" />} label="Compras & Reposição" sub="Sugestões de compra baseadas em dados" target="an-compras" badge={(analysis?.rupture_risk?.length ?? 0) > 0 ? analysis!.rupture_risk.length : undefined} />
-            <NavItem icon={<Ico.store size={18} stroke="var(--gold-500)" />} label="Canais de Venda" sub="Distribuição e taxas por canal" target="by-channel" />
-            <NavItem icon={<Ico.doc size={18} stroke="var(--gold-500)" />} label="DRE do Mês" sub="Demonstrativo de resultado" target="dre" />
-            <NavItem icon={<Ico.alert size={18} stroke="#F5847B" />} label="Alertas & Saúde" sub="Qualidade de dados e problemas operacionais" target="an-alertas" badge={alertCount > 0 ? alertCount : undefined} />
+            <NavItem icon={<Ico.pie size={18} stroke="var(--gold-500)" />} label="Categorias" sub="Análise de desempenho por categoria" target="intel-products" />
+            <NavItem icon={<Ico.truck size={18} stroke="var(--gold-500)" />} label="Compras & Reposição" sub="Sugestões de compra baseadas em dados" target="intel-stock" badge={(analysis?.rupture_risk?.length ?? 0) > 0 ? analysis!.rupture_risk.length : undefined} />
+            <NavItem icon={<Ico.store size={18} stroke="var(--gold-500)" />} label="Canais de Venda" sub="Distribuição e taxas por canal" target="intel-channels" />
+            <NavItem icon={<Ico.doc size={18} stroke="var(--gold-500)" />} label="DRE do Mês" sub="Demonstrativo de resultado" target="intel-finance" />
+            <NavItem icon={<Ico.alert size={18} stroke="#F5847B" />} label="Alertas & Saúde" sub="Qualidade de dados e problemas operacionais" target="intel-health" badge={alertCount > 0 ? alertCount : undefined} />
             <NavItem icon={<Ico.sparkle size={18} stroke="var(--gold-500)" />} label="Análise de Marketing" sub="O que postar, promover e destacar" target="an-marketing-intel" />
           </div>
         </ScreenBody>
       ) : null}
-      <BottomNav active="an" />
+      <BottomNav active="intel" />
     </>
   )
 }

@@ -150,7 +150,7 @@ export default function CategoryDetail() {
           )}
         </ScreenBody>
       )}
-      <BottomNav active="an" />
+      <BottomNav active="intel" />
     </>
   )
 }

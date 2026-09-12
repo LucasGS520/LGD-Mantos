@@ -12,17 +12,17 @@ import PurchaseList from './screens/op/PurchaseList'
 import EntryDetail from './screens/op/EntryDetail'
 import Expenses from './screens/op/Expenses'
 import StockMoves from './screens/op/StockMoves'
-import Dashboard from './screens/an/Dashboard'
-import TopProducts from './screens/an/TopProducts'
-import BySize from './screens/an/BySize'
-import ByChannel from './screens/an/ByChannel'
-import Suggestions from './screens/an/Suggestions'
-import DRE from './screens/an/DRE'
-import Categorias from './screens/an/Categorias'
-import CategoryDetail from './screens/an/CategoryDetail'
-import Alertas from './screens/an/Alertas'
-import MarketingIntel from './screens/an/MarketingIntel'
-import ComprasReposicao from './screens/an/ComprasReposicao'
+import Overview from './screens/intel/Overview'
+import Health from './screens/intel/Health'
+import Products from './screens/intel/Products'
+import CategoryDetail from './screens/intel/CategoryDetail'
+import Stock from './screens/intel/Stock'
+import Finance from './screens/intel/Finance'
+import Channels from './screens/intel/Channels'
+import TopProducts from './screens/intel/TopProducts'
+import BySize from './screens/intel/BySize'
+import Suggestions from './screens/intel/Suggestions'
+import MarketingIntel from './screens/intel/MarketingIntel'
 import More from './screens/mais/More'
 import Suppliers from './screens/mais/Suppliers'
 import SupplierForm from './screens/mais/SupplierForm'
@@ -50,17 +50,17 @@ export default function App() {
     'entry-detail':   <EntryDetail />,
     'expenses':       <Expenses />,
     'stock-moves':    <StockMoves />,
-    'dashboard':          <Dashboard />,
-    'top-products':       <TopProducts />,
-    'by-size':            <BySize />,
-    'by-channel':         <ByChannel />,
-    'suggestions':        <Suggestions />,
-    'dre':                <DRE />,
-    'an-categorias':      <Categorias />,
-    'an-category-detail': <CategoryDetail />,
-    'an-alertas':         <Alertas />,
-    'an-marketing-intel': <MarketingIntel />,
-    'an-compras':         <ComprasReposicao />,
+    'intel-overview':        <Overview />,
+    'intel-health':          <Health />,
+    'intel-products':        <Products />,
+    'intel-category-detail': <CategoryDetail />,
+    'intel-stock':           <Stock />,
+    'intel-finance':         <Finance />,
+    'intel-channels':        <Channels />,
+    'top-products':          <TopProducts />,
+    'by-size':               <BySize />,
+    'suggestions':           <Suggestions />,
+    'an-marketing-intel':    <MarketingIntel />,
     'more':           <More />,
     'suppliers':      <Suppliers />,
     'supplier-form':  <SupplierForm />,

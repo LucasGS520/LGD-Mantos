@@ -201,7 +201,7 @@ export default function ByChannel() {
           </Section>
         </ScreenBody>
       )}
-      <BottomNav active="an" />
+      <BottomNav active="intel" />
     </>
   )
 }

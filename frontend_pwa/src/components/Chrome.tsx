@@ -27,9 +27,9 @@ export function AppBar({ title, subtitle, back, action, dense }: AppBarProps) {
 
 // ─── BottomNav ─────────────────────────────────────────────────
 const TABS: { id: TabId; label: string; icon: (p: IcoProps) => JSX.Element }[] = [
-  { id: 'op',   label: 'Operação',  icon: Ico.box },
-  { id: 'an',   label: 'Análise',   icon: Ico.chart },
-  { id: 'mais', label: 'Mais',      icon: Ico.more },
+  { id: 'op',    label: 'Operação',     icon: Ico.box },
+  { id: 'intel', label: 'Inteligência', icon: Ico.chart },
+  { id: 'mais',  label: 'Mais',         icon: Ico.more },
 ]
 
 export function BottomNav({ active }: { active: TabId }) {

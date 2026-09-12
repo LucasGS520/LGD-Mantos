@@ -65,7 +65,7 @@ export default function Categorias() {
                 return (
                   <div
                     key={cat.category_id}
-                    onClick={() => navigate('an-category-detail', { categoryId: cat.category_id, categoryName: cat.category_name, period })}
+                    onClick={() => navigate('intel-category-detail', { categoryId: cat.category_id, categoryName: cat.category_name, period })}
                     style={{
                       padding: '14px 0', borderBottom: '1px solid var(--line-1)',
                       cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12,
@@ -101,7 +101,7 @@ export default function Categorias() {
           </SectionChart>
         </ScreenBody>
       )}
-      <BottomNav active="an" />
+      <BottomNav active="intel" />
     </>
   )
 }

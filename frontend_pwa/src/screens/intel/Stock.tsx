@@ -217,7 +217,7 @@ export default function ComprasReposicao() {
           )}
         </ScreenBody>
       )}
-      <BottomNav active="an" />
+      <BottomNav active="intel" />
     </>
   )
 }

@@ -65,7 +65,7 @@ export default function TopProducts() {
           </div>
         </ScreenBody>
       )}
-      <BottomNav active="an" />
+      <BottomNav active="intel" />
     </>
   )
 }

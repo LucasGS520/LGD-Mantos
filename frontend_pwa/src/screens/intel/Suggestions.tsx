@@ -101,7 +101,7 @@ export default function Suggestions() {
           )}
         </ScreenBody>
       )}
-      <BottomNav active="an" />
+      <BottomNav active="intel" />
     </>
   )
 }

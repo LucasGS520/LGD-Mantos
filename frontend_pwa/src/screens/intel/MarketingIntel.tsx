@@ -80,7 +80,7 @@ export default function MarketingIntel() {
           })}
         </ScreenBody>
       ) : null}
-      <BottomNav active="an" />
+      <BottomNav active="intel" />
     </>
   )
 }
