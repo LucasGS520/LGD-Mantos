@@ -21,7 +21,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <AppBar title="Análise" subtitle={`Hoje, ${today}`} />
+      <AppBar title="Inteligência" subtitle={`Hoje, ${today}`} />
 
       {loading ? <LoadingBody /> : error ? <ErrorBody msg={error} onRetry={reload} /> : data ? (
         <ScreenBody>
@@ -107,14 +107,40 @@ export default function Dashboard() {
               info={{ what: 'Quanto o estoque atual renderia se fosse vendido pelo preço cheio.', good: 'Deve ser bem maior que o custo — a diferença é seu lucro potencial do estoque.', action: 'Produtos com alto custo mas baixo potencial de venda podem ter margens ruins. Verifique em Categorias.' }} />
           </div>
 
-          {/* Navegação */}
+          {/* Navegação — as cinco áreas da Inteligência */}
           <div style={{ borderTop: '1px solid var(--line-1)', paddingTop: 4 }}>
-            <NavItem icon={<Ico.pie size={18} stroke="var(--gold-500)" />} label="Categorias" sub="Análise de desempenho por categoria" target="intel-products" />
-            <NavItem icon={<Ico.truck size={18} stroke="var(--gold-500)" />} label="Compras & Reposição" sub="Sugestões de compra baseadas em dados" target="intel-stock" badge={(analysis?.rupture_risk?.length ?? 0) > 0 ? analysis!.rupture_risk.length : undefined} />
-            <NavItem icon={<Ico.store size={18} stroke="var(--gold-500)" />} label="Canais de Venda" sub="Distribuição e taxas por canal" target="intel-channels" />
-            <NavItem icon={<Ico.doc size={18} stroke="var(--gold-500)" />} label="DRE do Mês" sub="Demonstrativo de resultado" target="intel-finance" />
-            <NavItem icon={<Ico.alert size={18} stroke="#F5847B" />} label="Alertas & Saúde" sub="Qualidade de dados e problemas operacionais" target="intel-health" badge={alertCount > 0 ? alertCount : undefined} />
-            <NavItem icon={<Ico.sparkle size={18} stroke="var(--gold-500)" />} label="Análise de Marketing" sub="O que postar, promover e destacar" target="an-marketing-intel" />
+            <NavItem
+              icon={<Ico.pie size={18} stroke="var(--gold-500)" />}
+              label="Produtos"
+              sub="Mix, ranking, tamanhos e situação de cada item"
+              target="intel-products"
+            />
+            <NavItem
+              icon={<Ico.truck size={18} stroke="var(--gold-500)" />}
+              label="Estoque & Compras"
+              sub="Cobertura, reposição e excesso de estoque"
+              target="intel-stock"
+              badge={(analysis?.rupture_risk?.length ?? 0) > 0 ? analysis!.rupture_risk.length : undefined}
+            />
+            <NavItem
+              icon={<Ico.doc size={18} stroke="var(--gold-500)" />}
+              label="Financeiro"
+              sub="DRE do mês, receita, CMV e despesas"
+              target="intel-finance"
+            />
+            <NavItem
+              icon={<Ico.store size={18} stroke="var(--gold-500)" />}
+              label="Canais"
+              sub="Distribuição e taxas por canal de venda"
+              target="intel-channels"
+            />
+            <NavItem
+              icon={<Ico.alert size={18} stroke="#F5847B" />}
+              label="Saúde da Loja"
+              sub="Ruptura, produtos parados e qualidade de dados"
+              target="intel-health"
+              badge={alertCount > 0 ? alertCount : undefined}
+            />
           </div>
         </ScreenBody>
       ) : null}
