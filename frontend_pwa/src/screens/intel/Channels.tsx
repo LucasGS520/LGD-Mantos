@@ -33,7 +33,7 @@ const CHANNEL_FALLBACK: Record<string, string> = {
   Loja: '#D4A847', WhatsApp: '#25D366', Instagram: '#E1306C', Shopee: '#EE4D2D',
 }
 
-export default function ByChannel() {
+export default function Channels() {
   const [period, setPeriod] = useState<Period>('current_month')
 
   const { data, loading, error, reload } = useData<[ByChannelItem[], SaleChannel[]]>(() =>

@@ -9,7 +9,7 @@ import { useData } from '../../hooks/useData'
 import type { Dashboard as DashboardData, ProductAnalysis } from '../../services/types'
 import { useNav } from '../../nav'
 
-export default function Dashboard() {
+export default function Overview() {
   const { navigate } = useNav()
   const { data, loading, error, reload } = useData<DashboardData>(api.getDashboard)
   const { data: analysis } = useData<ProductAnalysis>(() => api.getProductAnalysis('current_month'))

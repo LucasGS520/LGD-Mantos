@@ -31,7 +31,7 @@ function Row({ label, val, accent, bold, neg, info }: RowProps) {
   )
 }
 
-export default function DRE() {
+export default function Finance() {
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState(now.getFullYear())
