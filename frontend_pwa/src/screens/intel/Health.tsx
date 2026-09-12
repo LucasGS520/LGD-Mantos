@@ -9,7 +9,7 @@ import type { DataQuality, ProductAnalysis } from '../../services/types'
 import { useNav } from '../../nav'
 import { Ico } from '../../components/Icons'
 
-export default function Alertas() {
+export default function Health() {
   const { navigate } = useNav()
   const { data: dq, loading: loadDQ, error: errDQ, reload: reloadDQ } = useData<DataQuality>(api.getDataQuality)
   const { data: analysis } = useData<ProductAnalysis>(() => api.getProductAnalysis('current_month'))
@@ -19,7 +19,7 @@ export default function Alertas() {
 
   return (
     <>
-      <AppBar title="Alertas & Saúde" back />
+      <AppBar back title="Saúde da Loja" subtitle="Ruptura, parados e qualidade de dados" />
 
       {loading ? <LoadingBody /> : error ? <ErrorBody msg={error} onRetry={reloadDQ} /> : (
         <ScreenBody>
@@ -188,11 +188,6 @@ export default function Alertas() {
                       <div className="tnum" style={{ fontSize: 14, fontWeight: 700, color: '#F5BF7A', flexShrink: 0 }}>{p.total_stock} un</div>
                     </div>
                   ))}
-                </div>
-                <div style={{ marginTop: 10 }}>
-                  <Btn kind="ghost" size="sm" icon={Ico.sparkle} full onClick={() => navigate('an-marketing-intel')}>
-                    Ver sugestões de marketing
-                  </Btn>
                 </div>
               </div>
             )}
