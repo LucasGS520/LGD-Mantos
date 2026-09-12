@@ -59,6 +59,23 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Recria a estrutura vazia. Não restaura dados."""
+    # O schema recriado aqui é deliberadamente um esqueleto mínimo,
+    # não uma restauração fiel do schema original das tabelas de
+    # marketing. Faltam de propósito: colunas que existiam nos modelos
+    # originais (approvals.post_id, approvals.creative_brief_id,
+    # approvals.decided_at, creative_briefs.carousel_idea,
+    # creative_briefs.reel_script, creative_briefs.photo_analysis),
+    # vários índices, chaves estrangeiras para products, posts e
+    # creative_briefs, e alguns tamanhos de String são menores que os
+    # originais. O motivo: este downgrade() existe apenas para manter
+    # a cadeia de revisions do Alembic navegável (permitir downgrade
+    # seguido de upgrade sem erro). O domínio de Marketing foi removido
+    # em definitivo por decisão de produto, e nenhum dado dele foi
+    # preservado, então uma restauração fiel do schema não serviria a
+    # ninguém. Quem precisar do schema original deve buscá-lo no
+    # histórico do Git, em backend/app/modules/agents/marketing_ops/
+    # models.py e backend/app/modules/agents/knowledge/models.py, no
+    # commit b1b2701 ou anteriores.
     # create_type=False é obrigatório: sem ele, cada op.create_table() abaixo
     # emite seu próprio CREATE TYPE para a coluna de enum, colidindo com os
     # tipos que o bloco enum.create() logo adiante já criou. O erro seria
