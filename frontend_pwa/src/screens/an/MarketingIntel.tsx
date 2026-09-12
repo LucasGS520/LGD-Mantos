@@ -4,11 +4,11 @@ import { LoadingBody, ErrorBody, Badge } from '../../components/UI'
 import { MetricInfo } from '../../components/Analytics'
 import { api } from '../../services/api'
 import { useData } from '../../hooks/useData'
-import type { MarketingIntelligence, MarketingVariant } from '../../services/types'
+import type { ProductClassification, ClassifiedVariant } from '../../services/types'
 import { Ico } from '../../components/Icons'
 
 interface GroupConfig {
-  key: keyof MarketingIntelligence
+  key: keyof ProductClassification
   label: string
   sub: string
   badgeTone: 'success' | 'gold' | 'warn' | 'danger' | 'neutral'
@@ -20,7 +20,7 @@ interface GroupConfig {
 
 const GROUPS: GroupConfig[] = [
   {
-    key: 'post_candidates',
+    key: 'alta_saida_estoque_saudavel',
     label: 'Postar agora',
     sub: 'Alta saída + estoque disponível',
     badgeTone: 'success',
@@ -30,7 +30,7 @@ const GROUPS: GroupConfig[] = [
     icon: Ico.trend,
   },
   {
-    key: 'highlight_candidates',
+    key: 'margem_alta',
     label: 'Destacar',
     sub: 'Alta margem + estoque disponível',
     badgeTone: 'gold',
@@ -40,7 +40,7 @@ const GROUPS: GroupConfig[] = [
     icon: Ico.sparkle,
   },
   {
-    key: 'promotion_candidates',
+    key: 'baixa_saida_estoque_alto',
     label: 'Promover / queimar',
     sub: 'Sem saída — precisa girar o estoque',
     badgeTone: 'warn',
@@ -52,7 +52,7 @@ const GROUPS: GroupConfig[] = [
 ]
 
 export default function MarketingIntel() {
-  const { data, loading, error, reload } = useData<MarketingIntelligence>(api.getMarketingIntelligence)
+  const { data, loading, error, reload } = useData<ProductClassification>(api.getProductClassification)
 
   return (
     <>
@@ -73,7 +73,7 @@ export default function MarketingIntel() {
           </div>
 
           {GROUPS.map(g => {
-            const items = data[g.key] as MarketingVariant[]
+            const items = data[g.key] as ClassifiedVariant[]
             return (
               <Group key={g.key} config={g} items={items} />
             )
@@ -85,8 +85,8 @@ export default function MarketingIntel() {
   )
 }
 
-function Group({ config: g, items }: { config: GroupConfig; items: MarketingVariant[] }) {
-  const [open, setOpen] = useState(items.length > 0 && g.key === 'post_candidates')
+function Group({ config: g, items }: { config: GroupConfig; items: ClassifiedVariant[] }) {
+  const [open, setOpen] = useState(items.length > 0 && g.key === 'alta_saida_estoque_saudavel')
   const I = g.icon
 
   return (
@@ -126,7 +126,7 @@ function Group({ config: g, items }: { config: GroupConfig; items: MarketingVari
   )
 }
 
-function VariantCard({ item, accentColor }: { item: MarketingVariant; accentColor: string }) {
+function VariantCard({ item, accentColor }: { item: ClassifiedVariant; accentColor: string }) {
   return (
     <div style={{ background: 'var(--bg-1)', border: '1px solid var(--line-1)', borderRadius: 12, padding: '12px 14px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
