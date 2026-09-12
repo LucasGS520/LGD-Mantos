@@ -2,7 +2,7 @@ import { AppBar, BottomNav, ScreenBody } from '../../components/Chrome'
 import { LoadingBody, ErrorBody, Btn, Card } from '../../components/UI'
 import { api } from '../../services/api'
 import { useData } from '../../hooks/useData'
-import type { BuyingPattern, CategoryCoverage, CategorySizeStock } from '../../services/types'
+import type { BuyingPattern, CategoryCoverage, CategorySizeStock, ProductClassification, ClassifiedVariant } from '../../services/types'
 import { useNav } from '../../nav'
 import { Ico } from '../../components/Icons'
 
@@ -117,7 +117,7 @@ function classify(
 
 // ─── Componente principal ────────────────────────────────────────────────────
 
-export default function ComprasReposicao() {
+export default function Stock() {
   const { navigate } = useNav()
 
   const { data: patterns, loading, error, reload } = useData<BuyingPattern[]>(
@@ -132,6 +132,7 @@ export default function ComprasReposicao() {
     api.getCategoryStockCoverage,
     'compras-coverage'
   )
+  const { data: classificacao } = useData<ProductClassification>(api.getProductClassification)
 
   const covMap: Record<string, number | null> = {}
   for (const c of coverage ?? []) covMap[c.category_name] = c.coverage_days
@@ -148,10 +149,35 @@ export default function ComprasReposicao() {
 
   return (
     <>
-      <AppBar title="Compras & Reposição" back />
+      <AppBar back title="Estoque & Compras" subtitle="Cobertura, reposição e excesso" />
 
       {loading ? <LoadingBody /> : error ? <ErrorBody msg={error} onRetry={reload} /> : (
         <ScreenBody>
+          {/* Recomendações de estoque — vêm da classificação de produtos e são a
+              informação mais acionável da tela, por isso ficam no topo. */}
+          {classificacao && (
+            <div style={{ marginBottom: 16 }}>
+              <ListaDeSituacao
+                titulo="Repor primeiro"
+                descricao="Boa saída e estoque crítico"
+                cor="#F5847B"
+                itens={classificacao.estoque_critico}
+              />
+              <ListaDeSituacao
+                titulo="Sem estoque"
+                descricao="Zerado — venda perdida enquanto não repõe"
+                cor="#F5847B"
+                itens={classificacao.sem_estoque}
+              />
+              <ListaDeSituacao
+                titulo="Estoque encalhado"
+                descricao="Sem saída no período, com estoque parado"
+                cor="var(--text-3)"
+                itens={classificacao.baixa_saida_estoque_alto}
+              />
+            </div>
+          )}
+
           {enriched.length === 0 ? (
             <Card padding={24} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 22, marginBottom: 8 }}>✓</div>
@@ -390,5 +416,37 @@ function Stat({ label, value, color }: { label: string; value: string; color?: s
       <span style={{ color: 'var(--text-4)', fontWeight: 600 }}>{label}: </span>
       <span className="tnum" style={{ color: color ?? 'var(--text-1)', fontWeight: 700 }}>{value}</span>
     </span>
+  )
+}
+
+/** Lista compacta de variantes de uma situação de estoque. Mostra no máximo
+ *  cinco itens para não empurrar o resto da tela para baixo. */
+function ListaDeSituacao({ titulo, descricao, cor, itens }: {
+  titulo: string; descricao: string; cor: string; itens: ClassifiedVariant[]
+}) {
+  if (itens.length === 0) return null
+  return (
+    <div style={{ marginBottom: 12, padding: 14, borderRadius: 14, background: 'var(--bg-1)', border: '1px solid var(--line-1)' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: cor }}>{titulo}</span>
+        <span className="tnum" style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)' }}>{itens.length}</span>
+      </div>
+      <div style={{ fontSize: 11.5, color: 'var(--text-3)', marginTop: 2, marginBottom: 8 }}>{descricao}</div>
+      {itens.slice(0, 5).map((item, i) => (
+        <div key={`${item.sku}-${item.size}-${i}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderTop: '1px solid var(--line-1)' }}>
+          <span style={{ fontSize: 12.5, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {item.product_name} · {item.size}
+          </span>
+          <span className="tnum" style={{ fontSize: 12.5, color: 'var(--text-3)', flexShrink: 0, marginLeft: 8 }}>
+            {item.stock} un
+          </span>
+        </div>
+      ))}
+      {itens.length > 5 && (
+        <div style={{ fontSize: 11.5, color: 'var(--text-4)', marginTop: 6 }}>
+          e mais {itens.length - 5}
+        </div>
+      )}
+    </div>
   )
 }
