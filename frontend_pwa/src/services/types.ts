@@ -299,16 +299,6 @@ export interface ProductClassification {
   sem_estoque: ClassifiedVariant[]
 }
 
-// Marketing
-export interface MarketingRequest {
-  message: string
-  product_ids?: string[]
-}
-
-export interface MarketingResponse {
-  content: string
-}
-
 // ─── Configurações e Status do sistema ─────────────────────────────────────
 
 // Limiares de alerta configuráveis (tela Configurações). O payload de escrita

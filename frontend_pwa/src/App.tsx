@@ -19,10 +19,6 @@ import CategoryDetail from './screens/intel/CategoryDetail'
 import Stock from './screens/intel/Stock'
 import Finance from './screens/intel/Finance'
 import Channels from './screens/intel/Channels'
-import TopProducts from './screens/intel/TopProducts'
-import BySize from './screens/intel/BySize'
-import Suggestions from './screens/intel/Suggestions'
-import MarketingIntel from './screens/intel/MarketingIntel'
 import More from './screens/mais/More'
 import Suppliers from './screens/mais/Suppliers'
 import SupplierForm from './screens/mais/SupplierForm'
@@ -57,10 +53,6 @@ export default function App() {
     'intel-stock':           <Stock />,
     'intel-finance':         <Finance />,
     'intel-channels':        <Channels />,
-    'top-products':          <TopProducts />,
-    'by-size':               <BySize />,
-    'suggestions':           <Suggestions />,
-    'an-marketing-intel':    <MarketingIntel />,
     'more':           <More />,
     'suppliers':      <Suppliers />,
     'supplier-form':  <SupplierForm />,

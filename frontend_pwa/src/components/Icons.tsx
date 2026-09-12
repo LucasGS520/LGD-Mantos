@@ -29,7 +29,6 @@ function Icon({ d, size = 22, stroke = 'currentColor', fill = 'none', sw = 1.6, 
 export const Ico = {
   box:       (p: IcoProps) => <Icon {...p}><path d="M3 7.5L12 3l9 4.5M3 7.5v9L12 21l9-4.5v-9M3 7.5L12 12m9-4.5L12 12m0 0v9"/></Icon>,
   chart:     (p: IcoProps) => <Icon {...p}><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></Icon>,
-  megaphone: (p: IcoProps) => <Icon {...p}><path d="M3 10v4l11 5V5L3 10zM3 10H2a1 1 0 00-1 1v2a1 1 0 001 1h1m11-5l5-3v14l-5-3M7 14v3a2 2 0 002 2h0a2 2 0 002-2"/></Icon>,
   more:      (p: IcoProps) => <Icon {...p}><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/></Icon>,
   search:    (p: IcoProps) => <Icon {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></Icon>,
   filter:    (p: IcoProps) => <Icon {...p}><path d="M3 5h18M6 12h12M10 19h4"/></Icon>,
