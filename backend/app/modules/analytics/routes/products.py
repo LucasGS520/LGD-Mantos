@@ -24,9 +24,8 @@ async def top_products(
 async def product_analysis(
     period: str | None = Query(None),
     days: int = Query(30),
-    compare: bool = Query(False),
     db: AsyncSession = Depends(get_db),
     _=Depends(verify_token),
 ):
     """Análise completa de produtos: margem, parados e ruptura."""
-    return await ProductAnalysisService.product_analysis(db, period, days, compare=compare)
+    return await ProductAnalysisService.product_analysis(db, period, days)

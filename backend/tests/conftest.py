@@ -69,12 +69,18 @@ async def _prepare_database():
 
 @pytest_asyncio.fixture(autouse=True)
 async def _clean_tables(_prepare_database):
-    """Trunca as tabelas usadas nos testes antes de cada caso — isolamento total."""
+    """Trunca as tabelas usadas nos testes antes de cada caso — isolamento total.
+
+    `sales`/`sale_items` entraram na lista na Fase 2: os testes de comparação
+    de período (`?compare=true`) inserem vendas com datas específicas, e sem
+    truncar elas se acumulariam a cada execução da suíte, contaminando o
+    período "atual" de rodadas futuras.
+    """
     from app.core.database import engine
 
     async with engine.begin() as conn:
         await conn.execute(text(
-            "TRUNCATE product_variants, products RESTART IDENTITY CASCADE"
+            "TRUNCATE product_variants, products, sale_items, sales RESTART IDENTITY CASCADE"
         ))
     yield
 
@@ -132,3 +138,17 @@ async def create_product(db, sku="MANTO-TESTE", name="Manto de Teste", stock=5, 
     await db.commit()
     await db.refresh(product)
     return product
+
+
+async def create_sale(db, sold_at, total=100.0, sale_channel_id=None):
+    """Cria uma venda avulsa (sem itens) numa data específica.
+
+    Usado pelos testes de comparação de período — não precisa de `SaleItem`
+    porque `sales_by_channel` só lê `Sale`/`SaleChannel`.
+    """
+    from app.shared.models.operations import Sale
+
+    sale = Sale(sold_at=sold_at, total=total, sale_channel_id=sale_channel_id)
+    db.add(sale)
+    await db.commit()
+    return sale

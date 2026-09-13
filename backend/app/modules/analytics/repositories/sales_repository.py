@@ -90,19 +90,11 @@ async def units_sold_since(db: AsyncSession, since: datetime) -> int:
     return int(result.scalar())
 
 
-async def variant_velocity_30d(db: AsyncSession, since: datetime, end: datetime | None = None) -> dict[str, int]:
-    """Soma unidades vendidas por variante numa janela.
-
-    `end` opcional fecha a janela — necessário para calcular a velocidade do
-    período anterior (Fase 2) sem vazar vendas do período atual para dentro do
-    cálculo do período anterior.
-    """
-    query = (
+async def variant_velocity_30d(db: AsyncSession, since: datetime) -> dict[str, int]:
+    result = await db.execute(
         select(SaleItem.variant_id, func.sum(SaleItem.quantity).label("sold30"))
         .join(Sale)
         .where(Sale.sold_at >= since)
+        .group_by(SaleItem.variant_id)
     )
-    if end:
-        query = query.where(Sale.sold_at < end)
-    result = await db.execute(query.group_by(SaleItem.variant_id))
     return {row.variant_id: int(row.sold30) for row in result}

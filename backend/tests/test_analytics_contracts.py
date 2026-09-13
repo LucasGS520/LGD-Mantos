@@ -5,7 +5,11 @@ exige autenticação e devolve a estrutura que o frontend consome. Servem de red
 de segurança para as fases seguintes, que vão mexer nesses mesmos services.
 """
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
+
+from tests.conftest import create_sale
 
 
 ROTAS_PROTEGIDAS = [
@@ -86,17 +90,15 @@ async def test_dashboard_com_compare_traz_os_indicadores_comparados(auth_client)
         assert set(comparacao[indicador]) == {"atual", "anterior", "variacao_pct"}
 
 
-async def test_product_analysis_sem_compare_nao_traz_comparacao(auth_client):
-    resposta = await auth_client.get("/api/v1/analytics/products/analysis")
-    assert "comparacao" not in resposta.json()
-
-
-async def test_product_analysis_com_compare_traz_contagens_comparadas(auth_client):
+async def test_product_analysis_ignora_compare(auth_client):
+    """`product_analysis` não aceita comparação (ver docstring do service): sem
+    histórico de estoque por data, "anterior" para rupture_risk/stopped seria
+    um contrafactual sem significado, não um número real do período anterior.
+    Passar `?compare=true` não deve gerar a chave `comparacao`.
+    """
     resposta = await auth_client.get("/api/v1/analytics/products/analysis?compare=true")
-    comparacao = resposta.json()["comparacao"]
-    for indicador in ("rupture_risk", "stopped"):
-        assert indicador in comparacao, f"indicador ausente: {indicador}"
-        assert set(comparacao[indicador]) == {"atual", "anterior", "variacao_pct"}
+    assert resposta.status_code == 200
+    assert "comparacao" not in resposta.json()
 
 
 async def test_by_channel_sem_compare_continua_uma_lista(auth_client):
@@ -105,14 +107,43 @@ async def test_by_channel_sem_compare_continua_uma_lista(auth_client):
     assert isinstance(resposta.json(), list)
 
 
-async def test_by_channel_com_compare_traz_lista_e_comparacao(auth_client):
+async def test_by_channel_com_compare_continua_lista_com_comparacao_por_item(auth_client):
+    """Com compare=true, a resposta continua uma lista — cada item ganha sua
+    própria chave `comparacao` (a comparação é por canal, não um dicionário
+    paralelo que obrigaria casar por nome)."""
     resposta = await auth_client.get("/api/v1/analytics/by-channel?compare=true")
     corpo = resposta.json()
-    assert isinstance(corpo["channels"], list)
-    for indicadores in corpo["comparacao"].values():
-        assert set(indicadores) == {"total", "count"}
-        for indicador in indicadores.values():
+    assert isinstance(corpo, list)
+    for item in corpo:
+        assert set(item) == {"channel", "count", "total", "comparacao"}
+        assert set(item["comparacao"]) == {"total", "count"}
+        for indicador in item["comparacao"].values():
             assert set(indicador) == {"atual", "anterior", "variacao_pct"}
+
+
+async def test_by_channel_com_compare_mantem_canal_que_parou_de_vender(db, auth_client):
+    """Um canal que vendeu no período anterior mas não no atual precisa
+    continuar na lista, com os valores atuais zerados — é a informação mais
+    relevante da comparação (o canal parou de vender), não pode sumir.
+    """
+    agora = datetime.now(timezone.utc)
+    # days=30 (default): atual = [agora-30d, agora]; anterior = [agora-60d, agora-30d].
+    # sold_channel_id=None cai no bucket "Sem canal" que o service já usa como fallback.
+    await create_sale(db, sold_at=agora - timedelta(days=45), total=849.6, sale_channel_id=None)
+
+    resposta = await auth_client.get("/api/v1/analytics/by-channel?compare=true")
+    corpo = resposta.json()
+
+    canal_sumido = next((item for item in corpo if item["channel"] == "Sem canal"), None)
+    assert canal_sumido is not None, "canal que só vendeu no período anterior desapareceu da lista"
+    assert canal_sumido["count"] == 0
+    assert canal_sumido["total"] == 0.0
+    assert canal_sumido["comparacao"]["total"] == {
+        "atual": 0.0, "anterior": 849.6, "variacao_pct": -100.0,
+    }
+    assert canal_sumido["comparacao"]["count"] == {
+        "atual": 0.0, "anterior": 1.0, "variacao_pct": -100.0,
+    }
 
 
 async def test_dre_sem_compare_nao_traz_comparacao(auth_client):

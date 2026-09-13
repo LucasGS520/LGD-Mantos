@@ -18,15 +18,16 @@ class ChannelAnalysisService:
     @staticmethod
     async def sales_by_channel(
         db: AsyncSession, period: str | None = None, days: int = 30, compare: bool = False
-    ) -> list[dict] | dict:
+    ) -> list[dict]:
         """Vendas agrupadas por canal.
 
-        Sem `compare`, devolve a mesma lista de sempre — contrato preservado
-        byte a byte. Com `compare=True`, a resposta muda de forma (lista vira
-        objeto) só nesse caso: `{"channels": [...mesma lista...], "comparacao":
-        {<canal>: {"total": Comparado, "count": Comparado}}}`. Os nomes
-        "total"/"count" (não "revenue"/"qty") seguem os campos reais que este
-        método já devolve para cada canal.
+        Sempre devolve uma lista — sem `compare`, idêntica à de sempre. Com
+        `compare=True`, cada item ganha uma chave `comparacao` com os
+        indicadores daquele canal ("total"/"count", os nomes reais que este
+        método já usa) frente ao período anterior. Um canal que só vendeu no
+        período anterior continua aparecendo na lista, com `count`/`total`
+        zerados — removê-lo esconderia justamente a informação mais relevante
+        (um canal que parou de vender).
         """
         start, end = resolve_period(period, days)
         rows = await sales_repo.sales_by_channel(db, start, end)
@@ -37,16 +38,20 @@ class ChannelAnalysisService:
 
         _, (inicio_anterior, fim_anterior) = resolve_comparison_period(period, days)
         rows_ant = await sales_repo.sales_by_channel(db, inicio_anterior, fim_anterior)
-        atual_por_canal = {row[0]: (int(row[1]), float(row[2] or 0)) for row in rows}
         anterior_por_canal = {row[0]: (int(row[1]), float(row[2] or 0)) for row in rows_ant}
+        atual_por_canal = {item["channel"]: item for item in channels}
 
-        comparacao = {}
-        for nome_canal in atual_por_canal.keys() | anterior_por_canal.keys():
-            count_atual, total_atual = atual_por_canal.get(nome_canal, (0, 0.0))
-            count_ant, total_ant = anterior_por_canal.get(nome_canal, (0, 0.0))
-            comparacao[nome_canal] = {
-                "total": Comparado.de(total_atual, total_ant).model_dump(),
-                "count": Comparado.de(count_atual, count_ant).model_dump(),
+        for nome_canal, (count_ant, total_ant) in anterior_por_canal.items():
+            if nome_canal not in atual_por_canal:
+                novo = {"channel": nome_canal, "count": 0, "total": 0.0}
+                channels.append(novo)
+                atual_por_canal[nome_canal] = novo
+
+        for item in channels:
+            count_ant, total_ant = anterior_por_canal.get(item["channel"], (0, 0.0))
+            item["comparacao"] = {
+                "total": Comparado.de(item["total"], total_ant).model_dump(),
+                "count": Comparado.de(item["count"], count_ant).model_dump(),
             }
 
-        return {"channels": channels, "comparacao": comparacao}
+        return channels
