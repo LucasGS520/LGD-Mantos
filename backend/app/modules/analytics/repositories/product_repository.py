@@ -103,15 +103,25 @@ async def top_products_by_margin(db: AsyncSession, since: datetime, end: datetim
     return result.all()
 
 
-async def stopped_products(db: AsyncSession, since: datetime):
-    """Produtos ativos com estoque mas sem venda desde a data informada."""
-    sold_product_ids = (
+async def stopped_products(db: AsyncSession, since: datetime, end: datetime | None = None):
+    """Produtos ativos com estoque mas sem venda desde a data informada.
+
+    `end` opcional fecha a janela de "sem venda" — necessário para calcular o
+    valor do período anterior na comparação (Fase 2) sem vazar vendas do
+    período atual para dentro do cálculo. O estoque considerado continua sendo
+    o atual: o sistema não guarda histórico de estoque por data, então a
+    comparação usa o estoque de hoje combinado com o histórico de vendas da
+    janela informada.
+    """
+    sold_query = (
         select(ProductVariant.product_id)
         .join(SaleItem, SaleItem.variant_id == ProductVariant.id)
         .join(Sale, Sale.id == SaleItem.sale_id)
         .where(Sale.sold_at >= since)
-        .scalar_subquery()
     )
+    if end:
+        sold_query = sold_query.where(Sale.sold_at < end)
+    sold_product_ids = sold_query.scalar_subquery()
     result = await db.execute(
         select(
             Product.name,

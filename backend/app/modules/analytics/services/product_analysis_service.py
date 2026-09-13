@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.analytics.repositories import product_repository as product_repo
 from app.modules.analytics.repositories import sales_repository as sales_repo
-from app.modules.analytics.utils import resolve_period
+from app.modules.analytics.schemas.comparacao import Comparado
+from app.modules.analytics.utils import resolve_comparison_period, resolve_period
 from app.modules.settings.service import PreferenceService
 
 
@@ -27,7 +28,9 @@ class ProductAnalysisService:
         ]
 
     @staticmethod
-    async def product_analysis(db: AsyncSession, period: str | None = None, days: int = 30) -> dict:
+    async def product_analysis(
+        db: AsyncSession, period: str | None = None, days: int = 30, compare: bool = False
+    ) -> dict:
         """Análise completa de produtos: margem, parados, risco de ruptura e categorias."""
         prefs = await PreferenceService.get_safe(db)
         now = datetime.now(timezone.utc)
@@ -97,11 +100,59 @@ class ProductAnalysisService:
             for r in cat_rows
         ]
 
-        return {
+        resultado = {
             "period_days": days,
             "top_by_profit": top_by_profit,
             "top_by_margin": top_by_margin,
             "stopped": stopped,
             "rupture_risk": rupture_risk,
             "top_categories": top_categories,
+        }
+
+        if compare:
+            resultado["comparacao"] = await ProductAnalysisService._comparacao(
+                db, period, days, prefs, len(stopped), len(rupture_risk)
+            )
+
+        return resultado
+
+    @staticmethod
+    async def _comparacao(
+        db: AsyncSession,
+        period: str | None,
+        days: int,
+        prefs,
+        stopped_count: int,
+        rupture_risk_count: int,
+    ) -> dict:
+        """Recalcula as contagens de `stopped` e `rupture_risk` para o período anterior.
+
+        Só as contagens são comparadas (não as listas). O componente de
+        estoque de ambos os indicadores usa `stock_quantity` atual — o sistema
+        não guarda histórico de estoque por data, então a comparação reaplica
+        o estoque de hoje sobre o histórico de vendas da janela anterior (o
+        mesmo comportamento que o cálculo do período atual já tem: ambos são
+        indicadores "estoque atual x janela de vendas", não um snapshot fechado
+        do passado).
+        """
+        _, (inicio_anterior, fim_anterior) = resolve_comparison_period(period, days)
+
+        since_stopped_ant = fim_anterior - timedelta(days=prefs.stopped_days)
+        stopped_rows_ant = await product_repo.stopped_products(db, since_stopped_ant, fim_anterior)
+
+        since_30_ant = fim_anterior - timedelta(days=30)
+        velocity_ant = await sales_repo.variant_velocity_30d(db, since_30_ant, fim_anterior)
+        variants = await product_repo.active_variants(db)
+        rupture_risk_count_ant = 0
+        for variant in variants:
+            sold = velocity_ant.get(variant.id, 0)
+            if sold == 0:
+                continue
+            days_left = variant.stock_quantity / (sold / 30)
+            if days_left < prefs.rupture_days:
+                rupture_risk_count_ant += 1
+
+        return {
+            "stopped": Comparado.de(stopped_count, len(stopped_rows_ant)).model_dump(),
+            "rupture_risk": Comparado.de(rupture_risk_count, rupture_risk_count_ant).model_dump(),
         }

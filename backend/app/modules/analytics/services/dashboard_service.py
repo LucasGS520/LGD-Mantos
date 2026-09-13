@@ -7,11 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.analytics.repositories import finance_repository as finance_repo
 from app.modules.analytics.repositories import product_repository as product_repo
 from app.modules.analytics.repositories import sales_repository as sales_repo
+from app.modules.analytics.schemas.comparacao import Comparado
+from app.modules.analytics.utils import resolve_comparison_period
 
 
 class DashboardService:
     @staticmethod
-    async def dashboard(db: AsyncSession) -> dict:
+    async def dashboard(db: AsyncSession, compare: bool = False) -> dict:
         now = datetime.now(timezone.utc)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -39,8 +41,9 @@ class DashboardService:
         gross_profit = revenue - cogs
         net_profit = gross_profit - expenses
         avg_ticket = round(revenue / month_count, 2) if month_count else 0.0
+        margin_pct = round(net_profit / revenue * 100, 1) if revenue else 0
 
-        return {
+        resultado = {
             "today_revenue": today_revenue,
             "today_count": today_count,
             "month_revenue": revenue,
@@ -48,11 +51,61 @@ class DashboardService:
             "month_expenses": expenses,
             "gross_profit": gross_profit,
             "net_profit": net_profit,
-            "margin_pct": round(net_profit / revenue * 100, 1) if revenue else 0,
+            "margin_pct": margin_pct,
             "avg_ticket": avg_ticket,
             "total_units_sold": total_units,
             "stock_cost_value": float(stock[0]),
             "stock_sale_value": float(stock[1]),
             "stock_units": int(stock[2]),
             "daily_revenue": daily,
+        }
+
+        if compare:
+            resultado["comparacao"] = await DashboardService._comparacao(db, now, revenue, gross_profit, net_profit, margin_pct, avg_ticket, total_units)
+
+        return resultado
+
+    @staticmethod
+    async def _comparacao(
+        db: AsyncSession,
+        now: datetime,
+        revenue: float,
+        gross_profit: float,
+        net_profit: float,
+        margin_pct: float,
+        avg_ticket: float,
+        total_units: int,
+    ) -> dict:
+        """Recalcula os mesmos seis indicadores para o mês anterior (mesmos dias decorridos).
+
+        `sales_count_since` e `units_sold_since` não aceitam janela fechada
+        (só `since`), então o total de vendas e de unidades do período
+        anterior é obtido somando as quebras por canal/tamanho — que já
+        aceitam `since` e `end` — em vez de estender esses dois repositórios.
+        """
+        _, (inicio_anterior, fim_anterior) = resolve_comparison_period("current_month", agora=now)
+
+        revenue_ant = await sales_repo.month_revenue(db, inicio_anterior, fim_anterior)
+        cogs_ant = await sales_repo.month_cogs(db, inicio_anterior, fim_anterior)
+        expenses_ant = await finance_repo.expenses_total(
+            db, inicio_anterior.strftime("%Y-%m-%d"), fim_anterior.strftime("%Y-%m-%d")
+        )
+        gross_profit_ant = revenue_ant - cogs_ant
+        net_profit_ant = gross_profit_ant - expenses_ant
+        margin_pct_ant = round(net_profit_ant / revenue_ant * 100, 1) if revenue_ant else 0
+
+        canais_ant = await sales_repo.sales_by_channel(db, inicio_anterior, fim_anterior)
+        vendas_count_ant = sum(int(row[1] or 0) for row in canais_ant)
+        avg_ticket_ant = round(revenue_ant / vendas_count_ant, 2) if vendas_count_ant else 0.0
+
+        tamanhos_ant = await product_repo.sales_by_size(db, inicio_anterior, fim_anterior)
+        total_units_ant = sum(int(row[1] or 0) for row in tamanhos_ant)
+
+        return {
+            "month_revenue": Comparado.de(revenue, revenue_ant).model_dump(),
+            "gross_profit": Comparado.de(gross_profit, gross_profit_ant).model_dump(),
+            "net_profit": Comparado.de(net_profit, net_profit_ant).model_dump(),
+            "margin_pct": Comparado.de(margin_pct, margin_pct_ant).model_dump(),
+            "avg_ticket": Comparado.de(avg_ticket, avg_ticket_ant).model_dump(),
+            "total_units_sold": Comparado.de(total_units, total_units_ant).model_dump(),
         }

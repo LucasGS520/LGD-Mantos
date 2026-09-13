@@ -64,3 +64,68 @@ async def test_data_quality_expoe_score_e_total(auth_client):
     corpo = resposta.json()
     assert "score" in corpo
     assert "total_issues" in corpo
+
+
+# --- Fase 2: comparação com o período anterior (?compare=true) ---------------
+
+
+async def test_dashboard_sem_compare_nao_traz_comparacao(auth_client):
+    """Compatibilidade retroativa: o payload padrão não muda de forma."""
+    resposta = await auth_client.get("/api/v1/analytics/dashboard")
+    assert "comparacao" not in resposta.json()
+
+
+async def test_dashboard_com_compare_traz_os_indicadores_comparados(auth_client):
+    resposta = await auth_client.get("/api/v1/analytics/dashboard?compare=true")
+    comparacao = resposta.json()["comparacao"]
+    for indicador in (
+        "month_revenue", "gross_profit", "net_profit",
+        "margin_pct", "avg_ticket", "total_units_sold",
+    ):
+        assert indicador in comparacao, f"indicador ausente: {indicador}"
+        assert set(comparacao[indicador]) == {"atual", "anterior", "variacao_pct"}
+
+
+async def test_product_analysis_sem_compare_nao_traz_comparacao(auth_client):
+    resposta = await auth_client.get("/api/v1/analytics/products/analysis")
+    assert "comparacao" not in resposta.json()
+
+
+async def test_product_analysis_com_compare_traz_contagens_comparadas(auth_client):
+    resposta = await auth_client.get("/api/v1/analytics/products/analysis?compare=true")
+    comparacao = resposta.json()["comparacao"]
+    for indicador in ("rupture_risk", "stopped"):
+        assert indicador in comparacao, f"indicador ausente: {indicador}"
+        assert set(comparacao[indicador]) == {"atual", "anterior", "variacao_pct"}
+
+
+async def test_by_channel_sem_compare_continua_uma_lista(auth_client):
+    """Sem compare, /by-channel continua devolvendo a lista de sempre (não um objeto)."""
+    resposta = await auth_client.get("/api/v1/analytics/by-channel")
+    assert isinstance(resposta.json(), list)
+
+
+async def test_by_channel_com_compare_traz_lista_e_comparacao(auth_client):
+    resposta = await auth_client.get("/api/v1/analytics/by-channel?compare=true")
+    corpo = resposta.json()
+    assert isinstance(corpo["channels"], list)
+    for indicadores in corpo["comparacao"].values():
+        assert set(indicadores) == {"total", "count"}
+        for indicador in indicadores.values():
+            assert set(indicador) == {"atual", "anterior", "variacao_pct"}
+
+
+async def test_dre_sem_compare_nao_traz_comparacao(auth_client):
+    resposta = await auth_client.get("/api/v1/analytics/finance/dre")
+    assert "comparacao" not in resposta.json()
+
+
+async def test_dre_com_compare_traz_os_indicadores_comparados(auth_client):
+    resposta = await auth_client.get("/api/v1/analytics/finance/dre?compare=true")
+    comparacao = resposta.json()["comparacao"]
+    for indicador in (
+        "revenue", "cogs", "gross_profit", "gross_margin_pct",
+        "expenses", "net_profit", "margin_pct",
+    ):
+        assert indicador in comparacao, f"indicador ausente: {indicador}"
+        assert set(comparacao[indicador]) == {"atual", "anterior", "variacao_pct"}
