@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 import pytest
 
 from app.modules.analytics.schemas.comparacao import Comparado
-from app.modules.analytics.utils import resolve_comparison_period
+from app.modules.analytics.utils import resolve_comparison_period, resolve_period
 
 
 def _em(ano: int, mes: int, dia: int, hora: int = 12) -> datetime:
@@ -75,6 +75,22 @@ class TestJanelasMoveis:
         assert (fim_ant - ini_ant).days == 7
         assert fim_ant == ini_atual
 
+    def test_honra_o_instante_de_referencia_informado(self):
+        """O `agora` precisa valer em TODOS os ramos, não só nos de mês/ano.
+
+        Antes da correção este ramo delegava a `resolve_period` sem repassar o
+        instante, então a janela saía ancorada no relógio real e o parâmetro era
+        silenciosamente ignorado.
+        """
+        agora = _em(2026, 9, 12)
+        (ini_atual, fim_atual), (ini_ant, fim_ant) = resolve_comparison_period(
+            None, days=7, agora=agora
+        )
+        assert fim_atual == agora
+        assert ini_atual == _em(2026, 9, 5)
+        assert fim_ant == _em(2026, 9, 5)
+        assert ini_ant == _em(2026, 8, 29)
+
 
 class TestAnoCorrente:
     def test_compara_contra_o_mesmo_periodo_do_ano_passado(self):
@@ -85,6 +101,20 @@ class TestAnoCorrente:
         assert ini_atual == _em(2026, 1, 1, 0)
         assert ini_ant == _em(2025, 1, 1, 0)
         assert fim_ant == _em(2025, 3, 15)
+
+
+class TestResolvePeriodComAgora:
+    def test_resolve_period_honra_o_agora_informado(self):
+        """Prova que a função base passou a aceitar e respeitar `agora`.
+
+        Sem o parâmetro, `resolve_period` usava `datetime.now()` internamente e
+        o resultado dependeria do relógio real no momento do teste — o que
+        tornaria este teste não determinístico.
+        """
+        agora = _em(2026, 9, 12)
+        start, end = resolve_period(None, days=7, agora=agora)
+        assert end == agora
+        assert start == _em(2026, 9, 5)
 
 
 class TestComparado:

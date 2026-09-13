@@ -3,7 +3,11 @@
 from datetime import datetime, timedelta, timezone
 
 
-def resolve_period(period: str | None, days: int = 30) -> tuple[datetime, datetime]:
+def resolve_period(
+    period: str | None,
+    days: int = 30,
+    agora: datetime | None = None,
+) -> tuple[datetime, datetime]:
     """Retorna (start, end) em UTC para um período nomeado ou número de dias.
 
     Períodos nomeados:
@@ -13,8 +17,11 @@ def resolve_period(period: str | None, days: int = 30) -> tuple[datetime, dateti
     - last_6_months: últimos 180 dias até agora
     - current_year: de 1º de janeiro do ano atual até agora
     - None / fallback: últimos `days` dias até agora
+
+    O parâmetro `agora` existe para testes fixarem o instante de referência;
+    as chamadas existentes não o informam e continuam usando o relógio real.
     """
-    now = datetime.now(timezone.utc)
+    now = agora or datetime.now(timezone.utc)
     today = now.date()
 
     if period == "current_month":
@@ -95,7 +102,9 @@ def resolve_comparison_period(
         return (inicio_atual, inicio_deste), (inicio_anterior, inicio_atual)
 
     # Janelas móveis: o período anterior é do mesmo tamanho, colado ao atual.
-    inicio_atual, fim_atual = resolve_period(period, days)
+    # `agora` já foi resolvido na linha acima (nunca é None aqui), então repassá-lo
+    # garante que este ramo também honre um instante de referência fixado em teste.
+    inicio_atual, fim_atual = resolve_period(period, days, agora=agora)
     tamanho = fim_atual - inicio_atual
     return (inicio_atual, fim_atual), (inicio_atual - tamanho, inicio_atual)
 
