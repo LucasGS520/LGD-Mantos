@@ -331,11 +331,22 @@ Os repositórios já aceitam janelas: `sales_repo.month_revenue(db, inicio)` e i
 
 | Service | Indicadores em `comparacao` |
 | --- | --- |
-| `product_analysis` | `period_days` não; apenas contagens: `rupture_risk`, `stopped` (quantidade de itens, não as listas) |
+| `product_analysis` | apenas contagens: `rupture_risk` e `stopped` (quantidade de itens, não as listas) |
 | `sales_by_channel` | por canal: `revenue`, `qty` |
-| `dre` | `receita_bruta`, `cmv`, `lucro_bruto`, `despesas`, `lucro_liquido`, `margem_pct` — use os nomes de chave que o service já devolve |
+| `dre` | `revenue`, `cogs`, `gross_profit`, `gross_margin_pct`, `expenses`, `net_profit`, `margin_pct` |
 
-Confira os nomes reais das chaves lendo cada service antes de escrever — não presuma.
+As chaves do DRE acima foram conferidas no `finance_service.py` — são em inglês.
+Não comparar `period`, `expenses_by_category`, `break_even` nem `evolution`: os
+dois primeiros não são escalares, e os dois últimos já são, por natureza,
+projeções sobre o período.
+
+**`dre` não usa `resolve_comparison_period`.** A assinatura dele é
+`dre(db, month, year)`, não `period` — o período anterior é o mês calendário
+imediatamente antes do informado, com a virada de ano tratada (janeiro compara
+contra dezembro do ano anterior). Calcule isso dentro do próprio service.
+
+Confira os nomes reais das chaves dos outros services antes de escrever — não
+presuma.
 
 - [ ] **Step 3: As rotas repassam o parâmetro**
 
