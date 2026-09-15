@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from tests.conftest import create_sale
+from tests.conftest import create_category_sale, create_sale
 
 
 ROTAS_PROTEGIDAS = [
@@ -143,6 +143,58 @@ async def test_by_channel_com_compare_mantem_canal_que_parou_de_vender(db, auth_
     }
     assert canal_sumido["comparacao"]["count"] == {
         "atual": 0.0, "anterior": 1.0, "variacao_pct": -100.0,
+    }
+
+
+async def test_categories_performance_sem_compare_nao_traz_comparacao(auth_client):
+    """Compatibilidade retroativa: sem compare, nenhum item tem a chave `comparacao`."""
+    resposta = await auth_client.get("/api/v1/analytics/categories/performance")
+    corpo = resposta.json()
+    assert isinstance(corpo, list)
+    for item in corpo:
+        assert "comparacao" not in item
+
+
+async def test_categories_performance_com_compare_traz_comparacao_por_item(db, auth_client):
+    """Com compare=true, cada categoria ganha `comparacao` com revenue/units/
+    profit/margin_pct — daily_velocity fica de fora por ser derivada."""
+    await create_category_sale(db, sold_at=datetime.now(timezone.utc) - timedelta(days=5), category_name="Mantos Longos")
+
+    resposta = await auth_client.get("/api/v1/analytics/categories/performance?compare=true")
+    corpo = resposta.json()
+    assert isinstance(corpo, list)
+    item = next(i for i in corpo if i["category_name"] == "Mantos Longos")
+    assert set(item["comparacao"]) == {"revenue", "units", "profit", "margin_pct"}
+    for indicador in item["comparacao"].values():
+        assert set(indicador) == {"atual", "anterior", "variacao_pct"}
+
+
+async def test_categories_performance_com_compare_mantem_categoria_que_parou_de_vender(db, auth_client):
+    """Categoria que só vendeu no período anterior precisa continuar na lista,
+    com os valores atuais zerados — é a informação mais acionável (categoria
+    que parou de vender), não pode sumir.
+    """
+    agora = datetime.now(timezone.utc)
+    # days=30 (default): atual = [agora-30d, agora]; anterior = [agora-60d, agora-30d].
+    await create_category_sale(
+        db, sold_at=agora - timedelta(days=45), category_name="Mantos Curtos",
+        quantity=2, unit_price=199.9, unit_cost=80.0,
+    )
+
+    resposta = await auth_client.get("/api/v1/analytics/categories/performance?compare=true")
+    corpo = resposta.json()
+
+    categoria_sumida = next((i for i in corpo if i["category_name"] == "Mantos Curtos"), None)
+    assert categoria_sumida is not None, "categoria que só vendeu no período anterior desapareceu da lista"
+    assert categoria_sumida["units"] == 0
+    assert categoria_sumida["revenue"] == 0.0
+    assert categoria_sumida["profit"] == 0.0
+    assert categoria_sumida["daily_velocity"] == 0.0
+    assert categoria_sumida["comparacao"]["revenue"] == {
+        "atual": 0.0, "anterior": 399.8, "variacao_pct": -100.0,
+    }
+    assert categoria_sumida["comparacao"]["units"] == {
+        "atual": 0.0, "anterior": 2.0, "variacao_pct": -100.0,
     }
 
 

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { AppBar, BottomNav, ScreenBody } from '../../components/Chrome'
 import { LoadingBody, ErrorBody, Tabs, PhotoPlaceholder, Card, Section } from '../../components/UI'
-import { SectionChart, CovBadge } from '../../components/Analytics'
+import { SectionChart, CovBadge, Variacao } from '../../components/Analytics'
 import { fmtBRLshort, fmtNum } from '../../fmt'
 import { api } from '../../services/api'
 import { useData } from '../../hooks/useData'
@@ -24,8 +24,11 @@ export default function Products() {
   // período como padrão. Seletor de período configurável é assunto da Fase 2.
   const period = 'current_month'
 
+  // compare=true: seção Categorias mostra a variação de receita vs. período
+  // anterior ao lado do valor (decisão do dono — indicador mais útil pra
+  // compra numa loja de roupa).
   const { data: categorias, loading, error, reload } = useData<CategoryPerformance[]>(
-    () => api.getCategoryPerformance(period), period
+    () => api.getCategoryPerformance(period, true), period
   )
   const { data: coverage } = useData<CategoryCoverage[]>(api.getCategoryStockCoverage)
   const { data: ranking } = useData<TopProduct[]>(() => api.getTopProducts(undefined, 30))
@@ -102,8 +105,9 @@ export default function Products() {
                         {/* Dados */}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)', marginBottom: 6 }}>{cat.category_name}</div>
-                          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                             <Pill label="Receita" value={fmtBRLshort(cat.revenue)} color="var(--gold-300)" />
+                            <Variacao dado={cat.comparacao?.revenue} />
                             <Pill label="Margem" value={`${cat.margin_pct.toFixed(0)}%`} color={cat.margin_pct >= 30 ? '#5DD49E' : cat.margin_pct >= 15 ? '#F5BF7A' : '#F5847B'} />
                             <Pill label="Unid." value={String(cat.units)} color="var(--text-2)" />
                           </div>

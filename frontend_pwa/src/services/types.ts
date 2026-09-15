@@ -271,6 +271,14 @@ export interface CategoryPerformance {
   profit: number
   margin_pct: number
   daily_velocity: number
+  // Só vem com `?compare=true` — variação vs. período anterior. daily_velocity
+  // fica de fora por ser derivada de units e do tamanho da janela.
+  comparacao?: {
+    revenue: Comparado
+    units: Comparado
+    profit: Comparado
+    margin_pct: Comparado
+  }
 }
 
 export interface SizeShare {

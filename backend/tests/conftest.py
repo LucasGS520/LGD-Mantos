@@ -74,13 +74,16 @@ async def _clean_tables(_prepare_database):
     `sales`/`sale_items` entraram na lista na Fase 2: os testes de comparação
     de período (`?compare=true`) inserem vendas com datas específicas, e sem
     truncar elas se acumulariam a cada execução da suíte, contaminando o
-    período "atual" de rodadas futuras.
+    período "atual" de rodadas futuras. `categories` entrou junto com o teste
+    de comparação de `categories/performance`, que cria categoria própria — o
+    nome é `unique`, então sem truncar a segunda execução da suíte falharia
+    na criação por duplicidade.
     """
     from app.core.database import engine
 
     async with engine.begin() as conn:
         await conn.execute(text(
-            "TRUNCATE product_variants, products, sale_items, sales RESTART IDENTITY CASCADE"
+            "TRUNCATE product_variants, products, sale_items, sales, categories RESTART IDENTITY CASCADE"
         ))
     yield
 
@@ -152,3 +155,52 @@ async def create_sale(db, sold_at, total=100.0, sale_channel_id=None):
     db.add(sale)
     await db.commit()
     return sale
+
+
+async def create_category_sale(
+    db, sold_at, category_name, quantity=1, unit_price=199.9, unit_cost=80.0
+):
+    """Cria uma venda completa (Sale -> SaleItem -> ProductVariant -> Product
+    -> Category) numa categoria específica.
+
+    Diferente de `create_sale`, que só grava `Sale` — `category_performance`
+    precisa da cadeia inteira até `Category`, já que o repositório faz join
+    por `Product.category_id`. Reaproveita a categoria se ela já existir
+    (nome é `unique` no schema).
+    """
+    from sqlalchemy import select
+
+    from app.shared.models.catalog import Category, Product, ProductVariant
+    from app.shared.models.common import uid
+    from app.shared.models.operations import Sale, SaleItem
+
+    categoria = (
+        await db.execute(select(Category).where(Category.name == category_name))
+    ).scalar_one_or_none()
+    if categoria is None:
+        categoria = Category(name=category_name)
+        db.add(categoria)
+        await db.flush()
+
+    product = Product(
+        sku=f"SKU-{uid()}",
+        name=category_name,
+        category_id=categoria.id,
+        cost_price=unit_cost,
+        sale_price=unit_price,
+    )
+    db.add(product)
+    await db.flush()
+    variant = ProductVariant(product_id=product.id, size="M", stock_quantity=10)
+    db.add(variant)
+    await db.flush()
+
+    sale = Sale(sold_at=sold_at, total=round(unit_price * quantity, 2))
+    db.add(sale)
+    await db.flush()
+    db.add(SaleItem(
+        sale_id=sale.id, variant_id=variant.id,
+        quantity=quantity, unit_price=unit_price, unit_cost=unit_cost,
+    ))
+    await db.commit()
+    return categoria

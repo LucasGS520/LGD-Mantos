@@ -15,17 +15,34 @@ from app.modules.analytics.schemas.categories import (
     ProductAttributeAnalysis,
     SizeShare,
 )
-from app.modules.analytics.utils import resolve_period
+from app.modules.analytics.schemas.comparacao import Comparado
+from app.modules.analytics.utils import resolve_comparison_period, resolve_period
 
 
 class CategoryAnalysisService:
     @staticmethod
-    async def performance(db: AsyncSession, period: str | None = None, days: int = 30) -> list[CategoryPerformance]:
-        """Performance de cada categoria no período: receita, margem e velocidade."""
-        start, end = resolve_period(period, days)
+    async def performance(
+        db: AsyncSession, period: str | None = None, days: int = 30, compare: bool = False
+    ) -> list[CategoryPerformance]:
+        """Performance de cada categoria no período: receita, margem e velocidade.
+
+        Sem `compare`, a resposta é idêntica à de sempre. Com `compare=True`,
+        segue o mesmo padrão de `ChannelAnalysisService.sales_by_channel`: cada
+        item ganha uma chave `comparacao` com revenue/units/profit/margin_pct
+        frente ao período anterior. `daily_velocity` fica de fora por ser
+        derivada de units e do tamanho da janela — compará-la seria redundante.
+        Uma categoria que só vendeu no período anterior continua na lista, com
+        os valores atuais zerados: é a informação mais acionável da
+        comparação (categoria que parou de vender), não pode sumir.
+        """
+        # Resolvido uma única vez e repassado às duas chamadas de período —
+        # evita que `resolve_period` e `resolve_comparison_period` capturem
+        # instantes ligeiramente diferentes.
+        agora = datetime.now(timezone.utc)
+        start, end = resolve_period(period, days, agora=agora)
         period_days = max((end - start).days, 1)
         rows = await product_repo.category_performance(db, start, end)
-        return [
+        itens = [
             CategoryPerformance(
                 category_id=str(row.category_id),
                 category_name=row.category_name,
@@ -38,6 +55,50 @@ class CategoryAnalysisService:
             )
             for row in rows
         ]
+
+        if not compare:
+            return itens
+
+        _, (inicio_anterior, fim_anterior) = resolve_comparison_period(period, days, agora=agora)
+        rows_ant = await product_repo.category_performance(db, inicio_anterior, fim_anterior)
+        anterior_por_categoria = {
+            str(row.category_id): {
+                "category_name": row.category_name,
+                "units": int(row.units or 0),
+                "revenue": round(float(row.revenue or 0), 2),
+                "profit": round(float(row.profit or 0), 2),
+                "margin_pct": round(float(row.margin_pct or 0), 1),
+            }
+            for row in rows_ant
+        }
+        atual_por_categoria = {item.category_id: item for item in itens}
+
+        for category_id, dados_ant in anterior_por_categoria.items():
+            if category_id not in atual_por_categoria:
+                nova = CategoryPerformance(
+                    category_id=category_id,
+                    category_name=dados_ant["category_name"],
+                    units=0,
+                    revenue=0.0,
+                    cogs=0.0,
+                    profit=0.0,
+                    margin_pct=0.0,
+                    daily_velocity=0.0,
+                )
+                itens.append(nova)
+                atual_por_categoria[category_id] = nova
+
+        sem_dados_anteriores = {"units": 0, "revenue": 0.0, "profit": 0.0, "margin_pct": 0.0}
+        for item in itens:
+            dados_ant = anterior_por_categoria.get(item.category_id, sem_dados_anteriores)
+            item.comparacao = {
+                "revenue": Comparado.de(item.revenue, dados_ant["revenue"]),
+                "units": Comparado.de(item.units, dados_ant["units"]),
+                "profit": Comparado.de(item.profit, dados_ant["profit"]),
+                "margin_pct": Comparado.de(item.margin_pct, dados_ant["margin_pct"]),
+            }
+
+        return itens
 
     @staticmethod
     async def size_distribution(db: AsyncSession, period: str | None = None, days: int = 30) -> list[CategorySizeDistribution]:

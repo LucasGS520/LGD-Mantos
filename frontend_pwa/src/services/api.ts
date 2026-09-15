@@ -177,8 +177,8 @@ export const api = {
   getDataQuality: () =>
     req<DataQuality>('GET', '/analytics/data-quality'),
 
-  getCategoryPerformance: (period: string) =>
-    req<CategoryPerformance[]>('GET', `/analytics/categories/performance?period=${period}`),
+  getCategoryPerformance: (period: string, compare?: boolean) =>
+    req<CategoryPerformance[]>('GET', `/analytics/categories/performance?period=${period}${compare ? '&compare=true' : ''}`),
 
   getCategoryStockCoverage: () =>
     req<CategoryCoverage[]>('GET', '/analytics/categories/stock-coverage'),

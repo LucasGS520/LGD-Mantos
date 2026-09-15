@@ -3,6 +3,8 @@
 from typing import Optional
 from pydantic import BaseModel
 
+from app.modules.analytics.schemas.comparacao import Comparado
+
 
 class CategoryPerformance(BaseModel):
     category_id: str
@@ -13,6 +15,10 @@ class CategoryPerformance(BaseModel):
     profit: float
     margin_pct: float
     daily_velocity: float
+    # Só preenchido com `?compare=true` (ver CategoryAnalysisService.performance).
+    # Chaves fixas: revenue/units/profit/margin_pct — daily_velocity fica de
+    # fora por ser derivada de units e do tamanho da janela (redundante).
+    comparacao: Optional[dict[str, Comparado]] = None
 
 
 class SizeShare(BaseModel):
