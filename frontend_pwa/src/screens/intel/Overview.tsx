@@ -2,16 +2,16 @@ import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { Ico } from '../../components/Icons'
 import { KPI, LoadingBody, ErrorBody } from '../../components/UI'
 import { AppBar, BottomNav, ScreenBody } from '../../components/Chrome'
-import { NavItem, AlertRow, MetricInfo } from '../../components/Analytics'
+import { NavItem, AlertRow, MetricInfo, Variacao } from '../../components/Analytics'
 import { fmtBRL, fmtBRLshort } from '../../fmt'
 import { api } from '../../services/api'
 import { useData } from '../../hooks/useData'
-import type { Dashboard as DashboardData, ProductAnalysis } from '../../services/types'
+import type { Dashboard as DashboardData, ProductAnalysis, Comparado } from '../../services/types'
 import { useNav } from '../../nav'
 
 export default function Overview() {
   const { navigate } = useNav()
-  const { data, loading, error, reload } = useData<DashboardData>(api.getDashboard)
+  const { data, loading, error, reload } = useData<DashboardData>(() => api.getDashboard(true))
   const { data: analysis } = useData<ProductAnalysis>(() => api.getProductAnalysis('current_month'))
 
   const today = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })
@@ -28,13 +28,19 @@ export default function Overview() {
           {/* Hero */}
           <div style={{ padding: 18, borderRadius: 18, background: 'linear-gradient(140deg, rgba(212,168,71,0.18), rgba(212,168,71,0.04) 50%, rgba(212,168,71,0.02))', border: '1px solid rgba(212,168,71,0.25)', marginBottom: 12 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold-300)', textTransform: 'uppercase', letterSpacing: 1.5 }}>Receita do mês</div>
-            <div className="tnum" style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, color: 'var(--text-1)', marginTop: 4 }}>
-              {fmtBRLshort(data.month_revenue)}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+              <div className="tnum" style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, color: 'var(--text-1)', marginTop: 4 }}>
+                {fmtBRLshort(data.month_revenue)}
+              </div>
+              <Variacao dado={data.comparacao?.month_revenue} />
             </div>
-            <div style={{ display: 'flex', gap: 14, marginTop: 6, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 14, marginTop: 6, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: '#5DD49E', fontWeight: 700 }}>Margem {data.margin_pct.toFixed(1)}%</span>
+              <Variacao dado={data.comparacao?.margin_pct} />
               <span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>{data.total_units_sold} un vendidas</span>
+              <Variacao dado={data.comparacao?.total_units_sold} />
               <span style={{ fontSize: 12, color: 'var(--gold-300)', fontWeight: 500 }}>Ticket médio {fmtBRLshort(data.avg_ticket)}</span>
+              <Variacao dado={data.comparacao?.avg_ticket} />
             </div>
 
             {chartData.length > 1 && (
@@ -96,7 +102,7 @@ export default function Overview() {
               icon={Ico.cash} />
             <KPIInfo label="Lucro líquido" value={fmtBRLshort(data.net_profit)}
               delta={`margem ${data.margin_pct.toFixed(1)}%`} deltaTone={data.net_profit >= 0 ? 'success' : 'danger'}
-              icon={Ico.trend} />
+              icon={Ico.trend} variacao={data.comparacao?.net_profit} />
             <KPIInfo label="Estoque (custo)" value={fmtBRLshort(data.stock_cost_value)}
               delta={`${data.stock_units} un`} deltaTone="muted"
               icon={Ico.box}
@@ -150,10 +156,11 @@ export default function Overview() {
 }
 
 // KPI com ícone ⓘ inline
-function KPIInfo({ label, value, delta, deltaTone, icon: I, info }: {
+function KPIInfo({ label, value, delta, deltaTone, icon: I, info, variacao }: {
   label: string; value: string; delta?: string; deltaTone?: 'success' | 'danger' | 'muted'
   icon: (p: any) => JSX.Element
   info?: { what: string; good: string; action: string }
+  variacao?: Comparado
 }) {
   return (
     <div style={{ background: 'var(--bg-1)', border: '1px solid var(--line-1)', borderRadius: 14, padding: '12px 14px' }}>
@@ -165,7 +172,10 @@ function KPIInfo({ label, value, delta, deltaTone, icon: I, info }: {
         <I size={15} stroke="var(--text-3)" />
       </div>
       <div className="tnum" style={{ fontSize: 19, fontWeight: 700, letterSpacing: -0.5, color: 'var(--text-1)', lineHeight: 1.1 }}>{value}</div>
-      {delta && <div style={{ fontSize: 11, fontWeight: 600, marginTop: 4, color: deltaTone === 'success' ? '#5DD49E' : deltaTone === 'danger' ? '#F5847B' : 'var(--text-3)' }}>{delta}</div>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+        {delta && <span style={{ fontSize: 11, fontWeight: 600, color: deltaTone === 'success' ? '#5DD49E' : deltaTone === 'danger' ? '#F5847B' : 'var(--text-3)' }}>{delta}</span>}
+        {variacao !== undefined && <Variacao dado={variacao} />}
+      </div>
     </div>
   )
 }

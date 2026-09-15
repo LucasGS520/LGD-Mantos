@@ -6,27 +6,36 @@ import {
 import { Ico } from '../../components/Icons'
 import { Badge, Card, Section, LoadingBody, ErrorBody } from '../../components/UI'
 import { AppBar, ScreenBody } from '../../components/Chrome'
-import { MetricInfo, SectionChart } from '../../components/Analytics'
+import { MetricInfo, SectionChart, Variacao } from '../../components/Analytics'
 import { fmtBRL, fmtBRLshort } from '../../fmt'
 import { api } from '../../services/api'
 import { useData } from '../../hooks/useData'
-import type { DRE as DREData } from '../../services/types'
+import type { DRE as DREData, Comparado } from '../../services/types'
 
 const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
 const PIE_COLORS = ['#D4A847','#B68B2E','#5EA8E0','#3FB87C','#E8584F','#E8A04A','#9B59B6','#888888']
 
-interface RowProps { label: string; val: number; accent?: boolean; bold?: boolean; neg?: boolean; info?: { what: string; good: string; action: string } }
-function Row({ label, val, accent, bold, neg, info }: RowProps) {
+interface RowProps {
+  label: string; val: number; accent?: boolean; bold?: boolean; neg?: boolean
+  info?: { what: string; good: string; action: string }
+  variacao?: Comparado
+  // CMV e despesas: alta é notícia ruim, então a cor da variação é invertida.
+  inverterCor?: boolean
+}
+function Row({ label, val, accent, bold, neg, info, variacao, inverterCor }: RowProps) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderTop: '1px solid var(--line-1)', ...(accent ? { background: 'rgba(212,168,71,0.05)' } : {}) }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ fontSize: bold ? 14 : 13, fontWeight: bold ? 800 : 600, color: bold ? 'var(--text-1)' : 'var(--text-2)' }}>{label}</span>
         {info && <MetricInfo {...info} />}
       </div>
-      <span className="tnum" style={{ fontSize: bold ? 17 : 14, fontWeight: bold ? 800 : 700, color: accent ? 'var(--gold-300)' : neg ? '#F5847B' : 'var(--text-1)' }}>
-        {neg ? '−' : ''}{fmtBRL(Math.abs(val))}
-      </span>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        {variacao !== undefined && <Variacao dado={variacao} inverterCor={inverterCor} />}
+        <span className="tnum" style={{ fontSize: bold ? 17 : 14, fontWeight: bold ? 800 : 700, color: accent ? 'var(--gold-300)' : neg ? '#F5847B' : 'var(--text-1)' }}>
+          {neg ? '−' : ''}{fmtBRL(Math.abs(val))}
+        </span>
+      </div>
     </div>
   )
 }
@@ -37,7 +46,7 @@ export default function Finance() {
   const [year, setYear] = useState(now.getFullYear())
 
   const { data, loading, error, reload } = useData<DREData>(
-    () => api.getDRE(month, year),
+    () => api.getDRE(month, year, true),
     `${month}-${year}`,
   )
 
@@ -88,25 +97,34 @@ export default function Finance() {
           {/* Hero */}
           <div style={{ padding: 18, borderRadius: 18, marginBottom: 16, background: data.net_profit >= 0 ? 'linear-gradient(140deg, rgba(63,184,124,0.18), rgba(63,184,124,0.04) 60%)' : 'linear-gradient(140deg, rgba(232,88,79,0.18), rgba(232,88,79,0.04) 60%)', border: `1px solid ${data.net_profit >= 0 ? 'rgba(63,184,124,0.25)' : 'rgba(232,88,79,0.25)'}` }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: data.net_profit >= 0 ? '#5DD49E' : '#F5847B', textTransform: 'uppercase', letterSpacing: 1.5 }}>Lucro líquido</div>
-            <div className="tnum" style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, marginTop: 4, color: 'var(--text-1)' }}>{fmtBRL(data.net_profit)}</div>
-            <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+              <div className="tnum" style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, marginTop: 4, color: 'var(--text-1)' }}>{fmtBRL(data.net_profit)}</div>
+              <Variacao dado={data.comparacao?.net_profit} />
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <Badge tone={data.margin_pct >= 20 ? 'success' : data.margin_pct >= 0 ? 'warn' : 'danger'} size="lg" dot>
                 Margem {data.margin_pct.toFixed(1)}%
               </Badge>
+              <Variacao dado={data.comparacao?.margin_pct} />
               <Badge tone="info" size="lg">Margem bruta {data.gross_margin_pct?.toFixed(1) ?? '—'}%</Badge>
+              <Variacao dado={data.comparacao?.gross_margin_pct} />
             </div>
           </div>
 
           {/* Demonstrativo */}
           <div style={{ background: 'var(--bg-1)', border: '1px solid var(--line-1)', borderRadius: 14, overflow: 'hidden', marginBottom: 16 }}>
             <div style={{ padding: '12px 16px', fontSize: 11, color: 'var(--text-3)', fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>Demonstrativo</div>
-            <Row label="Receita bruta" val={data.revenue} />
+            <Row label="Receita bruta" val={data.revenue} variacao={data.comparacao?.revenue} />
             <Row label="(−) CMV — Custo das mercadorias" val={data.cogs} neg
+              variacao={data.comparacao?.cogs} inverterCor
               info={{ what: 'Custo total dos produtos vendidos (preço de custo × quantidade).', good: 'Deve ser entre 40–65% da receita para varejo de moda.', action: 'Se o CMV está muito alto, negocie preços de compra com fornecedores.' }} />
             <Row label="= Lucro bruto" val={data.gross_profit} bold
+              variacao={data.comparacao?.gross_profit}
               info={{ what: 'Receita menos custo dos produtos. Ainda não desconta despesas.', good: 'Margem bruta acima de 35% indica bom poder de precificação.', action: 'Se a margem bruta está baixa, revise os preços de venda.' }} />
-            <Row label="(−) Despesas operacionais" val={data.expenses} neg />
-            <Row label="= Lucro líquido" val={data.net_profit} bold accent />
+            <Row label="(−) Despesas operacionais" val={data.expenses} neg
+              variacao={data.comparacao?.expenses} inverterCor />
+            <Row label="= Lucro líquido" val={data.net_profit} bold accent
+              variacao={data.comparacao?.net_profit} />
           </div>
 
           {/* Break-even */}

@@ -145,12 +145,15 @@ export const api = {
   },
 
   // ─── Analytics ────────────────────────────────────────────
-  getDashboard: () => req<Dashboard>('GET', '/analytics/dashboard'),
+  // `compare` acrescenta `?compare=true` — sem ele a resposta é idêntica à de antes.
+  getDashboard: (compare?: boolean) =>
+    req<Dashboard>('GET', `/analytics/dashboard${compare ? '?compare=true' : ''}`),
 
-  getDRE: (month?: number, year?: number) => {
+  getDRE: (month?: number, year?: number, compare?: boolean) => {
     const q = new URLSearchParams()
     if (month) q.set('month', String(month))
     if (year) q.set('year', String(year))
+    if (compare) q.set('compare', 'true')
     const qs = q.toString()
     return req<DRE>('GET', `/analytics/finance/dre${qs ? `?${qs}` : ''}`)
   },
@@ -165,8 +168,8 @@ export const api = {
   getBySize: (period?: string, days?: number) =>
     req<BySizeItem[]>('GET', `/analytics/by-size?${periodOuDiasQuery(period, days)}`),
 
-  getByChannel: (period: string) =>
-    req<ByChannelItem[]>('GET', `/analytics/by-channel?period=${period}`),
+  getByChannel: (period: string, compare?: boolean) =>
+    req<ByChannelItem[]>('GET', `/analytics/by-channel?period=${period}${compare ? '&compare=true' : ''}`),
 
   getProductAnalysis: (period: string) =>
     req<ProductAnalysis>('GET', `/analytics/products/analysis?period=${period}`),

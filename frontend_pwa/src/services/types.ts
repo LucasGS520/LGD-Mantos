@@ -128,6 +128,14 @@ export interface DailyRevenue {
   value: number
 }
 
+/** Um indicador com seu valor no período anterior e a variação entre eles.
+ *  `variacao_pct` é null quando não há base de comparação (anterior ausente ou zero). */
+export interface Comparado {
+  atual: number
+  anterior: number | null
+  variacao_pct: number | null
+}
+
 export interface Dashboard {
   today_revenue: number
   today_count: number
@@ -143,6 +151,15 @@ export interface Dashboard {
   stock_sale_value: number
   stock_units: number
   daily_revenue: DailyRevenue[]
+  // Só vem com `?compare=true` — variação de cada indicador vs. mesmos dias do mês anterior.
+  comparacao?: {
+    month_revenue: Comparado
+    gross_profit: Comparado
+    net_profit: Comparado
+    margin_pct: Comparado
+    avg_ticket: Comparado
+    total_units_sold: Comparado
+  }
 }
 
 export interface TopProduct {
@@ -162,6 +179,11 @@ export interface ByChannelItem {
   channel: string
   count: number
   total: number
+  // Só vem com `?compare=true` — variação de receita e nº de vendas daquele canal.
+  comparacao?: {
+    total: Comparado
+    count: Comparado
+  }
 }
 
 export interface DRE {
@@ -176,6 +198,16 @@ export interface DRE {
   margin_pct: number
   break_even: number | null
   evolution: { period: string; revenue: number; net_profit: number }[]
+  // Só vem com `?compare=true` — variação vs. mês fechado anterior (virada de ano tratada no backend).
+  comparacao?: {
+    revenue: Comparado
+    cogs: Comparado
+    gross_profit: Comparado
+    gross_margin_pct: Comparado
+    expenses: Comparado
+    net_profit: Comparado
+    margin_pct: Comparado
+  }
 }
 
 // Analytics — Product Analysis

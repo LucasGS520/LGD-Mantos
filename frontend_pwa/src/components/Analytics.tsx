@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useNav, type ScreenId } from '../nav'
+import type { Comparado } from '../services/types'
 
 // ─── Period ────────────────────────────────────────────────────
 export const PERIODS = [
@@ -166,6 +167,28 @@ export function SectionChart({ title, info, loading, empty, emptyMsg, children, 
         <div style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)', fontSize: 13 }}>{emptyMsg ?? 'Sem dados no período'}</div>
       ) : children}
     </div>
+  )
+}
+
+// ─── Variacao ──────────────────────────────────────────────────
+/** Mostra a variação percentual de um indicador contra o período anterior.
+ *  Verde para alta, vermelho para queda, cinza quando não há base de comparação.
+ *  Atenção: para despesas e CMV, alta é ruim — use `inverterCor`. */
+export function Variacao({ dado, inverterCor = false }: {
+  dado?: Comparado
+  inverterCor?: boolean
+}) {
+  if (!dado || dado.variacao_pct === null || dado.variacao_pct === undefined) {
+    return <span style={{ fontSize: 11, color: 'var(--text-4)', fontWeight: 500 }}>sem base anterior</span>
+  }
+  const subiu = dado.variacao_pct >= 0
+  const bom = inverterCor ? !subiu : subiu
+  const cor = dado.variacao_pct === 0 ? 'var(--text-3)' : bom ? '#5DD49E' : '#F5847B'
+  const sinal = dado.variacao_pct > 0 ? '+' : ''
+  return (
+    <span className="tnum" style={{ fontSize: 11, fontWeight: 700, color: cor }}>
+      {sinal}{dado.variacao_pct.toFixed(1)}%
+    </span>
   )
 }
 

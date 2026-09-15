@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { AppBar, BottomNav, ScreenBody } from '../../components/Chrome'
 import { Card, Section, ChannelChip, LoadingBody, ErrorBody, Badge } from '../../components/UI'
-import { PeriodSelect, MetricInfo, SectionChart, type Period } from '../../components/Analytics'
+import { PeriodSelect, MetricInfo, SectionChart, Variacao, type Period } from '../../components/Analytics'
 import { fmtBRL, fmtBRLshort, fmtNum } from '../../fmt'
 import { api } from '../../services/api'
 import { useData } from '../../hooks/useData'
@@ -38,7 +38,7 @@ export default function Channels() {
 
   const { data, loading, error, reload } = useData<[ByChannelItem[], SaleChannel[]]>(() =>
     Promise.all([
-      api.getByChannel(period),
+      api.getByChannel(period, true),
       api.get<SaleChannel[]>('/channels'),
     ]), period
   )
@@ -137,10 +137,14 @@ export default function Channels() {
                     <div>
                       {fee > 0 && <div style={{ fontSize: 11, color: '#F5847B', fontWeight: 600 }}>taxa {fee}% → −{fmtBRLshort(c.total * fee / 100)}</div>}
                     </div>
-                    <span className="tnum" style={{ fontSize: 13, color: 'var(--text-2)', textAlign: 'right' }}>{fmtNum(c.count)}</span>
+                    <div style={{ textAlign: 'right' }}>
+                      <span className="tnum" style={{ fontSize: 13, color: 'var(--text-2)' }}>{fmtNum(c.count)}</span>
+                      <div><Variacao dado={c.comparacao?.count} /></div>
+                    </div>
                     <div style={{ textAlign: 'right' }}>
                       <div className="tnum" style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold-300)' }}>{fmtBRLshort(c.total)}</div>
                       {fee > 0 && <div className="tnum" style={{ fontSize: 11, color: '#5DD49E' }}>líq. {fmtBRLshort(net)}</div>}
+                      <div><Variacao dado={c.comparacao?.total} /></div>
                     </div>
                   </div>
                 )
