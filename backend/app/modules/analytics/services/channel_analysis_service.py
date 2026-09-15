@@ -1,5 +1,7 @@
 """Análise de canais de venda e distribuição por tamanho."""
 
+from datetime import datetime, timezone
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.analytics.repositories import product_repository as product_repo
@@ -29,14 +31,19 @@ class ChannelAnalysisService:
         zerados — removê-lo esconderia justamente a informação mais relevante
         (um canal que parou de vender).
         """
-        start, end = resolve_period(period, days)
+        # Resolvido uma única vez e repassado às duas chamadas: evita que
+        # `resolve_period` e `resolve_comparison_period` capturem instantes
+        # ligeiramente diferentes (mesmo problema que a Task 1 corrigiu no
+        # ramo de janelas móveis de `resolve_comparison_period`).
+        agora = datetime.now(timezone.utc)
+        start, end = resolve_period(period, days, agora=agora)
         rows = await sales_repo.sales_by_channel(db, start, end)
         channels = [{"channel": row[0], "count": int(row[1]), "total": float(row[2] or 0)} for row in rows]
 
         if not compare:
             return channels
 
-        _, (inicio_anterior, fim_anterior) = resolve_comparison_period(period, days)
+        _, (inicio_anterior, fim_anterior) = resolve_comparison_period(period, days, agora=agora)
         rows_ant = await sales_repo.sales_by_channel(db, inicio_anterior, fim_anterior)
         anterior_por_canal = {row[0]: (int(row[1]), float(row[2] or 0)) for row in rows_ant}
         atual_por_canal = {item["channel"]: item for item in channels}

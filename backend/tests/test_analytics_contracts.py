@@ -160,3 +160,26 @@ async def test_dre_com_compare_traz_os_indicadores_comparados(auth_client):
     ):
         assert indicador in comparacao, f"indicador ausente: {indicador}"
         assert set(comparacao[indicador]) == {"atual", "anterior", "variacao_pct"}
+
+
+async def test_dre_janeiro_compara_contra_dezembro_do_ano_anterior(db, auth_client):
+    """Virada de ano: DRE de janeiro tem que comparar contra dezembro do ano
+    anterior — não contra "tudo antes de janeiro". Ano fixo (2024) para o
+    cenário não depender da data em que o teste roda.
+
+    A venda de novembro é o detalhe que prova a janela fechada: se a
+    implementação regredisse para "tudo antes de janeiro/2024" em vez de
+    "só dezembro/2023", o `anterior` incluiria essa venda também e o teste
+    pegaria a regressão.
+    """
+    await create_sale(db, sold_at=datetime(2023, 11, 5, tzinfo=timezone.utc), total=999.0)
+    await create_sale(db, sold_at=datetime(2023, 12, 15, tzinfo=timezone.utc), total=300.0)
+    await create_sale(db, sold_at=datetime(2024, 1, 10, tzinfo=timezone.utc), total=500.0)
+
+    resposta = await auth_client.get("/api/v1/analytics/finance/dre?month=1&year=2024&compare=true")
+    corpo = resposta.json()
+
+    assert corpo["revenue"] == 500.0, "atual (janeiro/2024) deve conter só a venda de janeiro"
+    comparacao = corpo["comparacao"]["revenue"]
+    assert comparacao["atual"] == 500.0
+    assert comparacao["anterior"] == 300.0, "anterior deve ser só dezembro/2023 — não novembro nem a soma dos dois"
