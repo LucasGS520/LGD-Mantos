@@ -18,9 +18,17 @@ class DashboardService:
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-        revenue = await sales_repo.month_revenue(db, month_start)
-        cogs = await sales_repo.month_cogs(db, month_start)
-        expenses = await finance_repo.expenses_total(db, month_start.strftime("%Y-%m-%d"))
+        # Teto explícito em `now`/"amanhã" nos três indicadores: sem isso o lado
+        # atual ficava sem teto (contava venda/despesa com data futura por
+        # inteiro) enquanto o lado anterior (`_comparacao`) já é uma janela
+        # fechada — a assimetria enviesava toda comparação de lucro/margem.
+        revenue = await sales_repo.month_revenue(db, month_start, now)
+        cogs = await sales_repo.month_cogs(db, month_start, now)
+        # `Expense.date` é string "YYYY-MM-DD" (sem hora), então o teto tem que
+        # ser por dia — "amanhã" — pra incluir despesas lançadas hoje e ainda
+        # assim excluir qualquer data futura.
+        expenses_end = (today_start.date() + timedelta(days=1)).strftime("%Y-%m-%d")
+        expenses = await finance_repo.expenses_total(db, month_start.strftime("%Y-%m-%d"), expenses_end)
         today_count = await sales_repo.sales_count_since(db, today_start)
         today_revenue = await sales_repo.revenue_since(db, today_start)
         month_count = await sales_repo.sales_count_since(db, month_start)
@@ -87,8 +95,13 @@ class DashboardService:
 
         revenue_ant = await sales_repo.month_revenue(db, inicio_anterior, fim_anterior)
         cogs_ant = await sales_repo.month_cogs(db, inicio_anterior, fim_anterior)
+        # Mesma correção do lado atual: `Expense.date` é string de dia, e o
+        # filtro é `< end`, então usar `fim_anterior` puro excluía o dia inteiro
+        # em que ele cai. Soma-se 1 dia pro teto cobrir o mesmo número de dias
+        # que o lado atual (que vai até "amanhã" em relação a hoje).
+        expenses_end_ant = (fim_anterior.date() + timedelta(days=1)).strftime("%Y-%m-%d")
         expenses_ant = await finance_repo.expenses_total(
-            db, inicio_anterior.strftime("%Y-%m-%d"), fim_anterior.strftime("%Y-%m-%d")
+            db, inicio_anterior.strftime("%Y-%m-%d"), expenses_end_ant
         )
         gross_profit_ant = revenue_ant - cogs_ant
         net_profit_ant = gross_profit_ant - expenses_ant

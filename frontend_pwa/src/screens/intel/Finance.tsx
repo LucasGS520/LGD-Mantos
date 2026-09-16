@@ -105,9 +105,9 @@ export default function Finance() {
               <Badge tone={data.margin_pct >= 20 ? 'success' : data.margin_pct >= 0 ? 'warn' : 'danger'} size="lg" dot>
                 Margem {data.margin_pct.toFixed(1)}%
               </Badge>
-              <Variacao dado={data.comparacao?.margin_pct} base="vs. mês anterior fechado" />
+              <Variacao dado={data.comparacao?.margin_pct} base="vs. mês anterior fechado" ehPercentual />
               <Badge tone="info" size="lg">Margem bruta {data.gross_margin_pct?.toFixed(1) ?? '—'}%</Badge>
-              <Variacao dado={data.comparacao?.gross_margin_pct} base="vs. mês anterior fechado" />
+              <Variacao dado={data.comparacao?.gross_margin_pct} base="vs. mês anterior fechado" ehPercentual />
             </div>
           </div>
 

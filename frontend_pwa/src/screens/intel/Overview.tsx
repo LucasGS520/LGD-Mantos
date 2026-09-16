@@ -36,7 +36,7 @@ export default function Overview() {
             </div>
             <div style={{ display: 'flex', gap: 14, marginTop: 6, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: '#5DD49E', fontWeight: 700 }}>Margem {data.margin_pct.toFixed(1)}%</span>
-              <Variacao dado={data.comparacao?.margin_pct} base="vs. mesmos dias do mês anterior" />
+              <Variacao dado={data.comparacao?.margin_pct} base="vs. mesmos dias do mês anterior" ehPercentual />
               <span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>{data.total_units_sold} un vendidas</span>
               <Variacao dado={data.comparacao?.total_units_sold} base="vs. mesmos dias do mês anterior" />
               <span style={{ fontSize: 12, color: 'var(--gold-300)', fontWeight: 500 }}>Ticket médio {fmtBRLshort(data.avg_ticket)}</span>

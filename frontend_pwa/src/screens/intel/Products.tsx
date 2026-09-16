@@ -107,7 +107,7 @@ export default function Products() {
                           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-1)', marginBottom: 6 }}>{cat.category_name}</div>
                           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                             <Pill label="Receita" value={fmtBRLshort(cat.revenue)} color="var(--gold-300)" />
-                            <Variacao dado={cat.comparacao?.revenue} base="vs. período anterior de mesma duração" />
+                            <Variacao dado={cat.comparacao?.revenue} base="vs. mesmos dias do mês anterior" />
                             <Pill label="Margem" value={`${cat.margin_pct.toFixed(0)}%`} color={cat.margin_pct >= 30 ? '#5DD49E' : cat.margin_pct >= 15 ? '#F5BF7A' : '#F5847B'} />
                             <Pill label="Unid." value={String(cat.units)} color="var(--text-2)" />
                           </div>

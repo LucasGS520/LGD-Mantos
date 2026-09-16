@@ -83,7 +83,7 @@ async def _clean_tables(_prepare_database):
 
     async with engine.begin() as conn:
         await conn.execute(text(
-            "TRUNCATE product_variants, products, sale_items, sales, categories RESTART IDENTITY CASCADE"
+            "TRUNCATE product_variants, products, sale_items, sales, categories, expenses RESTART IDENTITY CASCADE"
         ))
     yield
 
@@ -155,6 +155,21 @@ async def create_sale(db, sold_at, total=100.0, sale_channel_id=None):
     db.add(sale)
     await db.commit()
     return sale
+
+
+async def create_expense(db, date, amount=100.0, category="Teste"):
+    """Cria uma despesa numa data específica (string "YYYY-MM-DD").
+
+    Usado pelos testes de janela do dashboard — `Expense.date` é string de
+    dia (sem hora), então plantar nas bordas exatas é o jeito de travar
+    regressão de teto assimétrico entre o lado atual e o anterior.
+    """
+    from app.shared.models.operations import Expense
+
+    despesa = Expense(date=date, category=category, amount=amount)
+    db.add(despesa)
+    await db.commit()
+    return despesa
 
 
 async def create_category_sale(

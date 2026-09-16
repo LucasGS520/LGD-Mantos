@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from tests.conftest import create_category_sale, create_sale
+from tests.conftest import create_category_sale, create_expense, create_sale
 
 
 ROTAS_PROTEGIDAS = [
@@ -88,6 +88,48 @@ async def test_dashboard_com_compare_traz_os_indicadores_comparados(auth_client)
     ):
         assert indicador in comparacao, f"indicador ausente: {indicador}"
         assert set(comparacao[indicador]) == {"atual", "anterior", "variacao_pct"}
+
+
+async def test_dashboard_conta_despesas_na_mesma_janela_dos_dois_lados(db, auth_client):
+    """Regressão: o lado atual do dashboard somava despesas sem teto (contava
+    até data futura) enquanto o lado anterior usava `< fim_anterior`, que
+    excluía o último dia inteiro da janela anterior. Os dois vícios juntos
+    faziam `net_profit`/`margin_pct` anteriores saírem sub ou superestimados,
+    enviesando a variação exibida.
+
+    Planta despesas nas bordas exatas dos dois lados — incluindo o último dia
+    da janela anterior, que era justamente o excluído — e prova que ambos
+    contam de forma simétrica.
+    """
+    from app.modules.analytics.utils import resolve_comparison_period
+
+    agora = datetime.now(timezone.utc)
+    (inicio_atual, _), (inicio_anterior, fim_anterior) = resolve_comparison_period(
+        "current_month", agora=agora
+    )
+
+    # Lado atual: despesa de hoje e despesa no 1º dia do mês têm que contar;
+    # despesa de amanhã (data futura) não pode contar em nenhum dos dois lados.
+    await create_expense(db, date=agora.strftime("%Y-%m-%d"), amount=50.0)
+    await create_expense(db, date=inicio_atual.strftime("%Y-%m-%d"), amount=30.0)
+    await create_expense(db, date=(agora + timedelta(days=1)).strftime("%Y-%m-%d"), amount=999.0)
+
+    # Lado anterior: despesa no 1º dia e no ÚLTIMO dia da janela anterior — o
+    # último dia é a borda que o bug excluía.
+    await create_expense(db, date=inicio_anterior.strftime("%Y-%m-%d"), amount=20.0)
+    await create_expense(db, date=fim_anterior.strftime("%Y-%m-%d"), amount=40.0)
+
+    resposta = await auth_client.get("/api/v1/analytics/dashboard?compare=true")
+    corpo = resposta.json()
+
+    assert corpo["month_expenses"] == 80.0, "despesa com data futura não pode entrar no lado atual"
+
+    # `sales`/`sale_items` estão truncados neste teste, então revenue/cogs
+    # anteriores são zero e `net_profit` anterior isola exatamente a soma das
+    # despesas plantadas na janela anterior (20 + 40) — só bate se o último
+    # dia da janela anterior tiver sido incluído.
+    net_profit_ant = corpo["comparacao"]["net_profit"]["anterior"]
+    assert net_profit_ant == -60.0, "despesa do último dia da janela anterior ficou de fora"
 
 
 async def test_product_analysis_ignora_compare(auth_client):
