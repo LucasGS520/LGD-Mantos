@@ -28,7 +28,19 @@ class ProductAnalysisService:
 
     @staticmethod
     async def product_analysis(db: AsyncSession, period: str | None = None, days: int = 30) -> dict:
-        """Análise completa de produtos: margem, parados, risco de ruptura e categorias."""
+        """Análise completa de produtos: margem, parados, risco de ruptura e categorias.
+
+        Nota Fase 2: `stopped` e `rupture_risk` não entram na comparação com o
+        período anterior (`?compare=true`) que os outros services de analytics
+        ganharam. Os dois combinam o estoque ATUAL (`stock_quantity`) com uma
+        janela histórica de vendas — o sistema não guarda snapshot de estoque
+        por data. Um "anterior" calculado assim não responde "quantos produtos
+        estavam em risco no mês passado", e sim "quantos estariam em risco
+        hoje se a velocidade de vendas fosse a do mês passado" — um
+        contrafactual sem significado para o operador. Comparar de verdade
+        exigiria uma tabela de snapshot de estoque por data, que não existe.
+        Não é esquecimento: é limitação de dado, decisão registrada na Fase 2.
+        """
         prefs = await PreferenceService.get_safe(db)
         now = datetime.now(timezone.utc)
         since, end = resolve_period(period, days)

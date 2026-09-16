@@ -1,6 +1,6 @@
 """Rota do dashboard executivo."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import verify_token
@@ -11,5 +11,9 @@ router = APIRouter()
 
 
 @router.get("/dashboard")
-async def dashboard(db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
-    return await DashboardService.dashboard(db)
+async def dashboard(
+    compare: bool = Query(False),
+    db: AsyncSession = Depends(get_db),
+    _=Depends(verify_token),
+):
+    return await DashboardService.dashboard(db, compare=compare)

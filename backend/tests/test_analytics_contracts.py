@@ -5,7 +5,11 @@ exige autenticação e devolve a estrutura que o frontend consome. Servem de red
 de segurança para as fases seguintes, que vão mexer nesses mesmos services.
 """
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
+
+from tests.conftest import create_category_sale, create_expense, create_sale
 
 
 ROTAS_PROTEGIDAS = [
@@ -64,3 +68,212 @@ async def test_data_quality_expoe_score_e_total(auth_client):
     corpo = resposta.json()
     assert "score" in corpo
     assert "total_issues" in corpo
+
+
+# --- Fase 2: comparação com o período anterior (?compare=true) ---------------
+
+
+async def test_dashboard_sem_compare_nao_traz_comparacao(auth_client):
+    """Compatibilidade retroativa: o payload padrão não muda de forma."""
+    resposta = await auth_client.get("/api/v1/analytics/dashboard")
+    assert "comparacao" not in resposta.json()
+
+
+async def test_dashboard_com_compare_traz_os_indicadores_comparados(auth_client):
+    resposta = await auth_client.get("/api/v1/analytics/dashboard?compare=true")
+    comparacao = resposta.json()["comparacao"]
+    for indicador in (
+        "month_revenue", "gross_profit", "net_profit",
+        "margin_pct", "avg_ticket", "total_units_sold",
+    ):
+        assert indicador in comparacao, f"indicador ausente: {indicador}"
+        assert set(comparacao[indicador]) == {"atual", "anterior", "variacao_pct"}
+
+
+async def test_dashboard_conta_despesas_na_mesma_janela_dos_dois_lados(db, auth_client):
+    """Regressão: o lado atual do dashboard somava despesas sem teto (contava
+    até data futura) enquanto o lado anterior usava `< fim_anterior`, que
+    excluía o último dia inteiro da janela anterior. Os dois vícios juntos
+    faziam `net_profit`/`margin_pct` anteriores saírem sub ou superestimados,
+    enviesando a variação exibida.
+
+    Planta despesas nas bordas exatas dos dois lados — incluindo o último dia
+    da janela anterior, que era justamente o excluído — e prova que ambos
+    contam de forma simétrica.
+    """
+    from app.modules.analytics.utils import resolve_comparison_period
+
+    agora = datetime.now(timezone.utc)
+    (inicio_atual, _), (inicio_anterior, fim_anterior) = resolve_comparison_period(
+        "current_month", agora=agora
+    )
+
+    # Lado atual: despesa de hoje e despesa no 1º dia do mês têm que contar;
+    # despesa de amanhã (data futura) não pode contar em nenhum dos dois lados.
+    await create_expense(db, date=agora.strftime("%Y-%m-%d"), amount=50.0)
+    await create_expense(db, date=inicio_atual.strftime("%Y-%m-%d"), amount=30.0)
+    await create_expense(db, date=(agora + timedelta(days=1)).strftime("%Y-%m-%d"), amount=999.0)
+
+    # Lado anterior: despesa no 1º dia e no ÚLTIMO dia da janela anterior — o
+    # último dia é a borda que o bug excluía.
+    await create_expense(db, date=inicio_anterior.strftime("%Y-%m-%d"), amount=20.0)
+    await create_expense(db, date=fim_anterior.strftime("%Y-%m-%d"), amount=40.0)
+
+    resposta = await auth_client.get("/api/v1/analytics/dashboard?compare=true")
+    corpo = resposta.json()
+
+    assert corpo["month_expenses"] == 80.0, "despesa com data futura não pode entrar no lado atual"
+
+    # `sales`/`sale_items` estão truncados neste teste, então revenue/cogs
+    # anteriores são zero e `net_profit` anterior isola exatamente a soma das
+    # despesas plantadas na janela anterior (20 + 40) — só bate se o último
+    # dia da janela anterior tiver sido incluído.
+    net_profit_ant = corpo["comparacao"]["net_profit"]["anterior"]
+    assert net_profit_ant == -60.0, "despesa do último dia da janela anterior ficou de fora"
+
+
+async def test_product_analysis_ignora_compare(auth_client):
+    """`product_analysis` não aceita comparação (ver docstring do service): sem
+    histórico de estoque por data, "anterior" para rupture_risk/stopped seria
+    um contrafactual sem significado, não um número real do período anterior.
+    Passar `?compare=true` não deve gerar a chave `comparacao`.
+    """
+    resposta = await auth_client.get("/api/v1/analytics/products/analysis?compare=true")
+    assert resposta.status_code == 200
+    assert "comparacao" not in resposta.json()
+
+
+async def test_by_channel_sem_compare_continua_uma_lista(auth_client):
+    """Sem compare, /by-channel continua devolvendo a lista de sempre (não um objeto)."""
+    resposta = await auth_client.get("/api/v1/analytics/by-channel")
+    assert isinstance(resposta.json(), list)
+
+
+async def test_by_channel_com_compare_continua_lista_com_comparacao_por_item(auth_client):
+    """Com compare=true, a resposta continua uma lista — cada item ganha sua
+    própria chave `comparacao` (a comparação é por canal, não um dicionário
+    paralelo que obrigaria casar por nome)."""
+    resposta = await auth_client.get("/api/v1/analytics/by-channel?compare=true")
+    corpo = resposta.json()
+    assert isinstance(corpo, list)
+    for item in corpo:
+        assert set(item) == {"channel", "count", "total", "comparacao"}
+        assert set(item["comparacao"]) == {"total", "count"}
+        for indicador in item["comparacao"].values():
+            assert set(indicador) == {"atual", "anterior", "variacao_pct"}
+
+
+async def test_by_channel_com_compare_mantem_canal_que_parou_de_vender(db, auth_client):
+    """Um canal que vendeu no período anterior mas não no atual precisa
+    continuar na lista, com os valores atuais zerados — é a informação mais
+    relevante da comparação (o canal parou de vender), não pode sumir.
+    """
+    agora = datetime.now(timezone.utc)
+    # days=30 (default): atual = [agora-30d, agora]; anterior = [agora-60d, agora-30d].
+    # sold_channel_id=None cai no bucket "Sem canal" que o service já usa como fallback.
+    await create_sale(db, sold_at=agora - timedelta(days=45), total=849.6, sale_channel_id=None)
+
+    resposta = await auth_client.get("/api/v1/analytics/by-channel?compare=true")
+    corpo = resposta.json()
+
+    canal_sumido = next((item for item in corpo if item["channel"] == "Sem canal"), None)
+    assert canal_sumido is not None, "canal que só vendeu no período anterior desapareceu da lista"
+    assert canal_sumido["count"] == 0
+    assert canal_sumido["total"] == 0.0
+    assert canal_sumido["comparacao"]["total"] == {
+        "atual": 0.0, "anterior": 849.6, "variacao_pct": -100.0,
+    }
+    assert canal_sumido["comparacao"]["count"] == {
+        "atual": 0.0, "anterior": 1.0, "variacao_pct": -100.0,
+    }
+
+
+async def test_categories_performance_sem_compare_nao_traz_comparacao(auth_client):
+    """Compatibilidade retroativa: sem compare, nenhum item tem a chave `comparacao`."""
+    resposta = await auth_client.get("/api/v1/analytics/categories/performance")
+    corpo = resposta.json()
+    assert isinstance(corpo, list)
+    for item in corpo:
+        assert "comparacao" not in item
+
+
+async def test_categories_performance_com_compare_traz_comparacao_por_item(db, auth_client):
+    """Com compare=true, cada categoria ganha `comparacao` com revenue/units/
+    profit/margin_pct — daily_velocity fica de fora por ser derivada."""
+    await create_category_sale(db, sold_at=datetime.now(timezone.utc) - timedelta(days=5), category_name="Mantos Longos")
+
+    resposta = await auth_client.get("/api/v1/analytics/categories/performance?compare=true")
+    corpo = resposta.json()
+    assert isinstance(corpo, list)
+    item = next(i for i in corpo if i["category_name"] == "Mantos Longos")
+    assert set(item["comparacao"]) == {"revenue", "units", "profit", "margin_pct"}
+    for indicador in item["comparacao"].values():
+        assert set(indicador) == {"atual", "anterior", "variacao_pct"}
+
+
+async def test_categories_performance_com_compare_mantem_categoria_que_parou_de_vender(db, auth_client):
+    """Categoria que só vendeu no período anterior precisa continuar na lista,
+    com os valores atuais zerados — é a informação mais acionável (categoria
+    que parou de vender), não pode sumir.
+    """
+    agora = datetime.now(timezone.utc)
+    # days=30 (default): atual = [agora-30d, agora]; anterior = [agora-60d, agora-30d].
+    await create_category_sale(
+        db, sold_at=agora - timedelta(days=45), category_name="Mantos Curtos",
+        quantity=2, unit_price=199.9, unit_cost=80.0,
+    )
+
+    resposta = await auth_client.get("/api/v1/analytics/categories/performance?compare=true")
+    corpo = resposta.json()
+
+    categoria_sumida = next((i for i in corpo if i["category_name"] == "Mantos Curtos"), None)
+    assert categoria_sumida is not None, "categoria que só vendeu no período anterior desapareceu da lista"
+    assert categoria_sumida["units"] == 0
+    assert categoria_sumida["revenue"] == 0.0
+    assert categoria_sumida["profit"] == 0.0
+    assert categoria_sumida["daily_velocity"] == 0.0
+    assert categoria_sumida["comparacao"]["revenue"] == {
+        "atual": 0.0, "anterior": 399.8, "variacao_pct": -100.0,
+    }
+    assert categoria_sumida["comparacao"]["units"] == {
+        "atual": 0.0, "anterior": 2.0, "variacao_pct": -100.0,
+    }
+
+
+async def test_dre_sem_compare_nao_traz_comparacao(auth_client):
+    resposta = await auth_client.get("/api/v1/analytics/finance/dre")
+    assert "comparacao" not in resposta.json()
+
+
+async def test_dre_com_compare_traz_os_indicadores_comparados(auth_client):
+    resposta = await auth_client.get("/api/v1/analytics/finance/dre?compare=true")
+    comparacao = resposta.json()["comparacao"]
+    for indicador in (
+        "revenue", "cogs", "gross_profit", "gross_margin_pct",
+        "expenses", "net_profit", "margin_pct",
+    ):
+        assert indicador in comparacao, f"indicador ausente: {indicador}"
+        assert set(comparacao[indicador]) == {"atual", "anterior", "variacao_pct"}
+
+
+async def test_dre_janeiro_compara_contra_dezembro_do_ano_anterior(db, auth_client):
+    """Virada de ano: DRE de janeiro tem que comparar contra dezembro do ano
+    anterior — não contra "tudo antes de janeiro". Ano fixo (2024) para o
+    cenário não depender da data em que o teste roda.
+
+    A venda de novembro é o detalhe que prova a janela fechada: se a
+    implementação regredisse para "tudo antes de janeiro/2024" em vez de
+    "só dezembro/2023", o `anterior` incluiria essa venda também e o teste
+    pegaria a regressão.
+    """
+    await create_sale(db, sold_at=datetime(2023, 11, 5, tzinfo=timezone.utc), total=999.0)
+    await create_sale(db, sold_at=datetime(2023, 12, 15, tzinfo=timezone.utc), total=300.0)
+    await create_sale(db, sold_at=datetime(2024, 1, 10, tzinfo=timezone.utc), total=500.0)
+
+    resposta = await auth_client.get("/api/v1/analytics/finance/dre?month=1&year=2024&compare=true")
+    corpo = resposta.json()
+
+    assert corpo["revenue"] == 500.0, "atual (janeiro/2024) deve conter só a venda de janeiro"
+    comparacao = corpo["comparacao"]["revenue"]
+    assert comparacao["atual"] == 500.0
+    assert comparacao["anterior"] == 300.0, "anterior deve ser só dezembro/2023 — não novembro nem a soma dos dois"

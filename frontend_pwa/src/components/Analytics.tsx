@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useNav, type ScreenId } from '../nav'
+import type { Comparado } from '../services/types'
 
 // ─── Period ────────────────────────────────────────────────────
 export const PERIODS = [
@@ -166,6 +167,57 @@ export function SectionChart({ title, info, loading, empty, emptyMsg, children, 
         <div style={{ height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)', fontSize: 13 }}>{emptyMsg ?? 'Sem dados no período'}</div>
       ) : children}
     </div>
+  )
+}
+
+// ─── Variacao ──────────────────────────────────────────────────
+/** Mostra a variação percentual de um indicador contra o período anterior.
+ *  Verde para alta, vermelho para queda, cinza quando não há base de comparação.
+ *  Atenção: para despesas e CMV, alta é ruim — use `inverterCor`.
+ *
+ *  O "período anterior" muda de significado por tela (dias decorridos do mês
+ *  passado, mês fechado, janela móvel...), e o mesmo percentual pode enganar
+ *  se o dono não souber contra o quê está comparando. Por isso `base` explica
+ *  isso num tooltip nativo (atributo `title`) — não ocupa espaço nem altera o layout. */
+export function Variacao({ dado, inverterCor = false, base, ehPercentual = false }: {
+  dado?: Comparado
+  inverterCor?: boolean
+  /** Texto curto dizendo contra o que a variação é comparada, ex.: "vs. mês anterior fechado". */
+  base?: string
+  /** Liga para indicadores que já são um percentual (ex.: margin_pct). Nesses
+   *  casos, `variacao_pct` seria o percentual relativo do percentual — margem
+   *  de 10% pra 12% vira "+20%", que o dono lê como "margem subiu 20" e erra
+   *  a leitura. Com a prop ligada, mostra a diferença absoluta em pontos
+   *  percentuais ("+2,0 p.p."), que é a leitura que faz sentido pra margem. */
+  ehPercentual?: boolean
+}) {
+  if (!dado || dado.variacao_pct === null || dado.variacao_pct === undefined) {
+    return (
+      <span
+        style={{ fontSize: 11, color: 'var(--text-4)', fontWeight: 500 }}
+        title={base ? `Não houve movimento no período anterior (${base}) para comparar` : 'Não houve movimento no período anterior para comparar'}
+      >
+        sem base anterior
+      </span>
+    )
+  }
+  // Fora do caso `ehPercentual`, a variação exibida é o percentual relativo
+  // que já vem do backend. No caso `ehPercentual`, a variação relevante é a
+  // diferença em pontos percentuais — `anterior` é garantidamente um número
+  // aqui (o early return acima já cobriu null/0, os únicos casos em que o
+  // backend devolve `variacao_pct` nulo).
+  const diferencaPontos = dado.atual - (dado.anterior as number)
+  const valorParaCor = ehPercentual ? diferencaPontos : dado.variacao_pct
+  const subiu = valorParaCor >= 0
+  const bom = inverterCor ? !subiu : subiu
+  const cor = valorParaCor === 0 ? 'var(--text-3)' : bom ? '#5DD49E' : '#F5847B'
+  const sinal = valorParaCor > 0 ? '+' : ''
+  return (
+    <span className="tnum" style={{ fontSize: 11, fontWeight: 700, color: cor }} title={base}>
+      {ehPercentual
+        ? `${sinal}${diferencaPontos.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} p.p.`
+        : `${sinal}${dado.variacao_pct.toFixed(1)}%`}
+    </span>
   )
 }
 

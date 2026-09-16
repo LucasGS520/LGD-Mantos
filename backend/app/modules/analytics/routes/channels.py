@@ -24,7 +24,8 @@ async def sales_by_size(
 async def sales_by_channel(
     period: str | None = Query(None),
     days: int = Query(30),
+    compare: bool = Query(False),
     db: AsyncSession = Depends(get_db),
     _=Depends(verify_token),
 ):
-    return await ChannelAnalysisService.sales_by_channel(db, period, days)
+    return await ChannelAnalysisService.sales_by_channel(db, period, days, compare=compare)

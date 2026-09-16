@@ -6,11 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.analytics.repositories import finance_repository as finance_repo
 from app.modules.analytics.repositories import sales_repository as sales_repo
+from app.modules.analytics.schemas.comparacao import Comparado
 
 
 class FinanceService:
     @staticmethod
-    async def dre(db: AsyncSession, month: int | None, year: int | None) -> dict:
+    async def dre(db: AsyncSession, month: int | None, year: int | None, compare: bool = False) -> dict:
         now = datetime.now(timezone.utc)
         selected_month = month or now.month
         selected_year = year or now.year
@@ -64,7 +65,7 @@ class FinanceService:
                 "net_profit": rev - cg - ex,
             })
 
-        return {
+        resultado = {
             "period": f"{selected_month:02d}/{selected_year}",
             "revenue": revenue,
             "cogs": cogs,
@@ -76,4 +77,60 @@ class FinanceService:
             "margin_pct": net_margin_pct,
             "break_even": break_even,
             "evolution": evolution,
+        }
+
+        if compare:
+            resultado["comparacao"] = await FinanceService._comparacao(
+                db, selected_month, selected_year, revenue, cogs, gross,
+                gross_margin_pct, expenses, net, net_margin_pct,
+            )
+
+        return resultado
+
+    @staticmethod
+    async def _comparacao(
+        db: AsyncSession,
+        selected_month: int,
+        selected_year: int,
+        revenue: float,
+        cogs: float,
+        gross: float,
+        gross_margin_pct: float,
+        expenses: float,
+        net: float,
+        net_margin_pct: float,
+    ) -> dict:
+        """Recalcula o DRE do mês calendário imediatamente anterior ao informado.
+
+        `dre` é parametrizado por mês/ano (não por período nomeado), então não
+        usa `resolve_comparison_period` — o anterior aqui é sempre o mês
+        fechado anterior, com virada de ano tratada explicitamente (janeiro
+        compara contra dezembro do ano anterior).
+        """
+        if selected_month == 1:
+            mes_ant, ano_ant = 12, selected_year - 1
+        else:
+            mes_ant, ano_ant = selected_month - 1, selected_year
+
+        inicio_ant = datetime(ano_ant, mes_ant, 1, tzinfo=timezone.utc)
+        fim_ant = datetime(selected_year, selected_month, 1, tzinfo=timezone.utc)
+        inicio_ant_str = f"{ano_ant}-{mes_ant:02d}-01"
+        fim_ant_str = f"{selected_year}-{selected_month:02d}-01"
+
+        revenue_ant = await sales_repo.month_revenue(db, inicio_ant, fim_ant)
+        cogs_ant = await sales_repo.month_cogs(db, inicio_ant, fim_ant)
+        expenses_ant = await finance_repo.expenses_total(db, inicio_ant_str, fim_ant_str)
+        gross_ant = revenue_ant - cogs_ant
+        net_ant = gross_ant - expenses_ant
+        gross_margin_pct_ant = round(gross_ant / revenue_ant * 100, 1) if revenue_ant else 0.0
+        net_margin_pct_ant = round(net_ant / revenue_ant * 100, 1) if revenue_ant else 0.0
+
+        return {
+            "revenue": Comparado.de(revenue, revenue_ant).model_dump(),
+            "cogs": Comparado.de(cogs, cogs_ant).model_dump(),
+            "gross_profit": Comparado.de(gross, gross_ant).model_dump(),
+            "gross_margin_pct": Comparado.de(gross_margin_pct, gross_margin_pct_ant).model_dump(),
+            "expenses": Comparado.de(expenses, expenses_ant).model_dump(),
+            "net_profit": Comparado.de(net, net_ant).model_dump(),
+            "margin_pct": Comparado.de(net_margin_pct, net_margin_pct_ant).model_dump(),
         }

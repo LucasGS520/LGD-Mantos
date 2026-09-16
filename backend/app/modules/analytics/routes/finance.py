@@ -14,7 +14,8 @@ router = APIRouter()
 async def dre(
     month: int | None = Query(None),
     year: int | None = Query(None),
+    compare: bool = Query(False),
     db: AsyncSession = Depends(get_db),
     _=Depends(verify_token),
 ):
-    return await FinanceService.dre(db, month, year)
+    return await FinanceService.dre(db, month, year, compare=compare)

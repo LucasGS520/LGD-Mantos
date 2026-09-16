@@ -7,7 +7,6 @@ from app.core.auth import verify_token
 from app.core.database import get_db
 from app.modules.analytics.schemas.categories import (
     CategoryCoverage,
-    CategoryPerformance,
     CategorySizeDistribution,
     ProductAttributeAnalysis,
 )
@@ -16,15 +15,27 @@ from app.modules.analytics.services.category_analysis_service import CategoryAna
 router = APIRouter(tags=["analytics"])
 
 
-@router.get("/categories/performance", response_model=list[CategoryPerformance])
+@router.get("/categories/performance")
 async def category_performance(
     period: str | None = Query(None),
     days: int = Query(30, ge=7),
+    compare: bool = Query(False),
     db: AsyncSession = Depends(get_db),
     _=Depends(verify_token),
 ):
-    """Performance por categoria: receita, margem e velocidade diária."""
-    return await CategoryAnalysisService.performance(db, period, days)
+    """Performance por categoria: receita, margem e velocidade diária.
+
+    Sem `response_model` de propósito: `comparacao` (quando `compare=true`)
+    pode legitimamente conter `variacao_pct: null` (sem base anterior — ver
+    `Comparado`), e um `response_model_exclude_none` apagaria esse null junto
+    com o `comparacao` ausente do caso sem compare, já que a exclusão do
+    FastAPI/Pydantic é recursiva e não distingue os dois níveis. Por isso o
+    dump é feito manualmente abaixo: exclui `comparacao` por inteiro quando
+    não há compare (chave ausente, não nula) e preserva os nulos internos de
+    `Comparado` quando há.
+    """
+    itens = await CategoryAnalysisService.performance(db, period, days, compare=compare)
+    return [item.model_dump(exclude_none=not compare) for item in itens]
 
 
 @router.get("/categories/size-distribution", response_model=list[CategorySizeDistribution])
