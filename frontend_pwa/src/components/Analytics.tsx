@@ -173,20 +173,34 @@ export function SectionChart({ title, info, loading, empty, emptyMsg, children, 
 // ─── Variacao ──────────────────────────────────────────────────
 /** Mostra a variação percentual de um indicador contra o período anterior.
  *  Verde para alta, vermelho para queda, cinza quando não há base de comparação.
- *  Atenção: para despesas e CMV, alta é ruim — use `inverterCor`. */
-export function Variacao({ dado, inverterCor = false }: {
+ *  Atenção: para despesas e CMV, alta é ruim — use `inverterCor`.
+ *
+ *  O "período anterior" muda de significado por tela (dias decorridos do mês
+ *  passado, mês fechado, janela móvel...), e o mesmo percentual pode enganar
+ *  se o dono não souber contra o quê está comparando. Por isso `base` explica
+ *  isso num tooltip nativo (atributo `title`) — não ocupa espaço nem altera o layout. */
+export function Variacao({ dado, inverterCor = false, base }: {
   dado?: Comparado
   inverterCor?: boolean
+  /** Texto curto dizendo contra o que a variação é comparada, ex.: "vs. mês anterior fechado". */
+  base?: string
 }) {
   if (!dado || dado.variacao_pct === null || dado.variacao_pct === undefined) {
-    return <span style={{ fontSize: 11, color: 'var(--text-4)', fontWeight: 500 }}>sem base anterior</span>
+    return (
+      <span
+        style={{ fontSize: 11, color: 'var(--text-4)', fontWeight: 500 }}
+        title={base ? `Não houve movimento no período anterior (${base}) para comparar` : 'Não houve movimento no período anterior para comparar'}
+      >
+        sem base anterior
+      </span>
+    )
   }
   const subiu = dado.variacao_pct >= 0
   const bom = inverterCor ? !subiu : subiu
   const cor = dado.variacao_pct === 0 ? 'var(--text-3)' : bom ? '#5DD49E' : '#F5847B'
   const sinal = dado.variacao_pct > 0 ? '+' : ''
   return (
-    <span className="tnum" style={{ fontSize: 11, fontWeight: 700, color: cor }}>
+    <span className="tnum" style={{ fontSize: 11, fontWeight: 700, color: cor }} title={base}>
       {sinal}{dado.variacao_pct.toFixed(1)}%
     </span>
   )

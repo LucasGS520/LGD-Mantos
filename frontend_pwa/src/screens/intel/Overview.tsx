@@ -32,15 +32,15 @@ export default function Overview() {
               <div className="tnum" style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, color: 'var(--text-1)', marginTop: 4 }}>
                 {fmtBRLshort(data.month_revenue)}
               </div>
-              <Variacao dado={data.comparacao?.month_revenue} />
+              <Variacao dado={data.comparacao?.month_revenue} base="vs. mesmos dias do mês anterior" />
             </div>
             <div style={{ display: 'flex', gap: 14, marginTop: 6, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: '#5DD49E', fontWeight: 700 }}>Margem {data.margin_pct.toFixed(1)}%</span>
-              <Variacao dado={data.comparacao?.margin_pct} />
+              <Variacao dado={data.comparacao?.margin_pct} base="vs. mesmos dias do mês anterior" />
               <span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>{data.total_units_sold} un vendidas</span>
-              <Variacao dado={data.comparacao?.total_units_sold} />
+              <Variacao dado={data.comparacao?.total_units_sold} base="vs. mesmos dias do mês anterior" />
               <span style={{ fontSize: 12, color: 'var(--gold-300)', fontWeight: 500 }}>Ticket médio {fmtBRLshort(data.avg_ticket)}</span>
-              <Variacao dado={data.comparacao?.avg_ticket} />
+              <Variacao dado={data.comparacao?.avg_ticket} base="vs. mesmos dias do mês anterior" />
             </div>
 
             {chartData.length > 1 && (
@@ -102,7 +102,7 @@ export default function Overview() {
               icon={Ico.cash} />
             <KPIInfo label="Lucro líquido" value={fmtBRLshort(data.net_profit)}
               delta={`margem ${data.margin_pct.toFixed(1)}%`} deltaTone={data.net_profit >= 0 ? 'success' : 'danger'}
-              icon={Ico.trend} variacao={data.comparacao?.net_profit} />
+              icon={Ico.trend} variacao={data.comparacao?.net_profit} variacaoBase="vs. mesmos dias do mês anterior" />
             <KPIInfo label="Estoque (custo)" value={fmtBRLshort(data.stock_cost_value)}
               delta={`${data.stock_units} un`} deltaTone="muted"
               icon={Ico.box}
@@ -156,11 +156,13 @@ export default function Overview() {
 }
 
 // KPI com ícone ⓘ inline
-function KPIInfo({ label, value, delta, deltaTone, icon: I, info, variacao }: {
+function KPIInfo({ label, value, delta, deltaTone, icon: I, info, variacao, variacaoBase }: {
   label: string; value: string; delta?: string; deltaTone?: 'success' | 'danger' | 'muted'
   icon: (p: any) => JSX.Element
   info?: { what: string; good: string; action: string }
   variacao?: Comparado
+  /** Texto do tooltip da variação — contra o que o período anterior é comparado. */
+  variacaoBase?: string
 }) {
   return (
     <div style={{ background: 'var(--bg-1)', border: '1px solid var(--line-1)', borderRadius: 14, padding: '12px 14px' }}>
@@ -174,7 +176,7 @@ function KPIInfo({ label, value, delta, deltaTone, icon: I, info, variacao }: {
       <div className="tnum" style={{ fontSize: 19, fontWeight: 700, letterSpacing: -0.5, color: 'var(--text-1)', lineHeight: 1.1 }}>{value}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
         {delta && <span style={{ fontSize: 11, fontWeight: 600, color: deltaTone === 'success' ? '#5DD49E' : deltaTone === 'danger' ? '#F5847B' : 'var(--text-3)' }}>{delta}</span>}
-        {variacao !== undefined && <Variacao dado={variacao} />}
+        {variacao !== undefined && <Variacao dado={variacao} base={variacaoBase} />}
       </div>
     </div>
   )

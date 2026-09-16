@@ -464,9 +464,23 @@ O `inverterCor` existe porque despesa e CMV subindo é notícia ruim — pintar 
 
 `Overview.tsx` passa a chamar `api.getDashboard(true)`. Os quatro `KPIInfo` e o bloco de receita do topo ganham `<Variacao dado={data.comparacao?.<indicador>} />` ao lado do valor. Não redesenhe os cards — acrescente o elemento.
 
-- [ ] **Step 4: As outras quatro telas**
+- [ ] **Step 4: Financeiro e Canais**
 
-Mesmo padrão em `Products.tsx`, `Stock.tsx`, `Finance.tsx` e `Channels.tsx`, nos indicadores que cada uma já exibe. Em `Finance.tsx`, lembrar do `inverterCor` para CMV e despesas.
+Mesmo padrão em `Finance.tsx` e `Channels.tsx`, nos indicadores que cada uma já
+exibe. Em `Finance.tsx`, lembrar do `inverterCor` para CMV e despesas.
+
+**`Stock.tsx` fica de fora, e é decisão, não esquecimento.** Nível de estoque é
+foto do momento, não período — comparar exigiria uma tabela de histórico de
+estoque que não existe. Foi o mesmo motivo que tirou a comparação de
+`rupture_risk` e `stopped` da Task 2.
+
+**`Products.tsx` entra por uma extensão** decidida pelo dono em 2026-09-15, depois
+que a Task 3 revelou que nenhum endpoint daquela tela aceitava comparação —
+efeito cascata de ter removido a comparação de `products/analysis`. A extensão
+acrescenta `compare` a `categories/performance` e renderiza a variação por
+categoria na seção Categorias. Motivo da escolha: "categoria X cresceu 18%" é a
+comparação que mais ajuda decisão de compra numa loja de roupa. `top-products` e
+`by-size` seguem sem comparação — "tamanho M vendeu +12%" é menos acionável.
 
 - [ ] **Step 5: Verificar**
 

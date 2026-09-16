@@ -31,7 +31,7 @@ function Row({ label, val, accent, bold, neg, info, variacao, inverterCor }: Row
         {info && <MetricInfo {...info} />}
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        {variacao !== undefined && <Variacao dado={variacao} inverterCor={inverterCor} />}
+        {variacao !== undefined && <Variacao dado={variacao} inverterCor={inverterCor} base="vs. mês anterior fechado" />}
         <span className="tnum" style={{ fontSize: bold ? 17 : 14, fontWeight: bold ? 800 : 700, color: accent ? 'var(--gold-300)' : neg ? '#F5847B' : 'var(--text-1)' }}>
           {neg ? '−' : ''}{fmtBRL(Math.abs(val))}
         </span>
@@ -99,15 +99,15 @@ export default function Finance() {
             <div style={{ fontSize: 11, fontWeight: 700, color: data.net_profit >= 0 ? '#5DD49E' : '#F5847B', textTransform: 'uppercase', letterSpacing: 1.5 }}>Lucro líquido</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
               <div className="tnum" style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1, marginTop: 4, color: 'var(--text-1)' }}>{fmtBRL(data.net_profit)}</div>
-              <Variacao dado={data.comparacao?.net_profit} />
+              <Variacao dado={data.comparacao?.net_profit} base="vs. mês anterior fechado" />
             </div>
             <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <Badge tone={data.margin_pct >= 20 ? 'success' : data.margin_pct >= 0 ? 'warn' : 'danger'} size="lg" dot>
                 Margem {data.margin_pct.toFixed(1)}%
               </Badge>
-              <Variacao dado={data.comparacao?.margin_pct} />
+              <Variacao dado={data.comparacao?.margin_pct} base="vs. mês anterior fechado" />
               <Badge tone="info" size="lg">Margem bruta {data.gross_margin_pct?.toFixed(1) ?? '—'}%</Badge>
-              <Variacao dado={data.comparacao?.gross_margin_pct} />
+              <Variacao dado={data.comparacao?.gross_margin_pct} base="vs. mês anterior fechado" />
             </div>
           </div>
 

@@ -139,12 +139,12 @@ export default function Channels() {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <span className="tnum" style={{ fontSize: 13, color: 'var(--text-2)' }}>{fmtNum(c.count)}</span>
-                      <div><Variacao dado={c.comparacao?.count} /></div>
+                      <div><Variacao dado={c.comparacao?.count} base="vs. período anterior de mesma duração" /></div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div className="tnum" style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold-300)' }}>{fmtBRLshort(c.total)}</div>
                       {fee > 0 && <div className="tnum" style={{ fontSize: 11, color: '#5DD49E' }}>líq. {fmtBRLshort(net)}</div>}
-                      <div><Variacao dado={c.comparacao?.total} /></div>
+                      <div><Variacao dado={c.comparacao?.total} base="vs. período anterior de mesma duração" /></div>
                     </div>
                   </div>
                 )
