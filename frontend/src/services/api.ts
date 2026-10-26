@@ -10,9 +10,8 @@ import type {
 } from './types'
 
 // Base da API: usa VITE_API_URL quando definida (dev fora do proxy, ambientes
-// especiais); caso contrário assume caminho relativo — em produção o PWA e a API
-// vivem no mesmo domínio atrás do reverse proxy (Caddy), e em desenvolvimento o
-// Vite encaminha /api para o backend local (ver proxy em vite.config.ts).
+// especiais); caso contrário assume caminho relativo. Em desenvolvimento, o Vite
+// encaminha /api para o backend local (ver proxy em vite.config.ts).
 const ENV_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.trim()
 const BASE = (ENV_BASE && ENV_BASE.length > 0
   ? ENV_BASE

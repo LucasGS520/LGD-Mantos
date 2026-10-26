@@ -3,7 +3,6 @@ import { AppBar, ScreenBody } from '../../components/Chrome'
 import { Card, Section, Btn } from '../../components/UI'
 import { Ico } from '../../components/Icons'
 import { api } from '../../services/api'
-import { usePwaUpdate, applyServiceWorkerUpdate } from '../../services/pwa'
 import type { HealthStatus } from '../../services/types'
 
 // Tempo máximo de espera pelo /health antes de considerar o servidor fora do ar —
@@ -23,7 +22,6 @@ export default function SystemStatus() {
   const [checking, setChecking] = useState(true)
   const [online, setOnline] = useState(true)
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
-  const pwa = usePwaUpdate()
 
   const check = useCallback(async () => {
     setChecking(true)
@@ -93,19 +91,6 @@ export default function SystemStatus() {
                 <span style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>{row.value}</span>
               </div>
             ))}
-          </Card>
-        </Section>
-
-        <Section title="Atualização do app" top={18}>
-          <Card padding={14}>
-            {pwa.needsRefresh ? (
-              <>
-                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Uma nova versão está disponível.</div>
-                <Btn kind="primary" size="sm" full onClick={() => applyServiceWorkerUpdate()}>Atualizar agora</Btn>
-              </>
-            ) : (
-              <div style={{ fontSize: 13, color: 'var(--text-3)' }}>Você está usando a versão mais recente.</div>
-            )}
           </Card>
         </Section>
 

@@ -6,19 +6,19 @@ Sistema interno de gestão da loja LGD Mantos. A aplicação reúne cadastro de 
 
 | Camada | Implementação |
 | --- | --- |
-| Interface | PWA React 18, TypeScript e Vite em `frontend_pwa/` |
+| Interface | Frontend web com React 18, TypeScript e Vite em `frontend/` |
 | API | FastAPI em `backend/`, rotas sob `/api/v1` |
 | Dados | PostgreSQL 16, SQLAlchemy assíncrono e migrações Alembic |
 | Marketing | Fluxos de campanhas e aprovação preservados; geração automática aguarda provedor externo de IA |
-| Produção | Docker Compose, Caddy como proxy HTTPS e servidor do PWA |
+| Ambiente local | Docker Compose com PostgreSQL, API e frontend |
 
-Os módulos da API ficam em `backend/app/modules/`: `auth`, `operational`, `analytics`, `agents`, `settings`, `system` e `export`. Modelos e schemas compartilhados ficam em `backend/app/shared/`. As telas do PWA ficam em `frontend_pwa/src/screens/`.
+Os módulos da API ficam em `backend/app/modules/`: `auth`, `operational`, `analytics`, `agents`, `settings`, `system` e `export`. Modelos e schemas compartilhados ficam em `backend/app/shared/`. As telas web ficam em `frontend/src/screens/`.
 
 ## Verificação
 
 ```text
-cd frontend_pwa && npm ci && npm run build
-cd backend && pip install -r requirements-dev.txt && pytest -q
+cd frontend && npm ci && npm run build
+cd backend && pip install -r requirements.txt && pytest -q
 ```
 
 Os testes do backend cobrem principalmente os fluxos de agentes e aprovação. Ainda faltam testes automatizados para boa parte das rotas operacionais, análises, configurações e exportação. Não há pipeline de CI versionado neste repositório.
@@ -29,6 +29,5 @@ A tela **Mais → Configurações** exporta relatórios CSV resumidos, individua
 
 ## Referências
 
-- `specs/`: especificações de funcionalidades.
 - `docs/AGENTES_MARKETING_SPEC.md`: especificação de produto para a futura integração de IA externa.
 - `graphify-out/`: grafo local gerado para navegação com `graphify .`; a pasta não é versionada.

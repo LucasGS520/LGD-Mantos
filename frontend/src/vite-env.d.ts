@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
-/// <reference types="vite-plugin-pwa/client" />
 
 // Injetadas em build time por vite.config.ts (fonte única: package.json + git).
-// Ver services/pwa.ts (Status do sistema) e telas mais/About.tsx.
+// Usadas nas telas de status do sistema e informações sobre o app.
 declare const __APP_VERSION__: string
 declare const __BUILD_HASH__: string

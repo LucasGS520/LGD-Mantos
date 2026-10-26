@@ -28,7 +28,7 @@ export default function About() {
           {[
             { label: 'Versão do app', value: `v${__APP_VERSION__} · ${__BUILD_HASH__}` },
             { label: 'Versão da API', value: apiVersion ? `v${apiVersion}` : '—' },
-            { label: 'Plataforma',    value: 'PWA / Web' },
+            { label: 'Plataforma',    value: 'Web' },
             { label: 'Backend',       value: 'FastAPI + PostgreSQL' },
           ].map((row, i) => (
             <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderTop: i === 0 ? undefined : '1px solid var(--line-1)' }}>

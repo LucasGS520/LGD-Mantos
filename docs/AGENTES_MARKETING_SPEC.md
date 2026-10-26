@@ -2,7 +2,7 @@
 
 **Status:** proposta de referência para a próxima etapa de desenvolvimento  
 **Data:** 2026-08-07  
-**Escopo:** módulo `backend/app/modules/agents` e sua experiência no PWA
+**Escopo:** módulo `backend/app/modules/agents` e sua experiência no frontend
 
 ## Decisão de produto
 
@@ -173,7 +173,7 @@ Fora do MVP: autopost, descontos automáticos, várias campanhas no mesmo run, g
 ## Critérios de aceite da próxima entrega
 
 - Brief produz uma proposta rastreável ou falha com motivo claro.
-- PWA mostra dados/documentos/políticas usados, versões e status por etapa.
+- O frontend mostra dados/documentos/políticas usados, versões e status por etapa.
 - Revisão preserva histórico e exige nova decisão.
 - Aprovação tem identidade autenticada e perde validade após mudança relevante.
 - Não se publica produto sem estoque, conteúdo não aprovado ou versão diferente da aprovada.
@@ -203,4 +203,4 @@ Até essas respostas, as opções seguras são bloquear estoque crítico para pu
 | `agents/publishing` | Evoluir marcação manual para ordem/tentativa; conector por interface. |
 | `agents/knowledge` | Adicionar versão, autoria, vigência e referências por run. |
 | `analytics` | Permanecer read-only; explicitar DTO de contexto e adicionar resultado pós-publicação depois. |
-| `frontend_pwa/src/screens/mk` | Substituir objetivo livre por brief e expor evidências, versões e intenção de publicar. |
+| `frontend/src/screens/mk` | Substituir objetivo livre por brief e expor evidências, versões e intenção de publicar. |

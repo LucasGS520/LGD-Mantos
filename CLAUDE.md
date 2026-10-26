@@ -5,7 +5,7 @@
 O projeto é uma aplicação de gestão interna para operação, análise
 e marketing da loja LGD Mantos. O sistema centraliza dados de produtos, estoque,
 compras, vendas e finanças, utilizando uma base única em PostgreSQL, backend
-FastAPI e cliente web responsivo em React (PWA). A IA existe exclusivamente na
+FastAPI e frontend web responsivo em React. A IA existe exclusivamente na
 camada de Agentes de Marketing: ela transforma dados já consolidados em propostas
 de campanhas, copy e direção criativa, sem substituir o controle humano. Os
 módulos Operacional, Analytics e Auth não possuem agentes de IA; eles apenas

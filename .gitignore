@@ -40,17 +40,17 @@ backend/app/static/uploads/
 frontend_mobile/bin/
 frontend_mobile/.gradle/
 
-# Frontend PWA / Node outputs
-frontend_pwa/node_modules/
-frontend_pwa/dist/
-frontend_pwa/build/
-frontend_pwa/.next/
-frontend_pwa/.nuxt/
-frontend_pwa/.vite/
-frontend_pwa/.cache/
-frontend_pwa/.parcel-cache/
-frontend_pwa/coverage/
-frontend_pwa/*.tsbuildinfo
+# Frontend / Node outputs
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/.nuxt/
+frontend/.vite/
+frontend/.cache/
+frontend/.parcel-cache/
+frontend/coverage/
+frontend/*.tsbuildinfo
 
 # Node package manager artifacts
 npm-debug.log*
@@ -71,6 +71,6 @@ pnpm-debug.log*
 graphify-out/
 
 # Cache local do npm quando o cache global não está acessível
-frontend_pwa/.npm-cache/
+frontend/.npm-cache/
 .verify-frontend/
 
