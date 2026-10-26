@@ -19,8 +19,5 @@ httpx==0.28.1
 # Suporte a imagens.
 pillow==11.0.0
 
-# Framework de agentes IA e cliente Ollama.
-# O pacote `openai` é exigido pelo Agno para o modelo Ollama (cliente compatível).
+# Framework dos agentes de marketing, mantido para integração futura com IA externa.
 agno==2.6.19
-ollama==0.6.2
-openai==2.45.0

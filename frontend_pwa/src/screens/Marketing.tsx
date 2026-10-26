@@ -83,7 +83,7 @@ function CampanhasTab() {
       }>
         {runs.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-3)', fontSize: 13 }}>
-            Nenhum run ainda. Crie sua primeira campanha!
+            Nenhum run ainda. A geração automática aguarda integração com IA externa.
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

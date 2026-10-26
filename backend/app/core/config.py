@@ -14,8 +14,6 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     APP_PASSWORD: str
     APP_SECRET: str
-    OLLAMA_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3.1:8b"
 
     # Origens permitidas para CORS, separadas por vírgula.
     # Em produção, definir CORS_ORIGINS com o domínio real do frontend
@@ -31,6 +29,8 @@ class Settings(BaseSettings):
         """Define o arquivo `.env` como fonte adicional de configuração local."""
 
         env_file = ".env"
+        # Permite iniciar após a remoção de variáveis antigas do ambiente.
+        extra = "ignore"
 
 
 settings = Settings()

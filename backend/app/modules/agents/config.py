@@ -1,33 +1,18 @@
-"""Configuração centralizada da camada de agentes — modelo e runtime Agno.
+"""Ponto de integração dos agentes com um futuro provedor externo de IA."""
 
-Ponto único de troca de provedor LLM: todos os agentes obtêm o modelo por
-`get_agent_model()`. Para adicionar um provedor externo (ex.: Anthropic ou
-OpenAI), basta tratar o novo valor de AGENT_LLM_PROVIDER aqui — nenhum
-agente precisa ser alterado.
-
-Atenção ao deploy: o provedor padrão (Ollama) exige um servidor Ollama
-acessível em OLLAMA_URL. Em ambientes sem Ollama (ex.: Render), os runs de
-agentes falharão com erro de conexão — o restante da API continua operando.
-"""
-
-import os
-
-from agno.models.ollama import Ollama
-
-from app.core.config import settings
-
-# Provedor ativo. Hoje apenas "ollama" é suportado; o valor vem do ambiente
-# para permitir a troca sem alterar código dos agentes.
-AGENT_LLM_PROVIDER = os.environ.get("AGENT_LLM_PROVIDER", "ollama").lower()
+from fastapi import HTTPException
 
 
-def get_agent_model() -> Ollama:
-    """Retorna o modelo LLM configurado para uso nos agentes."""
-    if AGENT_LLM_PROVIDER == "ollama":
-        return Ollama(id=settings.OLLAMA_MODEL, host=settings.OLLAMA_URL)
+MODEL_UNAVAILABLE_MESSAGE = (
+    "Geração automática indisponível: nenhum provedor externo de IA foi integrado."
+)
 
-    raise ValueError(
-        f"Provedor LLM '{AGENT_LLM_PROVIDER}' não suportado. "
-        "Valores aceitos: 'ollama'. Para adicionar um provedor novo, "
-        "implemente-o em app/modules/agents/config.py."
-    )
+
+def require_agent_model() -> None:
+    """Impede novos runs enquanto não existir um provedor externo configurado."""
+    raise HTTPException(status_code=503, detail=MODEL_UNAVAILABLE_MESSAGE)
+
+
+def get_agent_model():
+    """Reserva a interface dos agentes para uma futura integração externa."""
+    raise RuntimeError(MODEL_UNAVAILABLE_MESSAGE)

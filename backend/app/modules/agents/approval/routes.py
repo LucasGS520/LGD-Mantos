@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import verify_token
 from app.core.database import get_db
+from app.modules.agents.config import require_agent_model
 from app.modules.agents.approval.schemas import (
     ApprovalDetail,
     ApprovalListItem,
@@ -128,6 +129,7 @@ async def regenerate_after_revision(
     campanha é preservada; apenas ContentAgent e CreativeAgent re-executam.
     Retorna 202 com o run de re-geração — acompanhe via GET /runs/{run_id}.
     """
+    require_agent_model()
     approval = await ApprovalService.get_detail(db, approval_id)
 
     if approval.status != "revision_requested":

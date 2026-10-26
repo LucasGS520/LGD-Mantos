@@ -25,7 +25,7 @@ Para cada campanha, o dono deve conseguir verificar: o problema comercial tratad
 | Execução usa `BackgroundTasks`; restart pode deixar run em `running`. | Implementada; risco conhecido | Rotas/Supervisor e plano histórico |
 | Revisão atual sobrescreve `Post` e `CreativeBrief`; não há histórico nem snapshot aprovado. | Implementada; lacuna | Supervisor e `marketing_ops/models.py` |
 
-O plano em `docs/plans/PLAN-20260716-1846-consolidacao-agentes-marketing.md` é o registro histórico das validações já feitas. Esta especificação passa a orientar as próximas decisões.
+Esta especificação orienta as próximas decisões de produto para o módulo Marketing.
 
 ## Princípios inegociáveis
 

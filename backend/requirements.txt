@@ -1,8 +1,6 @@
 agno==2.6.19
 alembic==1.18.5
 asyncpg==0.30.0
-ollama==0.6.2
-openai==2.44.0
 fastapi==0.115.5
 filetype==1.2.0
 httpx==0.28.1

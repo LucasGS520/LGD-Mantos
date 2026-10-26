@@ -45,7 +45,7 @@ export default function NewRun() {
           </div>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', marginBottom: 6 }}>Objetivo da Campanha</div>
           <div style={{ fontSize: 12.5, color: 'var(--text-3)', lineHeight: 1.5, maxWidth: 280, margin: '0 auto' }}>
-            Descreva o objetivo. Os agentes analisarão os dados e gerarão copy e direção criativa automaticamente.
+            A geração automática está indisponível até a integração de um provedor externo de IA.
           </div>
         </div>
 

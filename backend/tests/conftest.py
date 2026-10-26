@@ -19,8 +19,6 @@ os.environ.setdefault(
 )
 os.environ.setdefault("APP_PASSWORD", "senha-somente-testes")
 os.environ.setdefault("APP_SECRET", "segredo-somente-testes")
-os.environ.setdefault("OLLAMA_URL", "http://localhost:11434")
-os.environ.setdefault("OLLAMA_MODEL", "llama3.1:8b")
 
 import asyncpg
 import pytest_asyncio

@@ -22,7 +22,7 @@ espalhadas em planilhas, anotações, WhatsApp ou controles manuais:
 - Análises.
 - Sugestões de reposição.
 
-> Informações sobre a stack e tecnologias existentes em [STACK_LGD.md](STACK_LGD.md)
+> Informações gerais sobre a stack estão no [README.md](README.md).
 
 ---
 

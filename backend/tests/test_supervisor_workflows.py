@@ -1,7 +1,7 @@
 """Testes dos workflows do Supervisor com agentes LLM substituídos por stubs.
 
 Validam a orquestração completa (persistência, políticas, aprovação) sem
-depender do Ollama — os 4 agentes são trocados por funções determinísticas.
+depender de um provedor de IA — os 4 agentes são trocados por funções determinísticas.
 """
 
 import pytest
