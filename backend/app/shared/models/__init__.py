@@ -9,8 +9,10 @@ from app.shared.models.operations import (
     SaleItem,
     StockMovement,
 )
+from app.shared.models.settings import AppPreference
 
 __all__ = [
+    "AppPreference",
     "Category",
     "Expense",
     "MerchandiseEntry",

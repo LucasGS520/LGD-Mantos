@@ -23,6 +23,7 @@ pip-wheel-metadata/
 
 # Virtual environments
 .venv/
+.python-deps/
 venv/
 env/
 ENV/
@@ -49,6 +50,7 @@ frontend_pwa/.vite/
 frontend_pwa/.cache/
 frontend_pwa/.parcel-cache/
 frontend_pwa/coverage/
+frontend_pwa/*.tsbuildinfo
 
 # Node package manager artifacts
 npm-debug.log*
@@ -64,4 +66,11 @@ pnpm-debug.log*
 
 # Documentos Auxiliares
 .auxiliares_docs/
+
+# Grafo gerado localmente; não versionar saídas e caches
+graphify-out/
+
+# Cache local do npm quando o cache global não está acessível
+frontend_pwa/.npm-cache/
+.verify-frontend/
 

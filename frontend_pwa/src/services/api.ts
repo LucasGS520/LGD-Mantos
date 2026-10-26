@@ -6,6 +6,7 @@ import type {
   MarketingIntelligence,
   AgentRun, AgentApprovalItem, AgentApprovalDetail, OpsMetrics, KnowledgeDoc,
   PublishingQueueItem,
+  AppPreferences, AppPreferencesInput, HealthStatus,
 } from './types'
 
 // Base da API: usa VITE_API_URL quando definida (dev fora do proxy, ambientes
@@ -64,6 +65,47 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
     throw new Error('Resposta inválida do servidor (sem JSON). Verifique a configuração da API.')
   }
   return data
+}
+
+/**
+ * Baixa um arquivo autenticado (CSV/ZIP de exportação) e dispara o download no
+ * navegador. Usa fetch (não um <a href> direto) porque o download exige o header
+ * Authorization — e libera a object URL logo depois de iniciar o download, para
+ * não reter o arquivo inteiro em memória além do necessário.
+ */
+async function downloadFile(path: string, fallbackName: string): Promise<void> {
+  const token = Session.load()
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(`${BASE}${path}`, { method: 'GET', headers })
+
+  if (res.status === 401) {
+    Session.clear()
+    _onUnauthorized?.()
+    throw new Error('Sessão expirada. Faça login novamente.')
+  }
+  if (!res.ok) {
+    let msg = `Erro ${res.status}`
+    const d = await readJsonBody<{ detail?: unknown }>(res)
+    if (d?.detail) msg = typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail)
+    throw new Error(msg)
+  }
+
+  const disposition = res.headers.get('Content-Disposition') ?? ''
+  const filename = disposition.match(/filename="?([^"]+)"?/)?.[1] ?? fallbackName
+
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  // Pequeno atraso antes de revogar: alguns navegadores iniciam o download de forma
+  // assíncrona a partir do clique — revogar cedo demais pode cancelar o download.
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 export const api = {
@@ -182,6 +224,22 @@ export const api = {
 
   getOpsMetrics: () =>
     req<OpsMetrics>('GET', '/agents/ops/metrics'),
+
+  // ─── Configurações e Status do sistema ───────────────────────────────────
+  getPreferences: () =>
+    req<AppPreferences>('GET', '/settings/preferences'),
+
+  updatePreferences: (data: AppPreferencesInput) =>
+    req<AppPreferences>('PUT', '/settings/preferences', data),
+
+  getHealth: () =>
+    req<HealthStatus>('GET', '/health'),
+
+  exportDataset: (dataset: string) =>
+    downloadFile(`/export/${dataset}`, `lgd-${dataset}.csv`),
+
+  exportBackup: () =>
+    downloadFile('/export/reports', 'lgd-relatorios.zip'),
 
   getKnowledgeDocs: (docType?: string) => {
     const q = new URLSearchParams({ active_only: 'false' })

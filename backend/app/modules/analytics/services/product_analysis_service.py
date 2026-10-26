@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.analytics.repositories import product_repository as product_repo
 from app.modules.analytics.repositories import sales_repository as sales_repo
 from app.modules.analytics.utils import resolve_period
+from app.modules.settings.service import PreferenceService
 
 
 class ProductAnalysisService:
@@ -28,9 +29,10 @@ class ProductAnalysisService:
     @staticmethod
     async def product_analysis(db: AsyncSession, period: str | None = None, days: int = 30) -> dict:
         """Análise completa de produtos: margem, parados, risco de ruptura e categorias."""
+        prefs = await PreferenceService.get_safe(db)
         now = datetime.now(timezone.utc)
         since, end = resolve_period(period, days)
-        since_60 = now - timedelta(days=60)
+        since_stopped = now - timedelta(days=prefs.stopped_days)
         since_30 = now - timedelta(days=30)
 
         # Top por lucro absoluto.
@@ -59,14 +61,15 @@ class ProductAnalysisService:
             for r in margin_rows
         ]
 
-        # Produtos parados (sem venda em 60 dias, com estoque) — janela fixa de negócio.
-        stopped_rows = await product_repo.stopped_products(db, since_60)
+        # Produtos parados (sem venda em N dias, com estoque) — janela configurável (prefs.stopped_days).
+        stopped_rows = await product_repo.stopped_products(db, since_stopped)
         stopped = [
             {"name": r[0], "sku": r[1], "total_stock": int(r[2] or 0)}
             for r in stopped_rows
         ]
 
-        # Risco de ruptura: variantes com menos de 15 dias de estoque — usa velocidade dos últimos 30d.
+        # Risco de ruptura: variantes com menos de N dias de estoque (prefs.rupture_days) —
+        # usa velocidade dos últimos 30d.
         velocity = await sales_repo.variant_velocity_30d(db, since_30)
         variants = await product_repo.active_variants(db)
         rupture_risk = []
@@ -75,7 +78,7 @@ class ProductAnalysisService:
             if sold == 0:
                 continue
             days_left = variant.stock_quantity / (sold / 30)
-            if days_left < 15:
+            if days_left < prefs.rupture_days:
                 rupture_risk.append({
                     "product_name": variant.product.name,
                     "sku": variant.product.sku,

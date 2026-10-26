@@ -6,9 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.analytics.repositories import product_repository as product_repo
 from app.modules.analytics.repositories import sales_repository as sales_repo
+from app.modules.settings.service import PreferenceService
 
 _STOCK_SAFE = 5      # estoque mínimo para postar sem risco
-_STOCK_CRITICAL = 3  # estoque que dispara alerta de reposição antes de postar
 _VELOCITY_MIN = 3    # unidades/30d para considerar produto popular
 _MARGIN_HIGH = 35.0  # margem % para considerar produto de destaque
 
@@ -16,6 +16,9 @@ _MARGIN_HIGH = 35.0  # margem % para considerar produto de destaque
 class MarketingIntelligenceService:
     @staticmethod
     async def marketing_intelligence(db: AsyncSession) -> dict:
+        # Estoque crítico (dispara alerta de reposição antes de postar) é configurável
+        # pelo operador — ver app.modules.settings.
+        prefs = await PreferenceService.get_safe(db)
         since_30 = datetime.now(timezone.utc) - timedelta(days=30)
         velocity = await sales_repo.variant_velocity_30d(db, since_30)
         variants = await product_repo.active_variants(db)
@@ -49,7 +52,7 @@ class MarketingIntelligenceService:
 
             if stock == 0:
                 avoid_post.append({**item, "reason": "sem estoque"})
-            elif sold >= _VELOCITY_MIN and stock <= _STOCK_CRITICAL:
+            elif sold >= _VELOCITY_MIN and stock <= prefs.critical_stock:
                 restock_first.append({**item, "reason": "boa saída, estoque crítico"})
             else:
                 if sold >= _VELOCITY_MIN and stock >= _STOCK_SAFE:
