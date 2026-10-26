@@ -239,7 +239,7 @@ export const api = {
     downloadFile(`/export/${dataset}`, `lgd-${dataset}.csv`),
 
   exportBackup: () =>
-    downloadFile('/export/backup', 'lgd-backup.zip'),
+    downloadFile('/export/reports', 'lgd-relatorios.zip'),
 
   getKnowledgeDocs: (docType?: string) => {
     const q = new URLSearchParams({ active_only: 'false' })

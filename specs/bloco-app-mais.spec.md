@@ -29,7 +29,8 @@ o servidor certo, na versão certa.
 2. **"Sincronização" vira "Status do sistema"** — o app não tem offline real (não há
    IndexedDB nem fila de escrita), então o item passa a mostrar o que de fato existe:
    conexão, versão, atualização do PWA.
-3. **Backup = exportação de dados** (CSV por conjunto + ZIP completo).
+3. **Exportação para consulta** (CSV por conjunto + ZIP com os seis relatórios).
+   Os arquivos não têm dados suficientes para restauração e não são backup do banco.
 4. **Notificações push saem de escopo**; entram **preferências de alertas** — os limiares
    que hoje estão cravados no código passam a ser configuráveis.
 5. **Versão passa a ter fonte única** — `package.json` + hash do commit, injetados em build time.
@@ -66,7 +67,7 @@ Três seções:
 
 **Dados** — exportação:
 - Botão por conjunto: Produtos, Vendas, Compras, Despesas, Movimentações de estoque, Cadastros.
-- Botão "Backup completo (.zip)" — todos os CSVs num único arquivo.
+- Botão "Exportar relatórios (.zip)" — todos os CSVs num único arquivo.
 
 **Segurança** — bloco informativo (sem campos):
 - Explica que a senha de acesso é definida no servidor (`APP_PASSWORD`) e que a troca é
@@ -119,8 +120,8 @@ Nova tela, novo `ScreenId`, substitui o destino do item "Sincronização".
   com nome no formato `lgd-{conjunto}-{AAAA-MM-DD}.csv`.
 - **RF-07** — The sistema shall oferecer os conjuntos: `produtos`, `vendas`, `compras`,
   `despesas`, `movimentacoes`, `cadastros`.
-- **RF-08** — When o usuário solicita o backup completo, the sistema shall responder com um
-  `application/zip` contendo um CSV por conjunto, nomeado `lgd-backup-{AAAA-MM-DD}.zip`.
+- **RF-08** — When o usuário solicita os relatórios em ZIP, the sistema shall responder com um
+  `application/zip` contendo um CSV por conjunto, nomeado `lgd-relatorios-{AAAA-MM-DD}.zip`.
 - **RF-09** — The sistema shall exigir token válido em todos os endpoints de exportação.
 - **RF-10** — Where um conjunto não possui registros, the sistema shall retornar um CSV
   contendo apenas a linha de cabeçalho, nunca HTTP 404.
@@ -203,8 +204,8 @@ Given não existe nenhuma despesa registrada,
 When o usuário exporta "Despesas",
 Then recebe um CSV válido contendo apenas a linha de cabeçalho.
 
-**CA-06 — Backup completo**
-When o usuário toca em "Backup completo",
+**CA-06 — Relatórios em ZIP**
+When o usuário toca em "Exportar relatórios",
 Then baixa um `.zip` contendo os seis CSVs, todos abríveis.
 
 **CA-07 — Exportação exige token**
@@ -295,7 +296,7 @@ existe, gravação faz upsert.
 ### Fase B — Backend: exportação e health
 - [ ] Serviço de exportação: um gerador de CSV por conjunto (produtos, vendas, compras, despesas, movimentações, cadastros)
 - [ ] Rota `GET /api/v1/export/{conjunto}` → CSV com `Content-Disposition`
-- [ ] Rota `GET /api/v1/export/backup` → ZIP em memória (`zipfile`, stdlib)
+- [ ] Rota `GET /api/v1/export/reports` → ZIP em memória (`zipfile`, stdlib)
 - [ ] Rota `GET /api/v1/health` pública com checagem `SELECT 1` e versão da API
 - [ ] Versão da API vinda de uma constante única (mesma usada no `FastAPI(version=...)`)
 

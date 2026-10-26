@@ -87,7 +87,7 @@ export default function Settings() {
     try {
       await api.exportBackup()
     } catch (e) {
-      setExportError(e instanceof Error ? e.message : 'Erro ao gerar backup')
+      setExportError(e instanceof Error ? e.message : 'Erro ao gerar relatórios')
     } finally {
       setExportingKey(null)
     }
@@ -170,7 +170,7 @@ export default function Settings() {
           )}
 
           <Btn kind="secondary" icon={Ico.package} full style={{ marginTop: 12 }} onClick={handleBackup}>
-            {exportingKey === 'backup' ? 'Gerando backup…' : 'Backup completo (.zip)'}
+            {exportingKey === 'backup' ? 'Gerando relatórios…' : 'Exportar relatórios (.zip)'}
           </Btn>
         </Section>
 
