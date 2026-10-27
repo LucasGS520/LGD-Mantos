@@ -29,5 +29,4 @@ A tela **Mais → Configurações** exporta relatórios CSV resumidos, individua
 
 ## Referências
 
-- `docs/AGENTES_MARKETING_SPEC.md`: especificação de produto para a futura integração de IA externa.
 - `graphify-out/`: grafo local gerado para navegação com `graphify .`; a pasta não é versionada.
