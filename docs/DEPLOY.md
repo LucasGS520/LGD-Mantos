@@ -1,7 +1,7 @@
 # Guia de Deploy em Produção — VPS único com Docker Compose
 
 Este guia descreve o deploy do LGD Mantos completo (PostgreSQL + API FastAPI +
-PWA React) em um VPS, substituindo o modelo anterior Render + Vercel.
+Frontend React) em um VPS, substituindo o modelo anterior Render + Vercel.
 
 **Arquitetura de produção:**
 
@@ -16,7 +16,7 @@ Internet ──HTTPS──▶ Caddy (container web, portas 80/443)
 ```
 
 Uma única origem pública (`https://SEU_DOMINIO`) serve frontend e API — por isso
-o PWA usa caminho relativo `/api/v1` e o CORS deixa de ser um problema real.
+o frontend usa caminho relativo `/api/v1` e o CORS deixa de ser um problema real.
 
 ---
 
@@ -60,7 +60,7 @@ Preencher no `.env` (todos obrigatórios em produção):
 |---|---|
 | `DATABASE_URL` | `postgresql+asyncpg://postgres:<senha-nova>@db:5432/lgd_mantos` |
 | `POSTGRES_PASSWORD` | mesma `<senha-nova>` da linha acima |
-| `APP_PASSWORD` | senha de login do PWA — **valor novo**, não reutilizar o exposto |
+| `APP_PASSWORD` | senha de login do frontend — **valor novo**, não reutilizar o exposto |
 | `APP_SECRET` | `openssl rand -hex 32` — **valor novo**, não reutilizar o exposto |
 | `DOMAIN` | `app.seudominio.com.br` |
 | `CORS_ORIGINS` | `https://app.seudominio.com.br` |
@@ -100,7 +100,7 @@ Verificações pós-deploy:
 | Checagem | Esperado |
 |---|---|
 | `https://SEU_DOMINIO` | PWA carrega com cadeado HTTPS |
-| `https://SEU_DOMINIO/api/v1/...` (login no PWA) | Token emitido |
+| `https://SEU_DOMINIO/api/v1/...` (login no frontend) | Token emitido |
 
 ## 6. Rotina de backup (obrigatório antes de considerar produção pronta)
 

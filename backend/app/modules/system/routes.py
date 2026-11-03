@@ -1,4 +1,4 @@
-"""Rota pública de status do sistema — usada pela tela "Status do sistema" do PWA."""
+"""Rota pública de status do sistema — usada pela tela web "Status do sistema"."""
 
 import asyncio
 from datetime import datetime, timezone
@@ -23,7 +23,7 @@ _DB_CHECK_TIMEOUT_SECONDS = 3.0
 async def health(db: AsyncSession = Depends(get_db)):
     """Verifica conectividade real com o banco e devolve a versão em vigor da API.
 
-    Rota pública (sem verify_token de propósito) — o PWA usa para medir latência e
+    Rota pública (sem verify_token de propósito) — o frontend usa para medir latência e
     confirmar que está falando com o servidor certo antes mesmo do login. Nunca
     expõe detalhes internos (host, credenciais, stack trace): uma falha no banco
     vira só `database: "error"`, com HTTP 200 — quem decide "isso é grave?" é a

@@ -3,7 +3,7 @@
 # Diferenças em relação ao docker-compose.yml (desenvolvimento):
 #   - Nenhuma porta interna exposta ao host (banco só na rede interna).
 #   - Backend sem --reload e sem montagem do código-fonte.
-#   - PWA buildado e servido pelo Caddy (serviço `web`), com HTTPS automático.
+#   - Frontend buildado e servido pelo Caddy (serviço `web`), com HTTPS automático.
 #   - Única exposição pública: portas 80/443 do Caddy.
 #
 # Uso no servidor:

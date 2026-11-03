@@ -1,4 +1,4 @@
-"""Serviço de exportação de dados — gera CSV/ZIP para backup manual do operador.
+"""Serviço de exportação de relatórios resumidos em CSV/ZIP.
 
 Cada função de exportação monta o CSV a partir do resultado direto da consulta
 (lista de tuplas do SQLAlchemy), sem passar por uma estrutura intermediária de
@@ -15,18 +15,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.shared.models.catalog import Category, Product, ProductVariant, SaleChannel, Supplier
 from app.shared.models.operations import Expense, MerchandiseEntry, MerchandiseEntryItem, Sale, StockMovement
 
-# Conjuntos de exportação disponíveis — usados tanto na validação da rota quanto no backup completo.
+# Conjuntos de exportação disponíveis — usados na validação e no pacote de relatórios.
 EXPORT_SETS = ("produtos", "vendas", "compras", "despesas", "movimentacoes", "cadastros")
 
 
 def _csv_bytes(header: list[str], rows: list[list]) -> bytes:
-    """Serializa cabeçalho + linhas em CSV UTF-8 com BOM (abre corretamente no Excel pt-BR)."""
+    """Serializa CSV para planilhas, neutralizando fórmulas em valores textuais."""
+
+    def safe_cell(value: object) -> object:
+        # Planilhas executam texto iniciado por estes caracteres como fórmula.
+        if isinstance(value, str) and value.lstrip().startswith(("=", "+", "-", "@")):
+            return "'" + value
+        return value
 
     buffer = io.StringIO()
     buffer.write(chr(0xFEFF))  # BOM — escrito via chr() para evitar depender de caractere invisível no arquivo-fonte.
     writer = csv.writer(buffer)
     writer.writerow(header)
-    writer.writerows(rows)
+    writer.writerows([[safe_cell(value) for value in row] for row in rows])
     return buffer.getvalue().encode("utf-8")
 
 
@@ -37,7 +43,7 @@ def _sim_nao(value: bool | None) -> str:
 
 
 class ExportService:
-    """Gera CSVs de backup por conjunto de dados a partir do banco de produção."""
+    """Gera CSVs de consulta por conjunto de dados a partir do banco."""
 
     @staticmethod
     async def export_produtos(db: AsyncSession) -> bytes:
@@ -128,7 +134,7 @@ class ExportService:
         """Um CSV combinando categorias, fornecedores e canais de venda — visão geral dos cadastros.
 
         Formato unificado (Tipo/Nome/Detalhes/Ativo) porque os três cadastros têm
-        campos diferentes entre si; não serve para reimportação, apenas backup legível.
+        campos diferentes entre si; não serve para reimportação.
         """
 
         header = ["Tipo", "Nome", "Detalhes", "Ativo"]
@@ -178,7 +184,7 @@ class ExportService:
 
     @staticmethod
     async def export_backup(db: AsyncSession) -> bytes:
-        """Monta um .zip com um CSV por conjunto — backup completo em um único arquivo."""
+        """Monta um .zip de relatórios CSV para consulta, sem prometer restauração."""
 
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:

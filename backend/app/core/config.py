@@ -29,6 +29,8 @@ class Settings(BaseSettings):
         """Define o arquivo `.env` como fonte adicional de configuração local."""
 
         env_file = ".env"
+        # Permite iniciar após a remoção de variáveis antigas do ambiente.
+        extra = "ignore"
 
 
 settings = Settings()

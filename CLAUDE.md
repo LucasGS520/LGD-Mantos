@@ -5,9 +5,10 @@
 O projeto é uma aplicação de gestão interna para operação, análise
 e marketing da loja LGD Mantos. O sistema centraliza dados de produtos, estoque,
 compras, vendas e finanças, utilizando uma base única em PostgreSQL, backend
-FastAPI e cliente web responsivo em React (PWA). A IA deve ser nativa dentro desse sistema, atuando como camada auxiliar transversal,
-apoiando decisões operacionais, análises e geração de conteúdo, sem substituir
-o controle humano.
+FastAPI e frontend web responsivo em React. A ?rea de Intelig?ncia re?ne an?lises
+e compara??es entre per?odos. O antigo m?dulo de Agentes de Marketing foi
+removido; novas integra??es de IA devem respeitar a arquitetura atual e o
+controle humano.
 
 O principal papel do sistema é centralizar rotinas que normalmente ficariam
 espalhadas em planilhas, anotações, WhatsApp ou controles manuais:
@@ -20,7 +21,7 @@ espalhadas em planilhas, anotações, WhatsApp ou controles manuais:
 - Análises.
 - Sugestões de reposição.
 
-> Informações sobre a stack e tecnologias existentes em [STACK_LGD.md](STACK_LGD.md)
+> Informações gerais sobre a stack estão no [README.md](README.md).
 
 ---
 
@@ -58,13 +59,13 @@ espalhadas em planilhas, anotações, WhatsApp ou controles manuais:
 
 #### graphify
 
-Este projeto possui um grafo de conhecimento em graphify-out/ com nós principais, estrutura de comunidade e relações entre arquivos.
+O Graphify pode gerar localmente um grafo de conhecimento em graphify-out/ com nós principais, comunidades e relações entre arquivos. Essa pasta não é versionada.
 
 Regras:
 - Para perguntas sobre a base de código, primeiro execute `graphify query "<pergunta>"` quando graphify-out/graph.json existir. Use `graphify path "<A>" "<B>"` para relações e `graphify explain "<conceito>"` para conceitos específicos. Esses comandos retornam um subgrafo delimitado, geralmente muito menor que GRAPH_REPORT.md ou a saída bruta do grep.
 - Se graphify-out/wiki/index.md existir, use-o para navegação ampla em vez de navegar diretamente pelo código-fonte.
 - Leia graphify-out/GRAPH_REPORT.md apenas para revisão da arquitetura geral ou quando query/path/explain não fornecerem contexto suficiente.
-- Após modificar o código, SEMPRE EXECUTE `graphify update .` para manter o grafo **atualizado e alinhado com as modificações executadas** (somente AST, sem custo de API).
+- Se houver grafo local, após modificar o código execute `graphify update .` para mantê-lo atualizado (somente AST, sem custo de API).
 - `graphify update` gera arquivos de cache em `graphify-out/cache/` — SEMPRE exclua `graphify-out/cache` (e `graphify-out/<data>/` de backup) de pacotes de diff/revisão gerados pra subagentes revisores; eles não são código revisável e só inflam o pacote.
 
 #### caveman

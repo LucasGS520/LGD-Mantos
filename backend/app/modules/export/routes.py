@@ -1,4 +1,4 @@
-"""Rotas de exportação de dados — backup manual do operador em CSV/ZIP."""
+"""Rotas de exportação de relatórios para consulta em CSV/ZIP."""
 
 from datetime import date
 
@@ -12,16 +12,16 @@ from app.modules.export.service import EXPORT_SETS, ExportService
 router = APIRouter(prefix="/export", tags=["export"])
 
 
-@router.get("/backup")
+@router.get("/reports")
 async def export_backup(db: AsyncSession = Depends(get_db), _=Depends(verify_token)):
-    """Baixa um .zip com um CSV por conjunto — backup completo em um único arquivo.
+    """Baixa um .zip com um CSV resumido por conjunto para consulta.
 
-    Registrada antes de `/{dataset}` para que "backup" nunca seja interpretado
+    Registrada antes de `/{dataset}` para que "reports" nunca seja interpretado
     como nome de conjunto pela rota genérica abaixo.
     """
 
     content = await ExportService.export_backup(db)
-    filename = f"lgd-backup-{date.today().isoformat()}.zip"
+    filename = f"lgd-relatorios-{date.today().isoformat()}.zip"
     return Response(
         content=content,
         media_type="application/zip",
