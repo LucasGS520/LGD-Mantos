@@ -1,22 +1,16 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { Session } from './services/session'
-import { setUnauthorizedHandler } from './services/api'
+import { setUnauthorizedHandler } from './services/domain'
 
 export type ScreenId =
-  | 'login'
-  | 'product-list' | 'product-detail' | 'product-form'
-  | 'sale-modal' | 'sales-history' | 'sale-detail'
-  | 'purchase-form' | 'purchase-list' | 'entry-detail'
-  | 'expenses' | 'stock-moves'
-  | 'intel-overview' | 'intel-health' | 'intel-products' | 'intel-category-detail'
-  | 'intel-stock' | 'intel-finance' | 'intel-channels'
-  | 'more' | 'suppliers' | 'supplier-form' | 'categories' | 'category-form' | 'sale-channels' | 'channel-form' | 'settings' | 'system-status' | 'about'
+  | 'catalog' | 'product' | 'operations' | 'operation-form' | 'operation-detail' | 'management' | 'auxiliaries'
+  | 'login' | 'more'
 
 export type TabId = 'op' | 'intel' | 'mais'
 
 export const TAB_ROOTS: Record<TabId, ScreenId> = {
-  op: 'product-list',
-  intel: 'intel-overview',
+  op: 'catalog',
+  intel: 'management',
   mais: 'more',
 }
 
@@ -38,7 +32,7 @@ const Nav = createContext<NavCtx | null>(null)
 export function NavProvider({ children }: { children: ReactNode }) {
   const [tab, setTabState] = useState<TabId | null>(null)
   const [stack, setStack] = useState<NavEntry[]>(() => {
-    const screen: ScreenId = Session.isValid() ? 'product-list' : 'login'
+    const screen: ScreenId = Session.isValid() ? 'catalog' : 'login'
     return [{ screen, params: {} }]
   })
 

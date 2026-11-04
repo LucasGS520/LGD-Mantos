@@ -1,6 +1,6 @@
 """Configurações carregadas do ambiente para o backend."""
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -25,12 +25,7 @@ class Settings(BaseSettings):
         """Converte CORS_ORIGINS em lista, ignorando entradas vazias."""
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
-    class Config:
-        """Define o arquivo `.env` como fonte adicional de configuração local."""
-
-        env_file = ".env"
-        # Permite iniciar após a remoção de variáveis antigas do ambiente.
-        extra = "ignore"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()

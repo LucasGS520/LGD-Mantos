@@ -17,8 +17,7 @@ from app.core.database import Base
 
 # Importa todos os módulos de modelos para registrá-los em Base.metadata.
 # Sem esses imports o autogenerate enxergaria um schema vazio.
-import app.shared.models.catalog  # noqa: F401
-import app.shared.models.operations  # noqa: F401
+import app.domain.models  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)

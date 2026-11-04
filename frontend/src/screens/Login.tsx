@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Ico } from '../components/Icons'
 import { useNav } from '../nav'
-import { api } from '../services/api'
+import { api } from '../services/domain'
 
 export default function Login() {
   const { setTab } = useNav()

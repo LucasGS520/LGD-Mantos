@@ -48,10 +48,7 @@ def main() -> None:
     cfg.set_main_option("script_location", str(Path(__file__).parent / "migrations"))
 
     if has_products and not has_alembic:
-        # Banco criado pelo antigo create_all: o schema do baseline já existe,
-        # então apenas registramos a revisão sem recriar tabelas.
-        print(f"Banco legado detectado — registrando baseline {BASELINE_REVISION}...")
-        command.stamp(cfg, BASELINE_REVISION)
+        raise RuntimeError("Banco legado sem Alembic: regularize a revisão explicitamente antes de iniciar. Nenhum dado foi alterado.")
 
     print("Aplicando migrations...")
     command.upgrade(cfg, "head")

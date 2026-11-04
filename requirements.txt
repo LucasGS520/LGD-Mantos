@@ -11,11 +11,12 @@ pydantic-settings==2.6.1
 alembic==1.18.5
 
 # Autenticação, uploads e cliente HTTP assíncrono (usado nos testes de API).
-python-jose[cryptography]==3.3.0
+python-jose[cryptography]==3.5.0
 python-multipart==0.0.20
-aiofiles==24.1.0
-httpx==0.28.1
 
 # Suporte a imagens.
 pillow==11.0.0
+pydantic==2.13.3
+python-dotenv==1.2.2
+tzdata==2025.2
 

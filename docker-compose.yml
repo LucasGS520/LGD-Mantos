@@ -55,15 +55,21 @@ services:
     environment:
       # O browser no host acessa a API publicada em localhost:8000.
       VITE_API_URL: http://localhost:8000/api/v1
+      # O proxy roda no container e acessa a API pelo nome do serviço.
+      VITE_PROXY_TARGET: http://backend:8000
     ports:
       - "5173:5173"
     volumes:
       - ./frontend:/app
+      # Dependências Linux ficam no Docker, sem resíduos no diretório do projeto.
+      - frontend_node_modules:/app/node_modules
     command: >
-      sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+      sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
 
 volumes:
   # Volume persistente do PostgreSQL.
   pgdata:
   # Volume persistente para uploads de produtos.
   uploads_data:
+  # Dependências regeneráveis do frontend de desenvolvimento.
+  frontend_node_modules:

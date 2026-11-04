@@ -12,7 +12,7 @@ export function AppBar({ title, subtitle, back, action, dense }: AppBarProps) {
   return (
     <div style={{ padding: dense ? '8px 18px 10px' : '6px 18px 14px', display: 'flex', alignItems: 'center', gap: 12, minHeight: 54, flexShrink: 0 }}>
       {back && (
-        <button onClick={goBack} style={{ width: 38, height: 38, borderRadius: 12, border: '1px solid var(--line-2)', background: 'var(--bg-2)', color: 'var(--text-1)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+        <button aria-label="Voltar" onClick={goBack} style={{ width: 38, height: 38, borderRadius: 12, border: '1px solid var(--line-2)', background: 'var(--bg-2)', color: 'var(--text-1)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
           <Ico.back size={20} />
         </button>
       )}
@@ -28,7 +28,7 @@ export function AppBar({ title, subtitle, back, action, dense }: AppBarProps) {
 // ─── BottomNav ─────────────────────────────────────────────────
 const TABS: { id: TabId; label: string; icon: (p: IcoProps) => JSX.Element }[] = [
   { id: 'op',    label: 'Operação',     icon: Ico.box },
-  { id: 'intel', label: 'Inteligência', icon: Ico.chart },
+  { id: 'intel', label: 'Gestão', icon: Ico.chart },
   { id: 'mais',  label: 'Mais',         icon: Ico.more },
 ]
 
@@ -58,31 +58,6 @@ export function BottomNav({ active }: { active: TabId }) {
           </div>
         )
       })}
-    </div>
-  )
-}
-
-// ─── Operação sub-nav (switches between op root screens) ───────
-type OpScreen = 'product-list' | 'sales-history' | 'purchase-list' | 'expenses' | 'stock-moves'
-const OP_TABS: { id: OpScreen; label: string }[] = [
-  { id: 'product-list',  label: 'Estoque'   },
-  { id: 'sales-history', label: 'Vendas'    },
-  { id: 'purchase-list', label: 'Compras'   },
-  { id: 'expenses',      label: 'Despesas'  },
-]
-
-export function OpSubNav({ active }: { active: OpScreen }) {
-  const { navigate } = useNav()
-  return (
-    <div style={{ display: 'flex', gap: 8, padding: '0 18px 10px', overflowX: 'auto', flexShrink: 0 }} className="lgd-scroll">
-      {OP_TABS.map(t => (
-        <div key={t.id} onClick={() => navigate(t.id)} style={{
-          padding: '6px 10px', borderRadius: 999, fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer',
-          background: t.id === active ? 'var(--gold-500)' : 'var(--bg-2)',
-          color: t.id === active ? '#1A1408' : 'var(--text-2)',
-          border: t.id === active ? '1px solid var(--gold-500)' : '1px solid var(--line-1)',
-        }}>{t.label}</div>
-      ))}
     </div>
   )
 }

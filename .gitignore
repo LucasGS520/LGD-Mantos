@@ -50,6 +50,8 @@ frontend/.vite/
 frontend/.cache/
 frontend/.parcel-cache/
 frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
 frontend/*.tsbuildinfo
 
 # Cache incremental do compilador TypeScript — muda a cada build e não deve
@@ -70,6 +72,7 @@ pnpm-debug.log*
 
 # Documentos Auxiliares
 .auxiliares_docs/
+.superpowers/
 
 # Grafo gerado localmente; não versionar saídas e caches
 graphify-out/
@@ -79,7 +82,5 @@ frontend/.npm-cache/
 .verify-frontend/
 
 
-# Artefatos locais remanescentes do frontend anterior.
-frontend_pwa/node_modules/
-frontend_pwa/dist/
-frontend_pwa/.vite/
+# Evita reintrodução de resíduos do frontend anterior.
+frontend_pwa/

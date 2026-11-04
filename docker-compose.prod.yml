@@ -47,7 +47,7 @@ services:
       - uploads_data:/app/app/static/uploads
 
   web:
-    # Borda pública: PWA estático + reverse proxy da API + HTTPS automático.
+    # Borda pública: React estático + reverse proxy da API + HTTPS automático.
     build:
       context: .
       dockerfile: deploy/Dockerfile.web

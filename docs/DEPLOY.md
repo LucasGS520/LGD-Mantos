@@ -1,150 +1,58 @@
-# Guia de Deploy em Produção — VPS único com Docker Compose
+# Execução em produção
 
-Este guia descreve o deploy do LGD Mantos completo (PostgreSQL + API FastAPI +
-Frontend React) em um VPS, substituindo o modelo anterior Render + Vercel.
+Referência de produto: [PRODUTO_E_OBJETIVO.md](PRODUTO_E_OBJETIVO.md).
+Este documento descreve configuração técnica; não cria funcionalidades de negócio.
 
-**Arquitetura de produção:**
+## Topologia
 
-```
-Internet ──HTTPS──▶ Caddy (container web, portas 80/443)
-                      ├── /            → PWA estático (build do Vite)
-                      ├── /api/*       → backend FastAPI :8000
-                      ├── /uploads/*   → backend (fotos de produtos)
-                      └── /static/*    → backend
-                    Rede interna do compose (sem portas expostas):
-                      backend ──▶ db (Postgres 16)
-```
+Docker Compose executa PostgreSQL 16, FastAPI e Caddy. O Caddy serve a aplicação
+React compilada e encaminha `/api/*` ao backend. Fotos são obtidas por endpoints
+autenticados da API. Não há diretório público de uploads, PWA ou serviço de IA.
 
-Uma única origem pública (`https://SEU_DOMINIO`) serve frontend e API — por isso
-o frontend usa caminho relativo `/api/v1` e o CORS deixa de ser um problema real.
+Apenas portas 80/443 são publicadas na configuração de produção; banco e backend
+permanecem na rede interna do Compose. O domínio precisa apontar para o servidor.
 
----
+## Configuração
 
-## 1. Pré-requisitos (ações do usuário)
+Preencha `.env` no servidor, sem versioná-lo:
 
-1. **Domínio**: registrar (ex.: Registro.br para `.com.br`, ~R$40/ano). Um
-   subdomínio como `app.seudominio.com.br` é suficiente.
-2. **VPS**: contratar com no mínimo **2 vCPU / 4 GB RAM / 60+ GB NVMe**
-   (Postgres + API FastAPI + Caddy; sem inferência de LLM local no servidor).
-   Recomendação avaliada em set/2026: Hostinger KVM 2 (2 vCPU/8 GB/100 GB,
-   data center São Paulo — folga confortável acima do mínimo). Alternativas:
-   Vultr São Paulo, Magalu Cloud.
-   SO: **Ubuntu 24.04 LTS**.
-3. **DNS**: criar registro `A` do domínio apontando para o IP do VPS.
-   Propagação deve estar completa antes do primeiro `up` (o Caddy emite o
-   certificado HTTPS na primeira subida).
-
-## 2. Preparar o servidor
-
-```bash
-# Como root no VPS:
-apt update && apt upgrade -y
-curl -fsSL https://get.docker.com | sh
-
-# Firewall: só SSH e web expostos.
-ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw enable
-```
-
-## 3. Clonar e configurar
-
-```bash
-git clone https://github.com/LucasGS520/LGD-Mantos.git /opt/lgd-mantos
-cd /opt/lgd-mantos
-cp .env.example .env
-nano .env
-```
-
-Preencher no `.env` (todos obrigatórios em produção):
-
-| Variável | Valor |
+| Variável | Finalidade |
 |---|---|
-| `DATABASE_URL` | `postgresql+asyncpg://postgres:<senha-nova>@db:5432/lgd_mantos` |
-| `POSTGRES_PASSWORD` | mesma `<senha-nova>` da linha acima |
-| `APP_PASSWORD` | senha de login do frontend — **valor novo**, não reutilizar o exposto |
-| `APP_SECRET` | `openssl rand -hex 32` — **valor novo**, não reutilizar o exposto |
-| `DOMAIN` | `app.seudominio.com.br` |
-| `CORS_ORIGINS` | `https://app.seudominio.com.br` |
+| `DOMAIN` | Domínio atendido pelo Caddy |
+| `POSTGRES_PASSWORD` | Senha do banco |
+| `DATABASE_URL` | Conexão `postgresql+asyncpg` com host `db`, banco `lgd_mantos` |
+| `APP_PASSWORD` | Senha exclusiva do dono |
+| `APP_SECRET` | Segredo de assinatura de tokens e prévias |
+| `CORS_ORIGINS` | Origem HTTPS da aplicação |
 
-> ⚠️ Os segredos antigos vazaram no histórico do git (ver
-> FABLE_CONSOLIDACAO_2026-07-16.md §3.3). Este deploy é o momento natural da
-> rotação: use valores novos para os três.
-
-## 4. Migrar os dados do Render (antes de desligar o serviço antigo)
-
-```bash
-# 1. No painel do Render, copie a "External Database URL" do Postgres.
-# 2. Dump direto do banco do Render (roda no VPS):
-docker run --rm postgres:16-alpine pg_dump "<EXTERNAL_DATABASE_URL_DO_RENDER>" \
-  --no-owner --no-privileges > /opt/lgd-mantos/render_dump.sql
-
-# 3. Suba apenas o banco novo e restaure:
-docker compose -f docker-compose.prod.yml up -d db
-docker exec -i lgd_db psql -U postgres -d lgd_mantos < /opt/lgd-mantos/render_dump.sql
-```
-
-Se o sistema no Render estiver vazio ou com dados descartáveis, pule esta etapa —
-o `init_db.py` cria o schema do zero via Alembic no primeiro boot.
-
-## 5. Subir a stack completa
-
-```bash
-cd /opt/lgd-mantos
-docker compose -f docker-compose.prod.yml up -d --build
-
-# Acompanhar o primeiro boot (migrations):
-docker compose -f docker-compose.prod.yml logs -f backend
-```
-
-Verificações pós-deploy:
-
-| Checagem | Esperado |
-|---|---|
-| `https://SEU_DOMINIO` | PWA carrega com cadeado HTTPS |
-| `https://SEU_DOMINIO/api/v1/...` (login no frontend) | Token emitido |
-
-## 6. Rotina de backup (obrigatório antes de considerar produção pronta)
-
-```bash
-# /opt/lgd-mantos/backup.sh — dump diário com retenção de 14 dias.
-#!/bin/sh
-set -e
-BACKUP_DIR=/opt/lgd-mantos/backups
-mkdir -p "$BACKUP_DIR"
-docker exec lgd_db pg_dump -U postgres lgd_mantos | gzip \
-  > "$BACKUP_DIR/lgd_$(date +%F).sql.gz"
-find "$BACKUP_DIR" -name "lgd_*.sql.gz" -mtime +14 -delete
-```
-
-```bash
-chmod +x /opt/lgd-mantos/backup.sh
-crontab -e   # adicionar: 0 4 * * * /opt/lgd-mantos/backup.sh
-```
-
-Recomendado: sincronizar `backups/` para fora do VPS (ex.: `rclone` para um
-drive) — backup no mesmo disco não protege contra perda do servidor.
-
-## 7. Atualizações do sistema
-
-```bash
-cd /opt/lgd-mantos
-git pull
+```sh
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-Migrations rodam automaticamente no boot do backend (`init_db.py` → Alembic).
+As imagens utilizam `requirements.txt` como fonte única de dependências Python de
+execução e `npm ci` para o frontend. Ferramentas de testes ficam separadas.
 
-## 8. Desligamento do Render/Vercel (só após validar tudo acima)
+## Transição da versão antiga
 
-1. Confirmar que o dump foi restaurado e o sistema novo está operante.
-2. Suspender/deletar o serviço web e o Postgres no Render.
-3. Deletar o projeto no Vercel.
-4. Confirmar a rotação dos 3 segredos (feita no passo 3 — os valores antigos
-   do histórico do git morrem junto com os serviços antigos).
+O esquema novo começa na migração 0006. Sua aplicação cria tabelas novas e mantém
+o legado intacto até o procedimento administrativo de transição.
 
-## Solução de problemas
+A limpeza da base escolhida deve ser executada separadamente, depois da validação
+em ambiente isolado, com o backend parado. Use os comandos do README com
+`-f docker-compose.prod.yml` quando o destino for produção. A ferramenta confere o
+nome do banco, o host e todas as tabelas presentes antes de apagar registros.
 
-| Sintoma | Causa provável | Ação |
-|---|---|---|
-| Caddy não emite certificado | DNS ainda não propagou / porta 80 bloqueada | `dig SEU_DOMINIO`, conferir ufw |
-| Backend reinicia em loop | `.env` incompleto (APP_SECRET/APP_PASSWORD são obrigatórios) | `docker logs lgd_mantos` |
-| PWA carrega mas API falha | `DOMAIN`/`CORS_ORIGINS` divergentes | conferir `.env` |
+Não copie dados de teste, não invente recebimentos e não confirme automaticamente
+o inventário inicial. Depois da transição, o dono inicia o controle pelas quantidades
+físicas conhecidas. Nenhuma limpeza ocorre em inicializações futuras.
+
+## Persistência e disponibilidade
+
+`pgdata` contém o banco e `uploads_data` contém as fotos. `caddy_data` e
+`caddy_config` preservam o estado da borda HTTPS.
+
+`/api/v1/health` verifica o banco e informa versão e horário. O status do banco está
+no corpo da resposta. `/` é apenas uma verificação simples do processo HTTP.
+
+Políticas de backup, retenção e restauração continuam sendo requisitos operacionais
+de infraestrutura a definir. A aplicação não oferece exportação como backup.

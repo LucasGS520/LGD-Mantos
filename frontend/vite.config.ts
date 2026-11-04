@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url))
+const proxyTarget = process.env.VITE_PROXY_TARGET || 'http://localhost:8000'
 
 // Versão do app: fonte única no package.json — evita "v1.0.0" hardcoded repetido
 // nas telas (Sobre o app, Status do sistema). Ver RF-19/RF-21 da spec do bloco App.
@@ -37,9 +38,7 @@ export default defineConfig({
     // Em desenvolvimento, encaminha chamadas de API e arquivos estáticos para o
     // backend local, permitindo que o frontend use caminhos relativos (/api/v1).
     proxy: {
-      '/api': 'http://localhost:8000',
-      '/uploads': 'http://localhost:8000',
-      '/static': 'http://localhost:8000',
+      '/api': proxyTarget,
     },
   },
   plugins: [react()],

@@ -1,0 +1,5 @@
+# Instalação de desenvolvimento a partir da raiz ou de backend/.
+-r ../requirements.txt
+httpx==0.28.1
+pytest==8.4.2
+pytest-asyncio==1.2.0
