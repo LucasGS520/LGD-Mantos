@@ -103,6 +103,15 @@ não devem voltar a um formulário ou serviço universal.
 Veja o [plano executado](docs/PLANO_MELHORIAS_CODIGO.md) e o
 [registro de verificação](docs/QUALIDADE_CODIGO_RESULTADO.md).
 
+## Qualidade e situação atual
+
+A dimensão Código teve o plano C0–C8 implementado e verificado. As próximas
+pendências estão no [registro central de qualidade](docs/QUALIDADE_SITUACAO_ATUAL.md):
+Arquitetura, Banco e preparação operacional. O registro distingue investigações
+obrigatórias de mudanças condicionadas a medição ou decisão, com prioridades,
+fontes no código e critérios de encerramento. A conclusão de Código não equivale
+a uma validação de capacidade ou disponibilidade em produção.
+
 ## Limpeza para início real
 
 A limpeza autorizada é administrativa, irreversível e separada da aplicação.

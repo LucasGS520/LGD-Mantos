@@ -3,6 +3,10 @@
 Fonte normativa: [PRODUTO_E_OBJETIVO.md](PRODUTO_E_OBJETIVO.md). Este documento
 registra contratos e critérios de manutenção, sem substituir decisões de produto.
 
+Situação de qualidade: Código (C0–C8) concluído; avaliação e melhorias de Arquitetura,
+Banco e preparação operacional permanecem no [registro de pendências](QUALIDADE_SITUACAO_ATUAL.md).
+As alternativas desse registro não substituem os contratos vigentes descritos aqui.
+
 ## Organização
 
 O backend permanece um monólito FastAPI, organizado em `app/modules` por capacidade:

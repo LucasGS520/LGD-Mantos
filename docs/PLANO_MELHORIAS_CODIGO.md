@@ -4,6 +4,8 @@ Data: 2026-11-06. Status: executado e verificado (C0–C8).
 
 Registro da implementação, testes e diferenças entre a árvore proposta e a organização final: [Resultado da qualidade do código](QUALIDADE_CODIGO_RESULTADO.md).
 
+As pendências das próximas dimensões são acompanhadas em [Qualidade e situação atual](QUALIDADE_SITUACAO_ATUAL.md). Elas não reabrem as entregas C0–C8 deste plano.
+
 Fonte de produto: `PRODUTO_E_OBJETIVO.md`. Contratos preservados: `ALINHAMENTO_IMPLEMENTADO.md`.
 
 ## Resultado esperado e limites

@@ -2,6 +2,9 @@
 
 Data: 2026-11-06. Escopo: C0–C8 do [plano de melhorias](PLANO_MELHORIAS_CODIGO.md).
 
+Este documento preserva as evidências da entrega concluída no commit `6d8b98c`.
+As pendências ainda abertas são mantidas no [registro central de qualidade e situação atual](QUALIDADE_SITUACAO_ATUAL.md).
+
 ## Entregas e evidências
 
 | Etapa | Resultado implementado | Evidência no repositório |
@@ -63,4 +66,4 @@ Vitest, Testing Library, ESLint, Ruff e Prettier foram adicionados como ferramen
 
 Todos os quatro achados da dimensão Código possuem implementação e evidência de verificação. As cinco melhorias funcionais escolhidas no plano estão incluídas. README, instruções de manutenção e matriz de alinhamento refletem os caminhos e comandos novos.
 
-Permanecem para as próximas dimensões as decisões sobre volume do replay, serialização global, paginação, modelagem JSON, UUIDs, índices, constraints e operação do banco. Esta entrega não modifica essas decisões nem constitui uma medição de desempenho em produção. O código está pronto para a avaliação seguinte de arquitetura e banco, com sua base modular e os gates de regressão estabelecidos.
+Permanecem para as próximas dimensões as decisões sobre volume do replay, serialização global, paginação, modelagem JSON, UUIDs, índices, constraints e operação do banco. As investigações, prioridades e critérios de encerramento estão em `QUALIDADE_SITUACAO_ATUAL.md`, itens ARQ, BD e OPS. Esta entrega não modifica essas decisões nem constitui uma medição de desempenho em produção. O código está pronto para a avaliação seguinte de arquitetura e banco, com sua base modular e os gates de regressão estabelecidos.

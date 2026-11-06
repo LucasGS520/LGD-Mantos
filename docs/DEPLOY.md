@@ -56,3 +56,20 @@ no corpo da resposta. `/` é apenas uma verificação simples do processo HTTP.
 
 Políticas de backup, retenção e restauração continuam sendo requisitos operacionais
 de infraestrutura a definir. A aplicação não oferece exportação como backup.
+
+## Pendências para comprovar a prontidão operacional
+
+Este documento é uma referência de configuração, não um registro de deploy
+validado. O acompanhamento está em [Qualidade e situação atual](QUALIDADE_SITUACAO_ATUAL.md):
+
+- OPS-01: definir RPO/RTO, frequência, retenção, destino e responsável por backups
+  de banco e fotos; comprovar restauração consistente em ambiente isolado antes
+  de depender da implantação para dados reais.
+- OPS-02: validar atualização, migrações, persistência dos volumes, HTTPS e
+  recuperação de release em ambiente apropriado.
+- OPS-03: definir os sinais mínimos de disponibilidade, erros e duração das
+  operações, incluindo espera por locks e custo do replay.
+
+Não há evidência de conclusão desses itens nesta documentação. A avaliação de
+Banco também deve conferir o schema efetivamente implantado e sua manutenção;
+a existência dos arquivos de migração não comprova o estado do servidor.

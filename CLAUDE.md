@@ -2,6 +2,10 @@
 
 A fonte normativa é `docs/PRODUTO_E_OBJETIVO.md`. Consulte também
 `docs/ALINHAMENTO_IMPLEMENTADO.md` para contratos, decisões técnicas e testes.
+O registro central de pendências é `docs/QUALIDADE_SITUACAO_ATUAL.md`.
+Código (C0–C8) está concluído; as próximas decisões são de Arquitetura, Banco
+e preparação operacional. Atualize os itens com evidência ao avançar e não trate
+alternativas condicionais (UUID, JSONB, checkpoints ou roteador) como mudanças já aprovadas.
 
 ## Estrutura atual
 
