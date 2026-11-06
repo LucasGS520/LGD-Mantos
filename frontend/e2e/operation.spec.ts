@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("inventário, compra, venda parcial, recebimento, correção e histórico", async ({
   page,
   request,
-}) => {
+}, testInfo) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
   await expect.poll(async () => {
@@ -92,7 +92,19 @@ test("inventário, compra, venda parcial, recebimento, correção e histórico",
   await page.getByRole("button", { name: "Cadastrar peça durante a compra" }).click();
   await page.getByLabel("Nome da peça").fill("Regata solar");
   await page.getByLabel("Estampa", { exact: true }).fill("Sol azul");
+  let failSources = true;
+  await page.route("**/api/v1/auxiliaries", async route => {
+    if (failSources && route.request().method() === "GET") {
+      await route.fulfill({status: 503, contentType: "application/json", body: JSON.stringify({detail: "Cadastros temporariamente indisponíveis"})});
+    } else await route.continue();
+  });
   await page.getByRole("button", { name: "Salvar produto", exact: true }).click();
+  await expect(page.getByText("Cadastros temporariamente indisponíveis", {exact:true})).toBeVisible();
+  await expect(page.getByLabel("Fornecedor", {exact:true})).toHaveValue(supplierBefore);
+  await expect(page.getByLabel("Custo unitário", {exact:true})).toHaveValue("20.00");
+  failSources = false;
+  await page.getByRole("button", {name:"Tentar novamente",exact:true}).click();
+  await expect(page.getByText("Cadastros temporariamente indisponíveis", {exact:true})).toHaveCount(0);
   await page.getByLabel("Tamanho", { exact: true }).fill("G");
   await page.getByLabel("Cor", { exact: true }).fill("Branco");
   await page.getByLabel("Custo de referência (opcional)", { exact: true }).fill("12.00");
@@ -176,10 +188,24 @@ test("inventário, compra, venda parcial, recebimento, correção e histórico",
     await page.getByLabel("Visão", { exact: true }).selectOption(view);
     await expect(page.getByRole("alert")).toHaveCount(0);
     await expect(page.getByLabel("Visão", { exact: true })).toBeVisible();
+    if (view === "stock") {
+      await expect(page.getByText("Camiseta navegador · M / Preto", {exact: true})).toBeVisible();
+      await expect(page.getByText("Regata solar · G / Branco", {exact: true})).toBeVisible();
+    } else if (view === "sales") {
+      await expect(page.getByText(/Vendido.*25,00.*1 unidades/)).toBeVisible();
+    } else if (view === "receipts") {
+      await expect(page.getByText(/Recebido no intervalo:.*25,00.*Saldo pendente atual:.*0,00/)).toBeVisible();
+    } else if (view === "purchases") {
+      await expect(page.getByText(/2 unidades compradas.*32,00/)).toBeVisible();
+    } else if (view === "buying") {
+      await expect(page.getByText(/1 vendas e 1 compras no intervalo/)).toBeVisible();
+    } else {
+      await expect(page.getByText("3 unidades", {exact:true})).toBeVisible();
+    }
   }
   expect(pageErrors).toEqual([]);
   await page.screenshot({
-    path: "test-results/gestao-mobile.png",
+    path: testInfo.outputPath("gestao-mobile.png"),
     fullPage: true,
   });
 });

@@ -5,9 +5,18 @@ registra contratos e critérios de manutenção, sem substituir decisões de pro
 
 ## Organização
 
-O backend permanece um monólito FastAPI. `app/domain` contém contratos, modelos,
-consultas, serviços de gravação, reprodução do histórico e consultas gerenciais.
-Autenticação e disponibilidade permanecem módulos pequenos separados.
+O backend permanece um monólito FastAPI, organizado em `app/modules` por capacidade:
+auxiliares, catálogo, fotos, operações, histórico, gestão, autenticação e disponibilidade.
+Cada cadastro auxiliar possui contrato e entrada próprios. Regras comuns de cadastro
+usam helpers sem acumular decisões específicas. Modelos ORM ficam em
+`app/shared/models/entities.py`; o ledger puro fica em `modules/operations/domain`.
+Rotas adaptam HTTP e delegam aos casos de uso. SQL e arquivos ficam em repositórios
+e adaptadores; serviços de aplicação não dependem de exceções HTTP.
+
+No frontend, `src/modules` agrupa APIs, contratos, páginas, componentes e hooks
+por capacidade. Inventário, compra, venda e ajuste têm composições próprias;
+prévia/confirmação compartilham o controlador. As seis visões de gestão são
+arquivos próprios. Transporte, formatos e UI genérica ficam em `src/shared`.
 
 As nove tabelas `lgd_*` representam controle inicial, auxiliares, produtos,
 variantes, fotos, operações, movimentações, revisões e recibos de requisição.
@@ -58,8 +67,17 @@ financeiro geral. A API é o contrato interno do frontend, não uma integração
 
 ## Matriz de requisitos e verificação
 
-Os testes HTTP estão em `backend/tests/test_operation_contracts.py`; a jornada
-real de interface está em `frontend/e2e/operation.spec.ts`.
+Os testes HTTP/transacionais estão em `backend/tests/integration/`, incluindo a
+suíte contratual recuperada e testes de falha de commit e compatibilidade HTTP.
+Testes puros ficam em `backend/tests/unit/`; hooks e formulários têm testes
+Vitest junto aos módulos. As jornadas reais de interface estão em
+`frontend/e2e/operation.spec.ts` e `frontend/e2e/recovery.spec.ts`.
+
+Uma prévia obsoleta é descartada com orientação de nova revisão, preservando o
+formulário. Se a resposta de confirmação for interrompida, a repetição mantém
+chave e conteúdo para obter o recibo idempotente. Mudanças no formulário invalidam
+a prévia. Cargas antigas são descartadas; falhas em movimentos/histórico/fontes
+gerenciais ficam visíveis e oferecem nova tentativa.
 
 | Seção do produto | Comportamento | Verificação |
 |---|---|---|

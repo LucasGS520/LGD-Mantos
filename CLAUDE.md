@@ -5,9 +5,9 @@ A fonte normativa é `docs/PRODUTO_E_OBJETIVO.md`. Consulte também
 
 ## Estrutura atual
 
-- Backend FastAPI e SQLAlchemy assíncrono em `backend/app/domain`.
+- Backend modular FastAPI/SQLAlchemy em `backend/app/modules`; modelos ORM em `backend/app/shared/models/entities.py`.
 - Catálogo, inventário inicial, compras, estoque, vendas e recebimentos.
-- Frontend React e TypeScript em `frontend/src/screens/workspace`.
+- Frontend React/TypeScript em `frontend/src/modules`, infraestrutura em `shared` e composição em `app`.
 - PostgreSQL 16 e migrações Alembic preservadas em `backend/migrations`.
 - Acesso único do dono; gestão baseada em evidências dos registros operacionais.
 
@@ -23,10 +23,17 @@ A fonte normativa é `docs/PRODUTO_E_OBJETIVO.md`. Consulte também
 - Não alterar o banco operacional para testar. Use apenas o banco isolado
   `lgd_mantos_alignment_test`, conforme as instruções do README.
 - Nunca executar limpeza de dados no startup ou como manutenção rotineira.
+- Cada cadastro auxiliar tem contratos e entradas próprios; compartilhar apenas mecânica comum.
+- Rotas não contêm SQL, commit, disco ou regras de negócio. Serviços de aplicação usam erros próprios.
+- O ledger permanece puro e a confirmação de operações permanece uma única transação.
+- Consumir interfaces públicas (`api`, `contracts`, `index`) ao cruzar módulos frontend; não importar páginas internas.
 
 ## Verificação
 
 `python backend/check.py` executa os testes de backend em PostgreSQL isolado.
+Execute também `python -m ruff check backend` e `python backend/check_boundaries.py`.
+No frontend: `npm run build`, `npm run lint`, `npm run check:boundaries`, `npm test`;
+depois da suíte backend, rode a API isolada e `npm run test:e2e`.
 O README descreve build, jornada Playwright e execução por Docker Compose.
 Com o ambiente Docker ativo, `docker compose exec frontend npm run build`
 verifica a interface sem instalar dependências no host.

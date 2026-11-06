@@ -1,17 +1,23 @@
-""" Ponto de entrada HTTP da API LGD Mantos.
+"""Ponto de entrada HTTP da API LGD Mantos.
 
 Este módulo configura a aplicação FastAPI, registra os roteadores versionados e
 expõe os diretórios estáticos usados para arquivos enviados pelo sistema.
 """
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
 from app.core.config import settings
 from app.core.version import API_VERSION
-from app.domain.routes import router as domain_router
 from app.modules.auth.routes import router as auth_router
+from app.modules.auxiliaries.router import router as auxiliaries_router
+from app.modules.catalog.router import router as catalog_router
+from app.modules.history.router import router as history_router
+from app.modules.management.router import router as management_router
+from app.modules.operations.router import router as operations_router
+from app.modules.photos.router import router as photos_router
 from app.modules.system.routes import router as system_router
+from app.shared.application.errors import ApplicationError
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 app = FastAPI(title="LGD Mantos", version=API_VERSION, docs_url="/api/docs")
 
@@ -25,7 +31,12 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix="/api/v1")
-app.include_router(domain_router, prefix="/api/v1")
+app.include_router(auxiliaries_router, prefix="/api/v1")
+app.include_router(catalog_router, prefix="/api/v1")
+app.include_router(photos_router, prefix="/api/v1")
+app.include_router(operations_router, prefix="/api/v1")
+app.include_router(history_router, prefix="/api/v1")
+app.include_router(management_router, prefix="/api/v1")
 app.include_router(system_router, prefix="/api/v1")
 
 # Fotos são entregues pelo endpoint autenticado; não há diretório público.
@@ -35,3 +46,9 @@ app.include_router(system_router, prefix="/api/v1")
 async def health():
     """Retorna um status simples para checagens de disponibilidade da API."""
     return {"status": "ok", "service": "LGD Mantos API"}
+
+
+@app.exception_handler(ApplicationError)
+async def application_error_handler(request, exc: ApplicationError):
+    """Mantém o contrato de erro HTTP na borda da aplicação."""
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})

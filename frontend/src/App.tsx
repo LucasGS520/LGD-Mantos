@@ -1,15 +1,13 @@
-import { useNav } from "./nav";
-import Login from "./screens/Login";
-import {
-  AuxiliaryScreen,
-  Catalog,
-  Management,
-  MoreScreen,
-  OperationDetail,
-  OperationForm,
-  Operations,
-  ProductScreen,
-} from "./screens/Workspace";
+import { MoreScreen } from "./app/MoreScreen";
+import { useNav } from "./app/nav";
+import Login from "./modules/auth/Login";
+import { AuxiliaryScreen } from "./modules/auxiliaries/Page";
+import { Catalog } from "./modules/catalog/pages/Catalog";
+import { ProductScreen } from "./modules/catalog/pages/ProductScreen";
+import { Management } from "./modules/management/pages/Management";
+import { OperationDetail } from "./modules/operations/pages/OperationDetail";
+import { OperationForm } from "./modules/operations/pages/OperationForm";
+import { Operations } from "./modules/operations/pages/Operations";
 
 export default function App() {
   const { screen, params } = useNav();

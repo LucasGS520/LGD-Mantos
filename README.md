@@ -29,8 +29,10 @@ recomendadas para compras aguardam uma regra validada com histórico real.
 - Frontend React 18 / TypeScript / Vite, navegação própria e tokens CSS existentes.
 - API FastAPI / Python 3.12, SQLAlchemy assíncrono e PostgreSQL 16.
 - Alembic para migrações; Docker Compose para execução.
-- `backend/app/domain`: modelos, contratos, regras, consultas e reprodução do histórico.
-- `frontend/src/screens/workspace/`: telas separadas por responsabilidade e componentes compartilhados.
+- `backend/app/modules/`: auxiliares por capacidade, catálogo, fotos, operações, histórico, gestão, autenticação e disponibilidade.
+- `backend/app/shared/`: modelos ORM, persistência e regras transversais de auditoria/versão.
+- `frontend/src/modules/`: contratos, APIs, páginas, formulários e hooks por capacidade; cada cadastro auxiliar tem arquivos próprios.
+- `frontend/src/shared/`: transporte HTTP, erros, formatos, carga segura e componentes genéricos; `src/app/` compõe a navegação.
 - [Matriz de alinhamento](docs/ALINHAMENTO_IMPLEMENTADO.md): regras e critérios de verificação.
 
 ## Ambiente local
@@ -60,10 +62,15 @@ sempre com banco `lgd_mantos_alignment_test`. Nenhum teste usa a base operaciona
 ```sh
 docker exec lgd_db psql -U postgres -d postgres -c "CREATE DATABASE lgd_mantos_alignment_test"
 python -m pip install -r backend/requirements-dev.txt
+python -m ruff check backend
+python backend/check_boundaries.py
 python backend/check.py
 cd frontend
 npm ci
 npm run build
+npm run lint
+npm run check:boundaries
+npm test
 npx playwright install chromium
 ```
 
@@ -77,6 +84,24 @@ Depois, em `frontend/`, execute `npm run test:e2e`. A suíte usa API na porta 80
 Vite na 5174 e fotos temporárias. Execute após os testes do backend, sem concorrência
 entre suítes: ambas usam o mesmo banco isolado. Antes de repetir a jornada, execute
 novamente os testes de backend para limpar seus dados. CI executa essa sequência.
+
+Testes puros ficam em `backend/tests/unit/`; testes HTTP e transacionais ficam em
+`backend/tests/integration/`. Para executar só os testes puros, sem banco ou `.env`:
+`python -m pytest -c backend/pytest.ini backend/tests/unit`.
+Testes de componentes e hooks ficam junto ao módulo (`*.test.tsx`) e usam Vitest.
+Resultados e cache de E2E são isolados por execução. No Windows, traces ficam
+desativados por padrão; `E2E_TRACE=1` os ativa. CI Linux preserva traces de falha.
+A jornada `recovery.spec.ts` verifica prévia obsoleta, resposta interrompida depois
+do commit e recuperação de falha parcial. O endpoint público `/health` permanece
+sem autenticação; as capacidades operacionais exigem JWT.
+
+As fronteiras são verificadas automaticamente: domínio puro sem HTTP/ORM,
+rotas sem SQL/commit/disco, interfaces públicas entre módulos frontend e ausência
+de ciclos de imports. Cada módulo oferece sua API própria; regras específicas
+não devem voltar a um formulário ou serviço universal.
+
+Veja o [plano executado](docs/PLANO_MELHORIAS_CODIGO.md) e o
+[registro de verificação](docs/QUALIDADE_CODIGO_RESULTADO.md).
 
 ## Limpeza para início real
 

@@ -1,6 +1,6 @@
-import type { CSSProperties, ReactNode } from 'react'
-import { Ico, type IcoProps } from './Icons'
-import { useNav, type TabId } from '../nav'
+import type { CSSProperties,ReactNode } from 'react';
+import { useNav,type TabId } from '../app/nav';
+import { Ico,type IcoProps } from './Icons';
 
 // ─── AppBar ────────────────────────────────────────────────────
 interface AppBarProps {

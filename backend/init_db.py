@@ -18,9 +18,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import inspect
-
 from app.core.database import engine
+from sqlalchemy import inspect
 
 BASELINE_REVISION = "0001"
 

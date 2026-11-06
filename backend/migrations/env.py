@@ -7,17 +7,15 @@ garantindo que migrations e API sempre apontem para o mesmo banco.
 import asyncio
 from logging.config import fileConfig
 
+# Importa todos os módulos de modelos para registrá-los em Base.metadata.
+# Sem esses imports o autogenerate enxergaria um schema vazio.
+import app.shared.models.entities  # noqa: F401
 from alembic import context
+from app.core.config import settings
+from app.core.database import Base
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-
-from app.core.config import settings
-from app.core.database import Base
-
-# Importa todos os módulos de modelos para registrá-los em Base.metadata.
-# Sem esses imports o autogenerate enxergaria um schema vazio.
-import app.domain.models  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)

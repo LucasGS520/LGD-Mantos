@@ -8,12 +8,11 @@ import argparse
 import asyncio
 from pathlib import Path
 
-from sqlalchemy import inspect, text
-from sqlalchemy.engine import make_url
-
 from app.core.config import settings
 from app.core.database import engine
-from app.domain.models import Base
+from app.shared.models.entities import Base
+from sqlalchemy import inspect, text
+from sqlalchemy.engine import make_url
 
 LEGACY = {"app_preferences", "categories", "suppliers", "sale_channels", "products", "product_variants", "stock_movements", "sales", "sale_items", "expenses", "merchandise_entries", "merchandise_entry_items"}
 

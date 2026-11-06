@@ -26,6 +26,7 @@ function resolveBuildHash(): string {
 }
 
 export default defineConfig({
+  cacheDir: process.env.VITE_CACHE_DIR || 'node_modules/.vite',
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __BUILD_HASH__: JSON.stringify(resolveBuildHash()),

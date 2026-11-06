@@ -5,10 +5,10 @@ existir. Credenciais são lidas do ambiente/.env sem aparecer na linha de comand
 """
 
 import os
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
 from dotenv import dotenv_values
