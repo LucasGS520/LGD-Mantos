@@ -2,6 +2,7 @@
 
 import io
 import os
+import tempfile
 import warnings
 from pathlib import Path
 
@@ -49,7 +50,16 @@ class LocalPhotoStorage:
 
     def write(self, filename, content):
         self.root.mkdir(parents=True, exist_ok=True)
-        self.path(filename).write_bytes(content)
+        # Publica no mesmo filesystem somente após concluir a escrita do arquivo.
+        descriptor, temporary = tempfile.mkstemp(prefix=".upload-", suffix=".tmp", dir=self.root)
+        try:
+            with os.fdopen(descriptor, "wb") as file:
+                file.write(content)
+                file.flush()
+                os.fsync(file.fileno())
+            os.replace(temporary, self.path(filename))
+        finally:
+            Path(temporary).unlink(missing_ok=True)
 
     def remove(self, filename):
         self.path(filename).unlink(missing_ok=True)

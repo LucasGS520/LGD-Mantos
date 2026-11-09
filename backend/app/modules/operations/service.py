@@ -1,3 +1,4 @@
+import asyncio
 import hmac
 import json
 from datetime import datetime
@@ -5,13 +6,14 @@ from datetime import datetime
 from app.modules.catalog.public import locked_variants
 from app.shared.application.audit import audit
 from app.shared.application.errors import ApplicationError
+from app.shared.application.telemetry import measured
 from app.shared.models.common import now, uid
 from app.shared.models.entities import Movement, Operation, RequestReceipt
 from app.shared.persistence import base as repo
 
 from .candidate import prepare
 from .domain.ledger import RuleError, replay
-from .repository import operations
+from .repository import affected_operations, operations
 from .repository import receipt as find_receipt
 from .signing import digest, sign
 
@@ -47,13 +49,17 @@ async def _execute(db, data, entity_id=None, preview_token=None, request_key=Non
         raise ApplicationError(409, "A base mudou desde a prévia. Revise o impacto novamente")
     if preview_token and not request_key:
         raise ApplicationError(422, "Confirmação exige Idempotency-Key")
-    all_rows = await operations(db)
+    with measured("operations_load"):
+        all_rows = await operations(db)
     timestamp = now().isoformat()
     computed = materialize(candidate, timestamp, (entity_id or uid()) if preview_token else None)
     variants = await locked_variants(db)
     history = [row for row in all_rows if row["id"] != entity_id] + [computed]
     try:
-        states, results = replay(history, [v.id for v in variants])
+        with measured(
+            "replay", mode="confirm" if preview_token else "preview", records=len(history)
+        ):
+            states, results = await asyncio.to_thread(replay, history, [v.id for v in variants])
     except RuleError as exc:
         raise ApplicationError(422, str(exc)) from exc
     impacts = [
@@ -105,8 +111,9 @@ async def _execute(db, data, entity_id=None, preview_token=None, request_key=Non
         old,
         repo.serialize(row),
     )
+    dependents = await affected_operations(db, [impact["id"] for impact in impacts])
     for impact in impacts:
-        dependent = await repo.require(db, Operation, impact["id"])
+        dependent = dependents[impact["id"]]
         before = repo.serialize(dependent)
         dependent.result = impact["after"]
         dependent.version += 1

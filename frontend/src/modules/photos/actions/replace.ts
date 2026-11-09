@@ -1,18 +1,12 @@
 import { api } from "../api";
 import type { Photo } from "../contracts";
 
-/** Só remove a foto anterior depois de salvar e organizar a substituta. */
+/** Backend preserva identidade/metadados e só remove o arquivo anterior após commit. */
 export async function replacePhoto(
   productId: string,
   photo: Photo,
   file: File,
 ) {
-  const added = await api.upload(productId, file);
-  await api.organize(added.id, {
-    position: photo.position,
-    primary: photo.primary,
-    variant_id: photo.variant_id,
-    color: photo.color,
-  });
-  await api.remove(photo.id);
+  if (photo.product_id !== productId) throw new Error("Foto de outro produto");
+  await api.replace(photo.id, file);
 }

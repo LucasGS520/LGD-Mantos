@@ -1,0 +1,302 @@
+{
+  "label": "architecture-final",
+  "python": "3.11.9",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "cpu_count": 14,
+  "samples": 3,
+  "warmup": 1,
+  "presentation": true,
+  "targets_ms": {
+    "simple_query": 1000,
+    "preview_confirm": 2000,
+    "management_correction": 5000
+  },
+  "scenarios": [
+    {
+      "operations": 1000,
+      "variants": 10,
+      "replay_traced_ms": 120.98,
+      "replay_peak_mib": 1.44,
+      "requests": {
+        "catalog": {
+          "median_ms": 5.69,
+          "p95_ms": 7.17,
+          "bytes": 3245,
+          "errors": 0
+        },
+        "operations": {
+          "median_ms": 10.0,
+          "p95_ms": 10.7,
+          "bytes": 83651,
+          "errors": 0
+        },
+        "management": {
+          "median_ms": 42.89,
+          "p95_ms": 43.16,
+          "bytes": 12369,
+          "errors": 0
+        },
+        "management_sales": {
+          "median_ms": 60.01,
+          "p95_ms": 68.05,
+          "bytes": 185648,
+          "errors": 0
+        },
+        "preview": {
+          "median_ms": 38.58,
+          "p95_ms": 62.43,
+          "bytes": 3679,
+          "errors": 0
+        },
+        "confirm_single": {
+          "ms": 60.64,
+          "bytes": 3750
+        },
+        "correction_preview_old": {
+          "median_ms": 45.39,
+          "p95_ms": 68.31,
+          "bytes": 10477,
+          "errors": 0
+        },
+        "correction_preview_middle": {
+          "median_ms": 48.12,
+          "p95_ms": 72.08,
+          "bytes": 3892,
+          "errors": 0
+        },
+        "correction_preview_recent": {
+          "median_ms": 41.09,
+          "p95_ms": 64.93,
+          "bytes": 3892,
+          "errors": 0
+        },
+        "movements_origin": {
+          "median_ms": 3.29,
+          "p95_ms": 3.4,
+          "bytes": 252,
+          "errors": 0
+        },
+        "correction_cost_preview": {
+          "median_ms": 124.94,
+          "p95_ms": 191.06,
+          "bytes": 770431,
+          "errors": 0
+        },
+        "correction_cost_confirm_single": {
+          "ms": 449.06,
+          "bytes": 770479
+        }
+      },
+      "correction_affected": 500,
+      "four_concurrent_previews": [
+        {
+          "status": 200,
+          "ms": 81.08
+        },
+        {
+          "status": 200,
+          "ms": 177.89
+        },
+        {
+          "status": 200,
+          "ms": 253.34
+        },
+        {
+          "status": 200,
+          "ms": 302.81
+        }
+      ]
+    },
+    {
+      "operations": 10000,
+      "variants": 100,
+      "replay_traced_ms": 1268.02,
+      "replay_peak_mib": 13.85,
+      "requests": {
+        "catalog": {
+          "median_ms": 9.87,
+          "p95_ms": 10.29,
+          "bytes": 30425,
+          "errors": 0
+        },
+        "operations": {
+          "median_ms": 9.65,
+          "p95_ms": 10.11,
+          "bytes": 83901,
+          "errors": 0
+        },
+        "management": {
+          "median_ms": 519.28,
+          "p95_ms": 574.47,
+          "bytes": 114804,
+          "errors": 0
+        },
+        "management_sales": {
+          "median_ms": 549.17,
+          "p95_ms": 615.4,
+          "bytes": 1084404,
+          "errors": 0
+        },
+        "preview": {
+          "median_ms": 451.54,
+          "p95_ms": 503.54,
+          "bytes": 21860,
+          "errors": 0
+        },
+        "confirm_single": {
+          "ms": 438.5,
+          "bytes": 21931
+        },
+        "correction_preview_old": {
+          "median_ms": 537.51,
+          "p95_ms": 558.78,
+          "bytes": 100028,
+          "errors": 0
+        },
+        "correction_preview_middle": {
+          "median_ms": 479.5,
+          "p95_ms": 736.76,
+          "bytes": 22073,
+          "errors": 0
+        },
+        "correction_preview_recent": {
+          "median_ms": 441.71,
+          "p95_ms": 529.12,
+          "bytes": 22077,
+          "errors": 0
+        },
+        "movements_origin": {
+          "median_ms": 3.59,
+          "p95_ms": 4.83,
+          "bytes": 252,
+          "errors": 0
+        },
+        "correction_cost_preview": {
+          "median_ms": 982.65,
+          "p95_ms": 1033.41,
+          "bytes": 7718462,
+          "errors": 0
+        },
+        "correction_cost_confirm_single": {
+          "ms": 5479.05,
+          "bytes": 7718510
+        }
+      },
+      "correction_affected": 5000,
+      "four_concurrent_previews": [
+        {
+          "status": 200,
+          "ms": 858.5
+        },
+        {
+          "status": 200,
+          "ms": 490.79
+        },
+        {
+          "status": 200,
+          "ms": 1330.72
+        },
+        {
+          "status": 200,
+          "ms": 1794.38
+        }
+      ]
+    },
+    {
+      "operations": 50000,
+      "variants": 500,
+      "replay_traced_ms": 6408.84,
+      "replay_peak_mib": 69.62,
+      "requests": {
+        "catalog": {
+          "median_ms": 19.41,
+          "p95_ms": 33.79,
+          "bytes": 152425,
+          "errors": 0
+        },
+        "operations": {
+          "median_ms": 9.72,
+          "p95_ms": 9.77,
+          "bytes": 84151,
+          "errors": 0
+        },
+        "management": {
+          "median_ms": 2933.77,
+          "p95_ms": 2944.83,
+          "bytes": 570813,
+          "errors": 0
+        },
+        "management_sales": {
+          "median_ms": 3000.98,
+          "p95_ms": 3107.53,
+          "bytes": 5078282,
+          "errors": 0
+        },
+        "preview": {
+          "median_ms": 2326.96,
+          "p95_ms": 2571.65,
+          "bytes": 102660,
+          "errors": 0
+        },
+        "confirm_single": {
+          "ms": 2381.67,
+          "bytes": 102731
+        },
+        "correction_preview_old": {
+          "median_ms": 2684.52,
+          "p95_ms": 2734.09,
+          "bytes": 499631,
+          "errors": 0
+        },
+        "correction_preview_middle": {
+          "median_ms": 2304.86,
+          "p95_ms": 2308.46,
+          "bytes": 102874,
+          "errors": 0
+        },
+        "correction_preview_recent": {
+          "median_ms": 2295.53,
+          "p95_ms": 2731.49,
+          "bytes": 102882,
+          "errors": 0
+        },
+        "movements_origin": {
+          "median_ms": 3.53,
+          "p95_ms": 5.28,
+          "bytes": 252,
+          "errors": 0
+        },
+        "correction_cost_preview": {
+          "median_ms": 4953.64,
+          "p95_ms": 5168.51,
+          "bytes": 38680242,
+          "errors": 0
+        },
+        "correction_cost_confirm_single": {
+          "ms": 29156.75,
+          "bytes": 38680290
+        }
+      },
+      "correction_affected": 25000,
+      "four_concurrent_previews": [
+        {
+          "status": 200,
+          "ms": 4940.31
+        },
+        {
+          "status": 200,
+          "ms": 2480.44
+        },
+        {
+          "status": 503,
+          "ms": 5058.74
+        },
+        {
+          "status": 200,
+          "ms": 7524.45
+        }
+      ]
+    }
+  ],
+  "postgres": "16.15"
+}

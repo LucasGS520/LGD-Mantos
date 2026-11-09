@@ -8,6 +8,7 @@ vi.mock("../api", () => ({ api: { preview: vi.fn(), confirm: vi.fn() } }));
 const preview: Preview = {
   operation: {
     id: "sale",
+    sequence: 1,
     kind: "sale",
     effective_at: "2026-01-01",
     created_at: "2026-01-01",

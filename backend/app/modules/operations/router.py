@@ -1,9 +1,12 @@
+from typing import Literal
+
 from app.core.auth import verify_token
 from app.core.database import get_db
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Query
 
 from . import queries, service
 from .repository import operations as list_operations
+from .repository import page
 from .schemas import ConfirmIn, OperationIn
 
 router = APIRouter(dependencies=[Depends(verify_token)])
@@ -15,7 +18,14 @@ async def state(db=Depends(get_db)):
 
 
 @router.get("/operations")
-async def operations(db=Depends(get_db)):
+async def operations(
+    kind: Literal["inventory", "purchase", "sale", "adjustment"] | None = None,
+    limit: int | None = Query(default=None, ge=1, le=100),
+    before_sequence: int | None = Query(default=None, ge=1),
+    db=Depends(get_db),
+):
+    if limit is not None or kind is not None or before_sequence is not None:
+        return await page(db, kind, limit or 50, before_sequence)
     return await list_operations(db)
 
 

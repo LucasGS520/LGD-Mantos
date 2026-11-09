@@ -8,9 +8,10 @@ from .repository import database_status
 
 
 async def health(db):
+    database = await database_status(db)
     return {
-        "status": "ok",
+        "status": "ok" if database == "ok" else "error",
         "version": API_VERSION,
-        "database": await database_status(db),
+        "database": database,
         "server_time": datetime.now(timezone.utc).isoformat(),
     }

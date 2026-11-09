@@ -1,9 +1,16 @@
-import { Session } from "../../modules/auth/session";
 import { ApiError } from "./errors";
 const BASE = (
   (import.meta.env.VITE_API_URL as string | undefined)?.trim() || "/api/v1"
 ).replace(/\/+$/, "");
 let onUnauthorized: (() => void) | null = null;
+let authentication = {
+  load: (): string | null => null,
+  clear: () => {},
+};
+/** A composição fornece a sessão; transporte não depende de módulos de negócio. */
+export function configureAuthentication(provider: typeof authentication) {
+  authentication = provider;
+}
 export function setUnauthorizedHandler(fn: () => void) {
   onUnauthorized = fn;
 }
@@ -15,7 +22,7 @@ export async function request<T>(
   key?: string,
 ): Promise<T> {
   const headers: Record<string, string> = {};
-  const token = Session.load();
+  const token = authentication.load();
   if (token) headers.Authorization = `Bearer ${token}`;
   if (body !== undefined && !(body instanceof FormData))
     headers["Content-Type"] = "application/json";
@@ -31,7 +38,7 @@ export async function request<T>(
           : undefined,
   });
   if (res.status === 401) {
-    Session.clear();
+    authentication.clear();
     onUnauthorized?.();
   }
   const data = await res.json().catch(() => null);

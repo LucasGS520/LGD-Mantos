@@ -1,7 +1,9 @@
+import time
 from datetime import datetime
 from decimal import Decimal
 
 from app.shared.application.errors import ApplicationError
+from app.shared.application.telemetry import emit
 from app.shared.models.entities import Control
 from sqlalchemy import select, text
 
@@ -25,7 +27,11 @@ def serialize(row):
 
 async def lock(db):
     """Serializa gravações inclusive na primeira inicialização do controle."""
+    started = time.perf_counter()
     await db.execute(text("SELECT pg_advisory_xact_lock(741206031)"))
+    acquired = time.perf_counter()
+    emit("lock_acquired", wait_ms=round((acquired - started) * 1000, 2))
+    db.info.setdefault("lock_started", acquired)
     control = await db.get(Control, 1, with_for_update=True)
     if control is None:
         control = Control(id=1, revision=0)

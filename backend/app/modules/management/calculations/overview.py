@@ -1,6 +1,6 @@
 """Indicadores derivados dos registros já selecionados."""
 
-from app.modules.operations.domain.ledger import ZERO, amount, money
+from app.modules.operations.public import ZERO, amount, money
 
 
 def build_summary(stock, sales, payments, pending, revenue, known_cost, unknown):

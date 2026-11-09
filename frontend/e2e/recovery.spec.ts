@@ -162,7 +162,7 @@ test("falha nos movimentos é visível e permite tentar novamente", async ({
   const fixture = await prepare(request, page);
   await fillSale(page, fixture.vid, fixture.channel.id);
   let fail = true;
-  await page.route("**/api/v1/movements", async (route) => {
+  await page.route("**/api/v1/movements*", async (route) => {
     if (fail) {
       await route.fulfill({
         status: 503,
@@ -185,4 +185,60 @@ test("falha nos movimentos é visível e permite tentar novamente", async ({
     page.getByText("Movimentos indisponíveis", { exact: true }),
   ).toHaveCount(0);
   await expect(page.getByText(/-1 unidades/)).toBeVisible();
+});
+
+test("substituição de foto repete após resposta perdida preservando a identidade", async ({
+  page,
+  request,
+}) => {
+  const fixture = await prepare(request, page);
+  await page.getByRole("heading", { name: fixture.name, exact: true }).click();
+  const red = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAIAAAACDbGyAAAAEUlEQVR4nGP8z4ACmBgo4wMAUJEBCfBOwRcAAAAASUVORK5CYII=",
+    "base64",
+  );
+  const blue = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAIAAAACDbGyAAAAFElEQVR4nGNkYPjPgASYGFABqXwATpMBCb/kZHAAAAAASUVORK5CYII=",
+    "base64",
+  );
+  await page
+    .getByLabel("Adicionar foto", { exact: true })
+    .setInputFiles({ name: "red.png", mimeType: "image/png", buffer: red });
+  await expect(page.getByAltText("Foto do produto")).toBeVisible();
+  const product = await (
+    await request.get(base + "/products/" + fixture.product.id, {
+      headers: fixture.headers,
+    })
+  ).json();
+  const id = product.photos[0].id;
+  let loseResponse = true;
+  await page.route(`**/api/v1/photos/${id}/content`, async (route) => {
+    if (route.request().method() === "PUT" && loseResponse) {
+      loseResponse = false;
+      const response = await route.fetch();
+      expect(response.ok()).toBeTruthy();
+      await route.abort("failed");
+    } else await route.continue();
+  });
+  const file = { name: "blue.png", mimeType: "image/png", buffer: blue };
+  await page.getByLabel("Substituir", { exact: true }).setInputFiles(file);
+  await expect(
+    page.getByText(/Failed to fetch|NetworkError|Load failed/),
+  ).toBeVisible();
+  await page.getByLabel("Substituir", { exact: true }).setInputFiles(file);
+  await expect(page.getByAltText("Foto do produto")).toBeVisible();
+  await expect
+    .poll(async () => {
+      const current = await (
+        await request.get(base + "/products/" + product.id, {
+          headers: fixture.headers,
+        })
+      ).json();
+      return current.photos.map((p: { id: string }) => p.id);
+    })
+    .toEqual([id]);
+  const content = await request.get(base + `/photos/${id}/content`, {
+    headers: fixture.headers,
+  });
+  expect(await content.body()).toEqual(blue);
 });

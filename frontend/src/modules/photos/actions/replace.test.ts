@@ -1,9 +1,7 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { api } from "../api";
 import { replacePhoto } from "./replace";
-vi.mock("../api", () => ({
-  api: { upload: vi.fn(), organize: vi.fn(), remove: vi.fn() },
-}));
+vi.mock("../api", () => ({ api: { replace: vi.fn() } }));
 const old = {
   id: "old",
   product_id: "p",
@@ -12,27 +10,18 @@ const old = {
   variant_id: "v",
   color: "Preto",
 };
-beforeEach(() => {
-  vi.resetAllMocks();
-  vi.mocked(api.upload).mockResolvedValue({ ...old, id: "new" });
+beforeEach(() => vi.resetAllMocks());
+it("envia a substituição ao mesmo ID e permite repetir após resposta perdida", async () => {
+  const file = new File(["image"], "a.png");
+  vi.mocked(api.replace).mockRejectedValueOnce(new Error("Conexão perdida"));
+  await expect(replacePhoto("p", old, file)).rejects.toThrow("Conexão perdida");
+  await replacePhoto("p", old, file);
+  expect(api.replace).toHaveBeenNthCalledWith(1, "old", file);
+  expect(api.replace).toHaveBeenNthCalledWith(2, "old", file);
 });
-it("preserva a foto anterior quando a organização da substituta falha", async () => {
-  vi.mocked(api.organize).mockRejectedValue(new Error("Falha ao organizar"));
+it("recusa foto de outro produto antes de enviar", async () => {
   await expect(
-    replacePhoto("p", old, new File(["image"], "a.png")),
-  ).rejects.toThrow("Falha ao organizar");
-  expect(api.remove).not.toHaveBeenCalled();
-});
-it("preserva os metadados antes de remover a foto antiga", async () => {
-  await replacePhoto("p", old, new File(["image"], "a.png"));
-  expect(api.organize).toHaveBeenCalledWith("new", {
-    position: 3,
-    primary: true,
-    variant_id: "v",
-    color: "Preto",
-  });
-  expect(api.remove).toHaveBeenCalledWith("old");
-  expect(vi.mocked(api.organize).mock.invocationCallOrder[0]).toBeLessThan(
-    vi.mocked(api.remove).mock.invocationCallOrder[0],
-  );
+    replacePhoto("outro", old, new File([], "a.png")),
+  ).rejects.toThrow("outro produto");
+  expect(api.replace).not.toHaveBeenCalled();
 });

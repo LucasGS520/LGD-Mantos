@@ -1,5 +1,5 @@
 from app.shared.models.entities import Movement, Revision
-from app.shared.persistence.base import rows, serialize
+from app.shared.persistence.base import serialize
 from sqlalchemy import select
 
 
@@ -16,5 +16,8 @@ async def history(db, entity_id):
     ]
 
 
-async def movements(db):
-    return [serialize(row) for row in await rows(db, Movement)]
+async def movements(db, operation_id=None):
+    query = select(Movement).order_by(Movement.created_at, Movement.id)
+    if operation_id is not None:
+        query = query.where(Movement.operation_id == operation_id)
+    return [serialize(row) for row in (await db.scalars(query)).all()]

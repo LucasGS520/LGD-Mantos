@@ -33,11 +33,15 @@ export function PurchasesView({
         <Section title="Produtos adquiridos e situação atual">
           {data.stock
             .filter((s) =>
-              data.purchases.some(
-                (op) =>
-                  op.payload.supplier_id === supplier &&
-                  op.result.items.some((i) => i.variant_id === s.variant_id),
-              ),
+              data.supplier_variants
+                ? data.supplier_variants.includes(s.variant_id)
+                : data.purchases.some(
+                    (op) =>
+                      op.payload.supplier_id === supplier &&
+                      op.result.items.some(
+                        (i) => i.variant_id === s.variant_id,
+                      ),
+                  ),
             )
             .map((s) => (
               <p key={s.variant_id}>

@@ -1,4 +1,5 @@
 import { useNav } from "../../../app/nav";
+import { useState } from "react";
 import { AppBar, ScreenBody } from "../../../components/Chrome";
 import { useData } from "../../../shared/hooks/useData";
 import { Card, ErrorBody, LoadingBody } from "../../../shared/ui";
@@ -12,9 +13,15 @@ import { kindLabel } from "../labels";
 export function Operations() {
   const { params, navigate } = useNav();
   const kind = (params.kind || "sale") as Kind;
+  const [paging, setPaging] = useState<{
+    kind: string;
+    cursors: (number | undefined)[];
+  }>({ kind, cursors: [undefined] });
+  const cursors = paging.kind === kind ? paging.cursors : [undefined];
+  const cursor = cursors[cursors.length - 1];
   const { data, loading, error, reload } = useData(
-    () => Promise.all([api.list(), api.state()]),
-    kind,
+    () => Promise.all([api.page(kind, cursor), api.state()]),
+    `${kind}:${cursor}`,
   );
   const [ops, state] = data || [[], null];
   const visible = ops.filter((op) => op.kind === kind);
@@ -64,6 +71,28 @@ export function Operations() {
         )}
         {!loading && !visible.length && (
           <Note>Nenhum registro neste grupo.</Note>
+        )}
+        {!loading && !error && (
+          <div className="options">
+            <Button
+              disabled={cursors.length === 1}
+              onClick={() => setPaging({ kind, cursors: cursors.slice(0, -1) })}
+            >
+              Anteriores
+            </Button>
+            <span>Página {cursors.length} · mais recentes primeiro</span>
+            <Button
+              disabled={visible.length < 50}
+              onClick={() =>
+                setPaging({
+                  kind,
+                  cursors: [...cursors, visible[visible.length - 1].sequence],
+                })
+              }
+            >
+              Próximos registros
+            </Button>
+          </div>
         )}
       </ScreenBody>
     </>

@@ -53,6 +53,7 @@ export interface Result {
 
 export interface Operation {
   id: string;
+  sequence: number;
   kind: Kind;
   effective_at: string;
   created_at: string;

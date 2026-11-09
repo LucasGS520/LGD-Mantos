@@ -5,6 +5,11 @@ const BASE = (
   (import.meta.env.VITE_API_URL as string | undefined)?.trim() || "/api/v1"
 ).replace(/\/+$/, "");
 export const api = {
+  replace: async (id: string, file: File) => {
+    const data = new FormData();
+    data.append("file", file);
+    return request<Photo>(`/photos/${id}/content`, "PUT", data);
+  },
   organize: (id: string, input: PhotoInput) =>
     http.put<Photo>(`/photos/${id}`, input),
   remove: (id: string) => http.remove(`/photos/${id}`),

@@ -2,6 +2,7 @@ import { http } from "../../shared/api/http";
 import type { Product, ProductInput, Variant, VariantInput } from "./contracts";
 export const api = {
   products: () => http.get<Product[]>("/products"),
+  product: (id: string) => http.get<Product>(`/products/${id}`),
   createProduct: (input: ProductInput) =>
     http.post<Product>("/products", input),
   updateProduct: (id: string, input: ProductInput) =>

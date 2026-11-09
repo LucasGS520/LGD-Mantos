@@ -80,6 +80,7 @@ graphify-out/
 # Cache local do npm quando o cache global não está acessível
 frontend/.npm-cache/
 .verify-frontend/
+.verification/
 
 
 # Evita reintrodução de resíduos do frontend anterior.

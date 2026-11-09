@@ -14,5 +14,5 @@ async def history(entity_id: str, db=Depends(get_db)):
 
 
 @router.get("/movements")
-async def movements(db=Depends(get_db)):
-    return await get_movements(db)
+async def movements(operation_id: str | None = None, db=Depends(get_db)):
+    return await get_movements(db, operation_id)

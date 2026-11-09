@@ -1,20 +1,32 @@
+from collections import defaultdict
+
 from app.shared.models.entities import Photo, Product, Variant
-from app.shared.persistence.base import rows, serialize
+from app.shared.persistence.base import serialize
 from sqlalchemy import select
 
 
-async def products(db):
-    variants, photos = await rows(db, Variant), await rows(db, Photo)
+async def products(db, product_id=None):
+    query = select(Product).order_by(Product.created_at, Product.id)
+    variant_query, photo_query = select(Variant), select(Photo)
+    if product_id is not None:
+        query = query.where(Product.id == product_id)
+        variant_query = variant_query.where(Variant.product_id == product_id)
+        photo_query = photo_query.where(Photo.product_id == product_id)
+    variants, photos = defaultdict(list), defaultdict(list)
+    for variant in (await db.scalars(variant_query.order_by(Variant.id))).all():
+        variants[variant.product_id].append(serialize(variant))
+    for photo in (await db.scalars(photo_query)).all():
+        photos[photo.product_id].append(serialize(photo))
     return [
         {
             **serialize(p),
-            "variants": [serialize(v) for v in variants if v.product_id == p.id],
+            "variants": variants[p.id],
             "photos": sorted(
-                [serialize(f) for f in photos if f.product_id == p.id],
+                photos[p.id],
                 key=lambda f: (f["position"], f["id"]),
             ),
         }
-        for p in await rows(db, Product)
+        for p in (await db.scalars(query)).all()
     ]
 
 

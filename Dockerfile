@@ -19,4 +19,4 @@ COPY backend/ .
 # Porta padrão usada pelo Uvicorn no docker-compose.
 EXPOSE 8000
 
-CMD ["sh", "-c", "python init_db.py && python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

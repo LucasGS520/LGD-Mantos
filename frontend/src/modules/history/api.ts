@@ -12,7 +12,7 @@ export interface Movement {
 export const api = {
   history: (id: string) => http.get<Revision[]>(`/history/${id}`),
   movements: async (operationId: string) =>
-    (await http.get<Movement[]>("/movements")).filter(
-      (row) => row.operation_id === operationId,
+    http.get<Movement[]>(
+      `/movements?operation_id=${encodeURIComponent(operationId)}`,
     ),
 };

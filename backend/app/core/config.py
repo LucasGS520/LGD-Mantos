@@ -1,5 +1,6 @@
 """Configurações carregadas do ambiente para o backend."""
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,6 +15,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     APP_PASSWORD: str
     APP_SECRET: str
+    DB_LOCK_TIMEOUT_MS: int = Field(default=5000, gt=0)
+    DB_STATEMENT_TIMEOUT_MS: int = Field(default=30000, gt=0)
+    DB_POOL_TIMEOUT_SECONDS: float = Field(default=5, gt=0)
 
     # Origens permitidas para CORS, separadas por vírgula.
     # Em produção, definir CORS_ORIGINS com o domínio real do frontend

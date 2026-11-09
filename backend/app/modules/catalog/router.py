@@ -1,5 +1,6 @@
 from app.core.auth import verify_token
-from app.core.database import get_db
+from app.core.database import get_db, get_read_db
+from app.shared.application.errors import ApplicationError
 from fastapi import APIRouter, Depends
 
 from . import products as product_service
@@ -11,8 +12,16 @@ router = APIRouter(dependencies=[Depends(verify_token)])
 
 
 @router.get("/products")
-async def products(db=Depends(get_db)):
+async def products(db=Depends(get_read_db)):
     return await list_products(db)
+
+
+@router.get("/products/{entity_id}")
+async def product(entity_id: str, db=Depends(get_read_db)):
+    result = await list_products(db, entity_id)
+    if not result:
+        raise ApplicationError(404, "Registro não encontrado")
+    return result[0]
 
 
 @router.post("/products")

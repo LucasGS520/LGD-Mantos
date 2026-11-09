@@ -7,7 +7,7 @@
 #   - Única exposição pública: portas 80/443 do Caddy.
 #
 # Uso no servidor:
-#   docker compose -f docker-compose.prod.yml up -d --build
+#   Consulte docs/DEPLOY.md: migração é etapa administrativa antes do tráfego.
 #
 # Pré-requisitos: arquivo .env preenchido (DATABASE_URL, APP_PASSWORD, APP_SECRET,
 # DOMAIN, CORS_ORIGINS) e DNS do domínio apontando para o IP do VPS.
@@ -36,21 +36,43 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: lgd-mantos-backend:${LGD_RELEASE:-local}
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     container_name: lgd_mantos
     restart: unless-stopped
     env_file: .env
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
     volumes:
       # Único volume: fotos enviadas pelo módulo operacional (persistentes).
       - uploads_data:/app/app/static/uploads
+
+  migrate:
+    # Executar uma única vez, com API parada e imagem da release escolhida.
+    image: lgd-mantos-backend:${LGD_RELEASE:-local}
+    profiles: [admin]
+    env_file: .env
+    command: ["python", "init_db.py"]
+    depends_on:
+      db:
+        condition: service_healthy
 
   web:
     # Borda pública: React estático + reverse proxy da API + HTTPS automático.
     build:
       context: .
       dockerfile: deploy/Dockerfile.web
+    image: lgd-mantos-web:${LGD_RELEASE:-local}
     container_name: lgd_web
     restart: unless-stopped
     environment:
@@ -59,7 +81,8 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     volumes:
       # Certificados e estado do Caddy — preserva os certificados entre deploys.
       - caddy_data:/data

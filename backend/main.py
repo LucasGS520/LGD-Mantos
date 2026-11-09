@@ -1,11 +1,12 @@
 """Ponto de entrada HTTP da API LGD Mantos.
 
 Este módulo configura a aplicação FastAPI, registra os roteadores versionados e
-expõe os diretórios estáticos usados para arquivos enviados pelo sistema.
+os sinais de requisição/disponibilidade. Arquivos são entregues por rotas autenticadas.
 """
 
 from app.core.config import settings
 from app.core.version import API_VERSION
+from app.http_telemetry import RequestTelemetry
 from app.modules.auth.routes import router as auth_router
 from app.modules.auxiliaries.router import router as auxiliaries_router
 from app.modules.catalog.router import router as catalog_router
@@ -15,11 +16,14 @@ from app.modules.operations.router import router as operations_router
 from app.modules.photos.router import router as photos_router
 from app.modules.system.routes import router as system_router
 from app.shared.application.errors import ApplicationError
+from app.shared.application.telemetry import configure
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+configure()
 app = FastAPI(title="LGD Mantos", version=API_VERSION, docs_url="/api/docs")
+app.add_middleware(RequestTelemetry)
 
 # Origens permitidas vêm da configuração (CORS_ORIGINS no ambiente).
 # Em desenvolvimento local o padrão cobre o Vite (localhost:5173).
@@ -51,4 +55,11 @@ async def health():
 @app.exception_handler(ApplicationError)
 async def application_error_handler(request, exc: ApplicationError):
     """Mantém o contrato de erro HTTP na borda da aplicação."""
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    headers = (
+        {"Retry-After": "60" if exc.status_code == 429 else "1"}
+        if exc.status_code in {429, 503}
+        else None
+    )
+    return JSONResponse(
+        status_code=exc.status_code, content={"detail": exc.detail}, headers=headers
+    )

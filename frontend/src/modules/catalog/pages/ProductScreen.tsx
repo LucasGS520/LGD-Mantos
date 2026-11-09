@@ -13,7 +13,7 @@ import { useSources } from "../hooks/useSources";
 export function ProductScreen() {
   const { params, navigate } = useNav();
   const id = params.id as string | undefined;
-  const { data, loading, error, reload } = useSources();
+  const { data, loading, error, reload } = useSources(id);
   const [editingVariant, setEditingVariant] = useState<string | null>(null);
   const [products, aux] = data || [[], [], null];
   const product = products.find((p) => p.id === id);

@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from app.modules.operations.domain.ledger import ZERO, amount, money
+from app.modules.operations.public import ZERO, amount, money
 
 
 def build_groups(stock, sales):

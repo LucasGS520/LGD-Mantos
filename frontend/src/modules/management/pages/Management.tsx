@@ -5,6 +5,7 @@ import { useData } from "../../../shared/hooks/useData";
 import { ErrorBody, LoadingBody } from "../../../shared/ui";
 import { Note } from "../../../shared/ui/Note";
 import { Select } from "../../../shared/ui/Select";
+import { Button } from "../../../shared/ui/Button";
 import { supplierApi } from "../../auxiliaries/suppliers/api";
 import { type Operation } from "../../operations/contracts";
 import { api } from "../api";
@@ -37,9 +38,12 @@ export function Management() {
   const [attribute, setAttribute] = useState("brand");
   const [sort, setSort] = useState("stock");
   const [supplier, setSupplier] = useState("");
+  const scope = JSON.stringify([filter, view, supplier, sort]);
+  const [paging, setPaging] = useState({ scope, offset: 0 });
+  const offset = paging.scope === scope ? paging.offset : 0;
   const { data, loading, error, reload } = useData(
-    () => api.report(filter),
-    filter,
+    () => api.report(filter, { view, offset, supplier, sort }),
+    `${scope}:${offset}`,
   );
   const supplierQuery = useData(() => supplierApi.list());
   const suppliers = supplierQuery.data || [];
@@ -123,6 +127,29 @@ export function Management() {
                   setAttribute={setAttribute}
                   groups={groups}
                 />
+              )}
+              {data.page && Object.keys(data.page.totals).length > 0 && (
+                <div className="options">
+                  <Button
+                    disabled={offset === 0}
+                    onClick={() =>
+                      setPaging({ scope, offset: Math.max(0, offset - 50) })
+                    }
+                  >
+                    Página anterior
+                  </Button>
+                  <span>
+                    Página {Math.floor(offset / 50) + 1} · revisão{" "}
+                    {data.revision}. Até 50 registros por lista. Totais
+                    consideram toda a base. A base pode mudar entre páginas.
+                  </span>
+                  <Button
+                    disabled={!data.page.has_more}
+                    onClick={() => setPaging({ scope, offset: offset + 50 })}
+                  >
+                    Próxima página
+                  </Button>
+                </div>
               )}
             </>
           )

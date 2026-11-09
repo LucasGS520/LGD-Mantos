@@ -51,7 +51,9 @@ Documentação técnica HTTP: `http://localhost:8000/api/docs`.
 As dependências do frontend ficam no volume Docker `frontend_node_modules`,
 separadas dos arquivos locais e dos dados persistentes da loja.
 
-O startup aplica migrações pendentes; não apaga operações e não cria inventário.
+No desenvolvimento, o comando Compose aplica migrações antes do reload. Em
+produção, a migração é administrativa e antecede a API, conforme [Deploy](docs/DEPLOY.md).
+Nenhuma dessas rotinas apaga operações ou cria inventário.
 A migração 0006 cria o núcleo novo sem converter nem apagar registros legados.
 
 ## Verificação
@@ -105,12 +107,20 @@ Veja o [plano executado](docs/PLANO_MELHORIAS_CODIGO.md) e o
 
 ## Qualidade e situação atual
 
-A dimensão Código teve o plano C0–C8 implementado e verificado. As próximas
+A dimensão Código teve o plano C0–C8 implementado e verificado. A arquitetura
+de aplicação também foi implementada e verificada. As próximas
 pendências estão no [registro central de qualidade](docs/QUALIDADE_SITUACAO_ATUAL.md):
-Arquitetura, Banco e preparação operacional. O registro distingue investigações
+Banco, acompanhamento de capacidade real e preparação operacional. O registro distingue investigações
 obrigatórias de mudanças condicionadas a medição ou decisão, com prioridades,
 fontes no código e critérios de encerramento. A conclusão de Código não equivale
 a uma validação de capacidade ou disponibilidade em produção.
+
+O [plano de Arquitetura](docs/PLANO_MELHORIAS_ARQUITETURA.md) descreve o desenho
+e as etapas A0–A9. O [resultado da execução](docs/QUALIDADE_ARQUITETURA_RESULTADO.md)
+registra mudanças, decisões, medidas em três escalas, testes e ensaio de backup/restauração.
+O monólito modular foi preservado. Há limites medidos para correções extensas e
+concorrência em 50 mil registros; backup externo, RPO/RTO e implantação real
+continuam pendentes. O resultado local não comprova prontidão de produção.
 
 ## Limpeza para início real
 

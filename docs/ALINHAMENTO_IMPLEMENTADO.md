@@ -3,9 +3,13 @@
 Fonte normativa: [PRODUTO_E_OBJETIVO.md](PRODUTO_E_OBJETIVO.md). Este documento
 registra contratos e critérios de manutenção, sem substituir decisões de produto.
 
-Situação de qualidade: Código (C0–C8) concluído; avaliação e melhorias de Arquitetura,
-Banco e preparação operacional permanecem no [registro de pendências](QUALIDADE_SITUACAO_ATUAL.md).
+Situação de qualidade: Código (C0–C8) e implementação da arquitetura de aplicação
+verificados. Banco, acompanhamento de capacidade e implantação real permanecem
+no [registro de pendências](QUALIDADE_SITUACAO_ATUAL.md).
 As alternativas desse registro não substituem os contratos vigentes descritos aqui.
+O [plano de Arquitetura](PLANO_MELHORIAS_ARQUITETURA.md) detalha as próximas
+etapas A0–A9. O [resultado](QUALIDADE_ARQUITETURA_RESULTADO.md) registra a execução,
+os contratos novos, medidas e limites. Não houve deploy no servidor real.
 
 ## Organização
 
@@ -47,9 +51,10 @@ financeiro geral. A API é o contrato interno do frontend, não uma integração
 - Toda edição de acontecimento exige versão e motivo. Prévia retorna efeitos e
   alterações de custos em registros posteriores. Confirmação verifica assinatura
   da prévia e revisão global; base alterada exige nova revisão do impacto.
-- Gravações são serializadas por uma trava PostgreSQL transacional, proporcional
-  ao acesso único, e variantes são bloqueadas em ordem de ID. Consultas gerenciais
-  usam trava compartilhada para não misturar versões do catálogo e da operação.
+- Gravações e prévias são serializadas por uma trava PostgreSQL transacional;
+  variantes são bloqueadas em ordem de ID. Catálogo e Gestão usam snapshot
+  read-only repetível. Gestão materializa os dados e encerra a transação antes
+  do cálculo puro; não retém trava compartilhada durante o replay.
 - `Idempotency-Key` é obrigatório na confirmação. Repetir a mesma chave e conteúdo
   devolve o primeiro resultado; reutilizar a chave com outro conteúdo é conflito.
 - Movimentações são imutáveis. Correção de quantidade registra a diferença; correção
@@ -59,8 +64,11 @@ financeiro geral. A API é o contrato interno do frontend, não uma integração
   `SequenceMatcher` sobre nome e estampa normalizados, razão mínima 0,85. O alerta
   exige confirmação de que as peças são distintas; não há fusão automática.
 - Cadastros utilizados não são apagados. A interface oferece renomeação/desativação.
-- Fotos: JPEG, PNG ou WebP verificados, até 10 MB; conteúdo autenticado. Arquivo novo
-  é compensado se a gravação falhar; exclusão física só ocorre depois do commit.
+- Fotos: JPEG, PNG ou WebP verificados, até 10 MB; conteúdo autenticado. Substituição
+  preserva ID/metadados e permite repetir o mesmo conteúdo. Escrita é publicada
+  por arquivo temporário e replace. Compensação só apaga após comprovar ausência
+  de referência; exclusão do arquivo anterior ocorre depois do commit. Reconciliação
+  administrativa apenas relata órfãos/ausentes.
 - Intervalos de consulta incluem os dias escolhidos em `America/Sao_Paulo`.
   Vendas seguem a ocorrência da venda; recebimentos seguem o pagamento; pendência
   e estoque são sempre atuais. Sem filtro, todo o histórico confiável.

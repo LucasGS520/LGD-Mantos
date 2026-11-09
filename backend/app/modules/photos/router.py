@@ -21,8 +21,13 @@ async def upload_photo(product_id: str, file: UploadFile, db=Depends(get_db)):
 async def photo_content(entity_id: str, db=Depends(get_db)):
     return FileResponse(
         await service.photo_content(entity_id, db, storage),
-        headers={"Cache-Control": "private, max-age=60"},
+        headers={"Cache-Control": "private, no-store"},
     )
+
+
+@router.put("/photos/{entity_id}/content")
+async def replace_photo(entity_id: str, file: UploadFile, db=Depends(get_db)):
+    return await service.replace_photo(entity_id, await file.read(MAX_PHOTO_BYTES + 1), db, storage)
 
 
 @router.put("/photos/{entity_id}")

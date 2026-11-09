@@ -1,4 +1,5 @@
 import { brl } from "../../../shared/format/money";
+import { useState } from "react";
 import { Card, Section } from "../../../shared/ui";
 import { Button } from "../../../shared/ui/Button";
 import { useEditor } from "../hooks/EditorContext";
@@ -6,6 +7,8 @@ import { kindLabel } from "../labels";
 import { OperationSummary } from "./OperationSummary";
 export function OperationPreview() {
   const { cancel, input, preview, busy, variants, confirm } = useEditor();
+  const [paging, setPaging] = useState({ token: "", shown: 20 });
+  const shown = paging.token === preview?.preview_token ? paging.shown : 20;
   return (
     <>
       {preview && (
@@ -23,7 +26,7 @@ export function OperationPreview() {
               );
             })}
             <h4>Registros posteriores afetados: {preview.affected.length}</h4>
-            {preview.affected.map((row) => (
+            {preview.affected.slice(0, shown).map((row) => (
               <div key={row.id}>
                 <p>
                   {kindLabel[row.kind]} · {row.id.slice(0, 8)}
@@ -38,6 +41,21 @@ export function OperationPreview() {
                 </p>
               </div>
             ))}
+            {shown < preview.affected.length && (
+              <Button
+                onClick={() =>
+                  setPaging({ token: preview.preview_token, shown: shown + 20 })
+                }
+              >
+                Ver mais impactos ({preview.affected.length - shown})
+              </Button>
+            )}
+            {busy && (
+              <p role="status">
+                Aguarde a confirmação. Correções com muitos registros podem
+                demorar.
+              </p>
+            )}
             <Button disabled={busy} danger={cancel} onClick={confirm}>
               {busy
                 ? "Salvando…"

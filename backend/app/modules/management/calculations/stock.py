@@ -1,11 +1,16 @@
+from collections import defaultdict
 from datetime import datetime
 
-from app.modules.operations.domain.ledger import amount
+from app.modules.operations.public import amount
 
 
 def build_stock(variants, states, valid, aux, observed_at):
     stock = []
     issues = []
+    origins_by_variant = defaultdict(list)
+    for op in valid:
+        for vid in op["result"].get("effects", {}):
+            origins_by_variant[vid].append(op["id"])
     for vid, variant in variants.items():
         p, state = variant["product"], states[vid]
 
@@ -16,7 +21,7 @@ def build_stock(variants, states, valid, aux, observed_at):
                 else None
             )
 
-        origins = [op["id"] for op in valid if vid in op["result"].get("effects", {})]
+        origins = origins_by_variant[vid]
         stock.append(
             {
                 "variant_id": vid,
@@ -25,7 +30,7 @@ def build_stock(variants, states, valid, aux, observed_at):
                 "print_name": p["print_name"],
                 "brand": p["brand"],
                 "model": p["model"],
-                "category": aux[p["category_id"]].name if p["category_id"] in aux else None,
+                "category": aux.get(p["category_id"]),
                 "size": variant["size"],
                 "color": variant["color"],
                 "code": variant["code"],

@@ -51,6 +51,10 @@ for (const file of files) {
       errors.push(`UI genérica depende de negócio: ${rel} -> ${dest}`);
     const fromModule = rel.match(/^modules\/([^/]+)/)?.[1],
       toModule = dest.match(/^modules\/([^/]+)/)?.[1];
+    if (rel.startsWith("shared/") && toModule)
+      errors.push(
+        `Infraestrutura compartilhada depende de módulo: ${rel} -> ${dest}`,
+      );
     if (
       fromModule &&
       toModule &&

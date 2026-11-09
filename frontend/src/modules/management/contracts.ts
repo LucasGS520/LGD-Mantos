@@ -38,6 +38,14 @@ export interface Group {
 }
 
 export interface Report {
+  revision?: number;
+  supplier_variants?: string[];
+  page?: {
+    offset: number;
+    limit: number;
+    totals: Record<string, number>;
+    has_more: boolean;
+  };
   started_at: string | null;
   summary: {
     stock_units: number;

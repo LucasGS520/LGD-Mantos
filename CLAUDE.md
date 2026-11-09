@@ -3,9 +3,14 @@
 A fonte normativa é `docs/PRODUTO_E_OBJETIVO.md`. Consulte também
 `docs/ALINHAMENTO_IMPLEMENTADO.md` para contratos, decisões técnicas e testes.
 O registro central de pendências é `docs/QUALIDADE_SITUACAO_ATUAL.md`.
-Código (C0–C8) está concluído; as próximas decisões são de Arquitetura, Banco
-e preparação operacional. Atualize os itens com evidência ao avançar e não trate
+Código (C0–C8) e a implementação da arquitetura de aplicação estão verificados;
+as próximas decisões são de Banco, perfil real de capacidade e preparação operacional.
+Atualize os itens com evidência ao avançar e não trate
 alternativas condicionais (UUID, JSONB, checkpoints ou roteador) como mudanças já aprovadas.
+O plano de Arquitetura está em `docs/PLANO_MELHORIAS_ARQUITETURA.md` (A0–A9):
+execução registrada em `docs/QUALIDADE_ARQUITETURA_RESULTADO.md` e `docs/decisions/`.
+Preserve suas garantias transacionais e registre decisões antes de otimizações
+condicionais. O plano de Banco continua pendente.
 
 ## Estrutura atual
 
@@ -30,6 +35,10 @@ alternativas condicionais (UUID, JSONB, checkpoints ou roteador) como mudanças 
 - Cada cadastro auxiliar tem contratos e entradas próprios; compartilhar apenas mecânica comum.
 - Rotas não contêm SQL, commit, disco ou regras de negócio. Serviços de aplicação usam erros próprios.
 - O ledger permanece puro e a confirmação de operações permanece uma única transação.
+- Catálogo/Gestão usam snapshot read-only; Gestão encerra a sessão antes do cálculo puro. Nunca compartilhar a sessão com a thread de cálculo.
+- Imports entre capacidades backend passam por `public.py` conforme a matriz de `check_boundaries.py`; compartilhado frontend não importa módulos de negócio.
+- Em produção, aplicar migrações com API parada antes de iniciar a release; imagem não migra no startup.
+- Reconciliação de fotos é somente leitura. Commit incerto exige prova de ausência de referência antes de remover arquivo.
 - Consumir interfaces públicas (`api`, `contracts`, `index`) ao cruzar módulos frontend; não importar páginas internas.
 
 ## Verificação

@@ -64,4 +64,4 @@ async def save_product(db, data, entity_id=None):
         repo.serialize(row),
     )
     control.revision += 1
-    return next(p for p in await products(db) if p["id"] == row.id)
+    return (await products(db, row.id))[0]

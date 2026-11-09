@@ -2,7 +2,7 @@
 
 from datetime import datetime, time, timedelta
 
-from app.modules.operations.domain.ledger import ZERO, money
+from app.modules.operations.public import ZERO, money
 from app.shared.application.time import LOCAL
 
 

@@ -2,6 +2,10 @@ import { http, request } from "../../shared/api/http";
 import type { Operation, OperationInput, Preview, State } from "./contracts";
 export const api = {
   list: () => http.get<Operation[]>("/operations"),
+  page: (kind: string, before?: number) =>
+    http.get<Operation[]>(
+      `/operations?kind=${kind}&limit=50${before ? `&before_sequence=${before}` : ""}`,
+    ),
   detail: (id: string) => http.get<Operation>(`/operations/${id}`),
   state: () => http.get<State>("/state"),
   preview: (data: OperationInput, id?: string) =>

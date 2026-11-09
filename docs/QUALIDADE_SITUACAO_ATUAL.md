@@ -1,6 +1,6 @@
 # Qualidade e situação atual — pendências
 
-Atualizado em 2026-11-06. Referência de código: commit `6d8b98c`.
+Atualizado em 2026-11-09. Código: `6d8b98c`; execução de Arquitetura a partir de `f67c59e`, registrada no commit desta entrega.
 
 Este é o registro central das pendências de qualidade. A fonte de regras de negócio continua sendo [Produto e objetivo](PRODUTO_E_OBJETIVO.md); este documento não aprova mudanças funcionais, de arquitetura ou de schema antecipadamente.
 
@@ -9,13 +9,13 @@ Este é o registro central das pendências de qualidade. A fonte de regras de ne
 | Dimensão | Situação | Evidência e limite |
 |---|---|---|
 | Código | Plano C0–C8 concluído | Modularização, recuperação de falhas, contratos e gates descritos no [resultado da implementação](QUALIDADE_CODIGO_RESULTADO.md). Não é uma declaração de ausência de qualquer defeito futuro |
-| Arquitetura | Avaliação e plano de execução pendentes | A separação de responsabilidades foi entregue; capacidade, contenção e estratégia de leitura/reprodução ainda precisam de avaliação |
+| Arquitetura | Aplicação implementada e verificada; limites de capacidade documentados | [Resultado de Arquitetura](QUALIDADE_ARQUITETURA_RESULTADO.md): snapshots, consultas, transações, fotos, fronteiras e medidas; preparação real de infraestrutura permanece separada |
 | Banco | Avaliação e plano de execução pendentes | Schema preservado na refatoração; modelagem, invariantes e comportamento com volume ainda precisam de avaliação |
-| Operação e disponibilidade | Preparação para uso real pendente de comprovação | Há configuração de deploy, mas backup, restauração e disponibilidade ainda não possuem critérios operacionais demonstrados |
+| Operação e disponibilidade | Ferramentas e ensaio sintético entregues; implantação real pendente | Backup/restauração e indisponibilidade foram ensaiados localmente; falta destino externo, política de RPO/RTO, coleta/alertas e ensaio do servidor real |
 
-A última verificação registrada na entrega de Código teve 64 testes backend no Python 3.12, 16 testes frontend, quatro jornadas Playwright, build, lint e verificações de fronteiras passando. Esses resultados são históricos daquela entrega; não foram reexecutados nesta atualização documental e não medem capacidade ou disponibilidade em produção.
+Na execução de Arquitetura passaram 84 testes backend no Python 3.12, 19 testes frontend, cinco jornadas Playwright, build, lint e fronteiras. Há medidas exploratórias em três escalas e ensaio de restauração sintética; detalhes e limites estão no resultado. Isso não mede disponibilidade de produção.
 
-O workflow foi atualizado e o commit enviado ao GitHub. O resultado remoto desse push não foi consultado nesta atualização: não presumir CI verde nem falha de CI. Volume e estado dos dados operacionais, desempenho real, backups existentes e implantação em produção também não foram inspecionados.
+O pipeline baseline `f67c59e` foi consultado e passou ([execução](https://github.com/LucasGS520/LGD-Mantos/actions/runs/42282745014)). O resultado remoto da entrega de Arquitetura deve ser conferido após sua publicação. Dados operacionais, backups e implantação real não foram inspecionados ou alterados.
 
 ## Como ler as prioridades
 
@@ -29,15 +29,23 @@ Prioridade não é severidade de incidente. Os itens abaixo não comprovam perda
 
 ## Arquitetura
 
+O [plano A0–A9](PLANO_MELHORIAS_ARQUITETURA.md) e o [resultado](QUALIDADE_ARQUITETURA_RESULTADO.md) detalham a execução. ARQ-01–10 estão encerrados no escopo da aplicação por implementação verificada ou decisão de manutenção com limites explícitos. Acompanhamento de capacidade real fica em ARQ-11; infraestrutura real continua em OPS.
+
 | ID | Prioridade / estado | Fato atual e fonte | Trabalho pendente | Critério de encerramento |
 |---|---|---|---|---|
-| ARQ-01 | P1 / Aberta | Prévia e confirmação carregam acontecimentos e reproduzem o histórico; confirmação pode recalcular registros posteriores. `operations/service.py`, `_execute()` | Medir tempo, memória e custo de correções antigas com históricos representativos; definir o volume e a latência aceitáveis para a loja | Perfil reproduzível, limites de uso acordados e decisão registrada: manter estratégia ou planejar otimização com equivalência do replay |
-| ARQ-02 | P1 / Aberta | Gravações usam advisory lock exclusivo; variantes são bloqueadas em ordem. `shared/persistence/base.py`, `lock()`; `catalog/repository.py`, `locked_variants()` | Medir duração/espera da trava em compras, vendas, correções e fotos; considerar múltiplas abas mesmo com um dono | Teste concorrente e tempos de espera registrados; manter ou alterar a granularidade com justificativa e proteção contra venda excedente |
-| ARQ-03 | P1 / Aberta | Gestão usa trava compartilhada e também reproduz todo o histórico. `management/repository.py`, `read_lock()`; `management/service.py`, `report()` | Medir interferência de consultas gerenciais em gravações e documentar a consistência necessária por consulta | Evidência de concorrência entre gestão e operação; decisão de leitura coerente com latência aceitável |
-| ARQ-04 | P1 / Aberta | Catálogo, operações e movimentos são consultados integralmente; agrupamentos/filtros ocorrem em memória em diversos pontos | Inventariar consultas e payloads; planejar filtros, consultas por origem e paginação das listagens que precisarem | Contratos de consulta definidos, medição antes/depois e jornadas preservadas; cálculos internos continuam recebendo o histórico completo necessário |
-| ARQ-05 | P2 / Condicional | Navegação continua em contexto/pilha local. `frontend/src/app/nav.tsx` | Decidir se URL por tela, deep links, refresh com contexto e histórico do navegador são necessidades do uso real | Decisão explícita de manter a navegação atual ou especificação/testes da evolução; troca de roteador não é pré-requisito técnico automático |
+| ARQ-01 | P1 / Investigação encerrada com limites | Replay integral medido em três escalas; leitura sem entidades e dependentes em lotes | Acompanhar necessidade real em ARQ-11 | A0/A6 e ADRs; 50 mil não atende todas as metas, sem SLA acordado |
+| ARQ-02 | P1 / Encerrada com limites | Trava global mantida, espera/tempo instrumentados e timeout recuperável | Reconsiderar contenção conforme ARQ-11 | Concorrência/idempotência testadas; quatro prévias em 50 mil tiveram um 503, publicado no resultado |
+| ARQ-03 | P1 / Concluída na aplicação | Gestão em snapshot read-only, sem trava compartilhada; cálculo após encerrar sessão | Coleta no servidor em OPS-03 | Teste intercala confirmação entre leituras sem misturar base ou bloquear escritor |
+| ARQ-04 | P1 / Concluída no escopo medido | Produto por ID, movimentos por origem, operações por cursor, gestão por visão/página | Consultas completas legadas e origens ainda podem crescer; reavaliar com ARQ-11/BD-03 | Redução de payload e jornadas verificadas; replay permanece integral |
+| ARQ-05 | P2 / Encerrada por decisão | Pilha local mantida | Reabrir diante de necessidade concreta de deep link/refresh com contexto | ADR 0001 registra perda de contexto e ausência de histórico de navegador |
+| ARQ-06 | P1 / Concluída | Interfaces públicas, sessão injetada, matriz e ciclos nos gates | Manter gates ao evoluir | Testes aceitam fronteiras válidas e recusam imports privados/ciclos |
+| ARQ-07 | P1 / Concluída | Unidade transacional por fluxo e snapshots compostos | Preservar políticas em alterações futuras | Testes de commit/rollback, leituras intercaladas e ADR 0002 |
+| ARQ-08 | P1 / Concluída na aplicação | Substituição backend no mesmo ID, compensação segura e reconciliação read-only | Rotina operacional e backups reais em OPS | Falhas/interrupção injetadas, repetição no browser e restauração sintética verificadas |
+| ARQ-09 | P1 / Concluída na aplicação | Prontidão 503 para banco indisponível; vivacidade separada | Monitor/alertas reais em OPS-03 | Parada e recuperação do PostgreSQL de ensaio comprovadas |
+| ARQ-10 | P2 / Encerrada por decisão | JWT/localStorage mantidos; proteção de tentativas por processo | Reabrir diante de nova fronteira de acesso ou demanda de revogação | ADR 0001 e Deploy registram rotação, limites e risco de token copiado |
+| ARQ-11 | P2 / Acompanhamento condicional | Não existe estimativa real; 50 mil/500 variantes e correções extensas ultrapassam metas exploratórias | Observar volume real, p95 e impactos; avaliar mais otimizações, resumos de impacto ou checkpoints antes de depender desse perfil | Perfil/objetivos acordados e nova decisão com equivalência de replay; não há promessa de capacidade irrestrita |
 
-Snapshots/checkpoints, projeções incrementais, cache ou alteração da trava só entram em um plano de implementação se ARQ-01–03 demonstrarem necessidade. Qualquer alternativa deve manter correções retroativas, custo desconhecido, ordenação histórica, assinatura de prévia e idempotência. A modularização entregue não autoriza enfraquecer essas garantias.
+Snapshot transacional de leitura foi implementado; não é checkpoint do ledger. Checkpoints, projeções incrementais, cache ou nova granularidade de trava continuam condicionados ao perfil real e à equivalência do replay. Correções, custo desconhecido, ordenação, assinatura e idempotência permanecem obrigatórios.
 
 ## Banco de dados
 
@@ -60,21 +68,20 @@ Uma FK não garante, por si, que uma categoria tenha `kind=category` ou que uma 
 
 | ID | Prioridade / estado | Pendência | Evidência necessária para encerrar |
 |---|---|---|---|
-| OPS-01 | P0 / Aberta | Definir e comprovar backup/restauração de banco e fotos | RPO/RTO acordados, frequência, retenção, destino, responsável e restauração ensaiada em ambiente isolado, com conferência de registros e arquivos relacionados |
-| OPS-02 | P1 / Aberta | Validar deploy, atualização e recuperação da implantação | Checklist executado em ambiente apropriado, migrações verificadas, volumes/HTTPS/segredos conferidos e procedimento de recuperação de release sem prometer reversão automática de dados |
-| OPS-03 | P1 / Aberta | Instrumentar o suficiente para avaliar as pendências de desempenho e diagnosticar falhas | Evidência de duração de requests/replay, espera de locks, erros e disponibilidade; sinais sem senha, token ou payload sensível nos logs |
-| VER-01 | P1 / Aberta | Consultar o resultado remoto do pipeline do commit enviado | Execução correspondente ao SHA, resultado dos jobs e artefatos relevantes; investigar divergências do ambiente local se houver |
+| OPS-01 | P0 / Parcial, implantação aberta | Ferramentas e restauração sintética verificadas; falta política e captura real | Acordar RPO/RTO, frequência, retenção, destino externo e responsável; restaurar backup da implantação em ambiente separado, conferindo registros/fotos |
+| OPS-02 | P1 / Parcial, implantação aberta | Migração separada, imagem e reinício sintético verificados; falta servidor real | Executar checklist da release escolhida, HTTPS/DNS/segredos/volumes, recuperação e compatibilidade de schema; rollback de imagem não reverte dados |
+| OPS-03 | P1 / Parcial, implantação aberta | Telemetria JSON, fases, locks, timeouts e prontidão implementados e testados | Configurar coleta/retenção/alertas no servidor e comprovar recebimento de sinais sem dados sensíveis; medir perfil real |
+| VER-01 | P1 / Baseline concluída; release atual pendente | Pipeline de `f67c59e` confirmado com sucesso; resultado remoto da entrega de Arquitetura ainda não conferido | Após publicação, conferir jobs/artefatos do SHA final; sucesso da baseline não equivale a CI das mudanças atuais |
 
 [Deploy](DEPLOY.md) descreve a topologia e os volumes. Ter volumes persistentes e um health endpoint não comprova que existe backup restaurável, monitoramento ou prontidão operacional. Esses itens são infraestrutura; não criam funcionalidades de exportação, caixa ou gestão financeira na interface.
 
 ## Ordem recomendada para as próximas tarefas
 
-1. Confirmar VER-01 e estabelecer o ambiente/dados de diagnóstico. Se o sistema já sustentar registros reais, tratar OPS-01 imediatamente em paralelo ao planejamento.
-2. Definir limites esperados de uso e cenários de teste; levantar consultas, volumes, payloads e invariantes (ARQ-01–04 e BD-01–03/07–08).
-3. Medir replay, correções retroativas, gestão concorrente e tempo de espera de gravações. Registrar a configuração usada e resultados comparáveis.
-4. Fechar decisões de Arquitetura e Banco com alternativas, justificativa e critérios de aceite. Avaliar UUID/JSONB/normalização/navegação apenas onde houver valor demonstrável.
-5. Produzir o próximo plano de execução em fatias verificáveis. Se houver migração de dados, definir validação, tratamento de registros incompatíveis, backup e recuperação antes da aplicação.
-6. Executar as melhorias aprovadas, repetir os gates de Código e acrescentar testes/medições específicos da mudança. Atualizar este registro com as evidências.
+1. Se já houver dados reais, resolver OPS-01 imediatamente: o ensaio sintético não é backup da loja.
+2. Preparar o plano da dimensão Banco a partir de BD-01–08, usando as consultas/medidas da Arquitetura como insumo; manter UUID/JSONB/normalização condicionais.
+3. Definir perfil real quando houver histórico de uso e acompanhar ARQ-11. Reconsiderar capacidade antes de depender de correções extensas ou do cenário de 50 mil com várias abas.
+4. Finalizar configuração/ensaio do servidor em OPS-01/02/03 e validar CI do SHA final após publicação autorizada.
+5. Para mudanças de Banco, planejar validação dos registros, backup e recuperação antes da migração, preservando o ledger e as garantias entregues. Atualizar este registro por evidência.
 
 Não há estimativa de prazo ou promessa de capacidade antes do diagnóstico. O banco operacional não deve ser alterado para testar; a primeira rodada de medidas deve usar `lgd_mantos_alignment_test` e dados sintéticos representativos. Qualquer necessidade de inspeção de produção deve ser definida explicitamente, com escopo de leitura e proteção dos dados.
 
