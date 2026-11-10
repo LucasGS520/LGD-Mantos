@@ -277,14 +277,14 @@ async def test_migration_has_all_active_tables(client):
     async with engine.connect() as conn:
         assert (
             await conn.execute(text("SELECT version_num FROM alembic_version"))
-        ).scalar() == "0006"
+        ).scalar() == "0007"
         assert (
             await conn.execute(
                 text(
                     "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'lgd_%'"
                 )
             )
-        ).scalar() == 9
+        ).scalar() == 15
 
 
 async def test_empty_inventory_and_unknown_reference(client):

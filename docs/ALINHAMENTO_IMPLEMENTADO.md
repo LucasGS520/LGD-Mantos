@@ -4,8 +4,9 @@ Fonte normativa: [PRODUTO_E_OBJETIVO.md](PRODUTO_E_OBJETIVO.md). Este documento
 registra contratos e critérios de manutenção, sem substituir decisões de produto.
 
 Situação de qualidade: Código (C0–C8) e implementação da arquitetura de aplicação
-verificados. Banco, acompanhamento de capacidade e implantação real permanecem
-no [registro de pendências](QUALIDADE_SITUACAO_ATUAL.md).
+verificados. Banco foi reconstruído e verificado conforme o
+[resultado B0–B6](QUALIDADE_BANCO_RESULTADO.md). Acompanhamento de capacidade e
+implantação real permanecem no [registro de pendências](QUALIDADE_SITUACAO_ATUAL.md).
 As alternativas desse registro não substituem os contratos vigentes descritos aqui.
 O [plano de Arquitetura](PLANO_MELHORIAS_ARQUITETURA.md) detalha as próximas
 etapas A0–A9. O [resultado](QUALIDADE_ARQUITETURA_RESULTADO.md) registra a execução,
@@ -17,7 +18,7 @@ O backend permanece um monólito FastAPI, organizado em `app/modules` por capaci
 auxiliares, catálogo, fotos, operações, histórico, gestão, autenticação e disponibilidade.
 Cada cadastro auxiliar possui contrato e entrada próprios. Regras comuns de cadastro
 usam helpers sem acumular decisões específicas. Modelos ORM ficam em
-`app/shared/models/entities.py`; o ledger puro fica em `modules/operations/domain`.
+`app/shared/models/`, exportados por `entities.py`; o ledger puro fica em `modules/operations/domain`.
 Rotas adaptam HTTP e delegam aos casos de uso. SQL e arquivos ficam em repositórios
 e adaptadores; serviços de aplicação não dependem de exceções HTTP.
 
@@ -26,12 +27,15 @@ por capacidade. Inventário, compra, venda e ajuste têm composições próprias
 prévia/confirmação compartilham o controlador. As seis visões de gestão são
 arquivos próprios. Transporte, formatos e UI genérica ficam em `src/shared`.
 
-As nove tabelas `lgd_*` representam controle inicial, auxiliares, produtos,
-variantes, fotos, operações, movimentações, revisões e recibos de requisição.
-Itens e pagamentos são documentos estruturados pertencentes à operação: isso
-permite validar e versionar o acontecimento inteiro numa única transação. Cada
-pagamento tem ID estável, valor, forma e momento próprios. Relacionamentos de
-variantes e auxiliares são validados no serviço; as versões preservam seus nomes.
+As 15 tabelas `lgd_*` representam controle inicial, cinco cadastros auxiliares,
+produtos, variantes, fotos, operações, itens, pagamentos, movimentos, revisões
+e recibos. Operação, itens e pagamentos são canônicos em colunas relacionais;
+o repositório reconstrói `payload` para a API e o ledger. Cada pagamento mantém
+ID, ordem e instante nas correções. Snapshots, resultados, auditoria e respostas
+idempotentes são JSONB versionados e preservam nomes/preços históricos.
+UUIDs e FKs tipadas protegem relacionamentos; todas as FKs são RESTRICT. A
+confirmação do agregado inteiro continua em uma única transação. O dicionário
+e a matriz regra/camada estão no [plano de Banco](PLANO_MELHORIAS_BANCO.md).
 
 Não há serviços externos, filas, motor de agentes, snapshots mensais ou sistema
 financeiro geral. A API é o contrato interno do frontend, não uma integração externa.
@@ -108,16 +112,17 @@ gerenciais ficam visíveis e oferecem nova tentativa.
 | Fotos | Conteúdo válido e vínculo com produto | upload, organização e remoção |
 | Tempo | Recorte histórico separado de saldo atual | intervalo sem vendas com saldo pendente |
 | Fronteiras | Sem despesas, exportação, DRE ou agentes | rotas removidas retornam 404 |
-| Fundação | Instalação reproduzível | cadeia Alembic até 0006 desde base vazia |
+| Fundação | Instalação reproduzível e privilégios mínimos | baseline independente 0007, 15 tabelas, app/migrator separados |
 | Uso real | Registrar, receber, corrigir e consultar | Playwright em navegador móvel |
 
 ## Transição
 
-A migração 0006 só cria o núcleo novo. Não apaga registros legados no startup.
-`reset_operation.py` é um procedimento administrativo separado, com conferência
-literal do banco e host. Ele limpa o núcleo, remove tabelas antigas reconhecidas
-e apaga somente fotos associadas dentro do armazenamento gerenciado. Recusa
-tabelas desconhecidas e destinos diferentes de `lgd_mantos`.
+A baseline independente `0007` instala somente o desenho definitivo e recusa
+bases antigas. `reset_operation.py` é administrativo, com conferência literal
+do banco, host e confirmação `RECRIAR`; exige API parada. Remove o schema
+`public` LGD e arquivos gerenciados, seguido de `init_db.py`. Aceita somente
+`lgd_mantos` ou o banco isolado de teste, sem stamp ou conversão presumida.
+Migrações anteriores continuam recuperáveis pelo Git. Consulte o [Deploy](DEPLOY.md).
 
 O início real não usa dados de teste e não confirma inventário automaticamente.
 Os planos anteriores foram retirados do diretório e permanecem no histórico Git.

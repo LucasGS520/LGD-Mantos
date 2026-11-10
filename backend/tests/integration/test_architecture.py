@@ -120,15 +120,17 @@ async def test_readiness_fails_but_process_is_alive(client, monkeypatch):
 
 
 async def test_readiness_requires_expected_migration(client):
-    async with engine.begin() as db:
+    from conftest import admin_engine
+
+    async with admin_engine.begin() as db:
         await db.execute(text("UPDATE alembic_version SET version_num='0005'"))
     try:
         response = await client.get("/api/v1/health")
         assert response.status_code == 503
         assert response.json()["database"] == "error"
     finally:
-        async with engine.begin() as db:
-            await db.execute(text("UPDATE alembic_version SET version_num='0006'"))
+        async with admin_engine.begin() as db:
+            await db.execute(text("UPDATE alembic_version SET version_num='0007'"))
     assert (await client.get("/api/v1/health")).status_code == 200
 
 

@@ -29,7 +29,11 @@ services:
       dockerfile: Dockerfile
     container_name: lgd_mantos
     restart: unless-stopped
-    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?defina DATABASE_URL com lgd_app}
+      APP_PASSWORD: ${APP_PASSWORD:?defina APP_PASSWORD}
+      APP_SECRET: ${APP_SECRET:?defina APP_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
     ports:
       - "8000:8000"
     depends_on:
@@ -40,9 +44,33 @@ services:
       - ./backend:/app
       # Preserva imagens enviadas pelo módulo operacional.
       - uploads_data:/app/app/static/uploads
-    # Inicializa tabelas/dados básicos antes de iniciar o servidor HTTP.
+    # Migrações são administrativas; a API inicia somente o servidor HTTP.
     command: >
-      sh -c "python init_db.py && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+      sh -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload --no-access-log"
+
+  migrate:
+    build: .
+    profiles: [admin]
+    environment:
+      MIGRATION_DATABASE_URL: ${MIGRATION_DATABASE_URL:?defina MIGRATION_DATABASE_URL}
+    command: [python, init_db.py]
+    volumes:
+      - uploads_data:/app/app/static/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  bootstrap:
+    build: .
+    profiles: [admin]
+    environment:
+      BOOTSTRAP_DATABASE_URL: ${BOOTSTRAP_DATABASE_URL:?defina BOOTSTRAP_DATABASE_URL}
+      LGD_APP_PASSWORD: ${LGD_APP_PASSWORD:?defina LGD_APP_PASSWORD}
+      LGD_MIGRATOR_PASSWORD: ${LGD_MIGRATOR_PASSWORD:?defina LGD_MIGRATOR_PASSWORD}
+    command: [python, bootstrap_database.py]
+    depends_on:
+      db:
+        condition: service_healthy
 
   frontend:
     # Frontend React/Vite para validar o fluxo completo local com a API Docker.

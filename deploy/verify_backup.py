@@ -27,10 +27,20 @@ def verify(source, container, photos):
         "photos": "photos",
         "products": "products",
         "variants": "variants",
-        "auxiliaries": "auxiliaries",
+        "operation_items": "operation_items",
+        "sale_payments": "sale_payments",
+        "suppliers": "suppliers",
+        "categories": "categories",
+        "purchase_channels": "purchase_channels",
+        "sale_channels": "sale_channels",
+        "payment_methods": "payment_methods",
         "control": "control",
     }
-    if set(manifest["counts"]) != set(tables):
+    if (
+        manifest.get("format_version") != 2
+        or manifest.get("schema_revision") != "0007"
+        or set(manifest["counts"]) != set(tables)
+    ):
         raise RuntimeError("Manifesto com tabelas não reconhecidas")
     for name in ("database.dump", "uploads.tar"):
         with (source / name).open("rb") as file:
@@ -75,7 +85,7 @@ def verify(source, container, photos):
                 "pg_restore",
                 "--exit-on-error",
                 "--no-owner",
-                "--no-privileges",
+                "--role=lgd_migrator",
                 "-U",
                 "postgres",
                 "-d",

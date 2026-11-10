@@ -1,9 +1,6 @@
-from app.shared.models.entities import Control, Operation
-from app.shared.persistence.base import require, serialize
+from app.shared.models.entities import Control
 
-
-async def detail(db, entity_id):
-    return serialize(await require(db, Operation, entity_id))
+from .repository import detail as detail
 
 
 async def state(db):

@@ -1,11 +1,23 @@
 import time
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
+from uuid import UUID
 
 from app.shared.application.errors import ApplicationError
 from app.shared.application.telemetry import emit
 from app.shared.models.entities import Control
 from sqlalchemy import select, text
+
+
+def value(value):
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    return str(value) if isinstance(value, (Decimal, UUID)) else value
+
+
+def document_version(version):
+    if version != 1:
+        raise ApplicationError(503, "Registro em formato incompatível; processamento interrompido")
 
 
 def serialize(row):
@@ -14,14 +26,12 @@ def serialize(row):
         return None
     result = {}
     for col in row.__table__.columns:
-        value = getattr(row, col.name)
-        result[col.name] = (
-            value.isoformat()
-            if isinstance(value, datetime)
-            else str(value)
-            if isinstance(value, Decimal)
-            else value
-        )
+        field_value = getattr(row, col.name)
+        result[col.name] = value(field_value)
+    if hasattr(row, "kind") and row.__table__.name != "lgd_operations":
+        result["kind"] = row.kind
+    if "document_version" in result:
+        document_version(result.pop("document_version"))
     return result
 
 
@@ -44,7 +54,28 @@ async def rows(db, model):
     return list((await db.scalars(select(model))).all())
 
 
+async def rows_by_ids(db, model, ids):
+    """Consulta explícita em lotes, sem carregamentos implícitos por entidade."""
+    values = list(dict.fromkeys(ids))
+    result = {}
+    for start in range(0, len(values), 500):
+        for row in (
+            await db.scalars(select(model).where(model.id.in_(values[start : start + 500])))
+        ).all():
+            result[row.id] = row
+    return result
+
+
+def identifier(entity_id):
+    try:
+        entity_id = str(UUID(str(entity_id)))
+    except (ValueError, TypeError, AttributeError):
+        raise ApplicationError(404, "Registro não encontrado") from None
+    return entity_id
+
+
 async def require(db, model, entity_id):
+    entity_id = identifier(entity_id)
     row = await db.get(model, entity_id)
     if row is None:
         raise ApplicationError(404, "Registro não encontrado")

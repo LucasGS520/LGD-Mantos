@@ -44,7 +44,14 @@ services:
         max-file: "3"
     container_name: lgd_mantos
     restart: unless-stopped
-    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?defina DATABASE_URL com lgd_app}
+      APP_PASSWORD: ${APP_PASSWORD:?defina APP_PASSWORD}
+      APP_SECRET: ${APP_SECRET:?defina APP_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      DB_LOCK_TIMEOUT_MS: ${DB_LOCK_TIMEOUT_MS:-5000}
+      DB_STATEMENT_TIMEOUT_MS: ${DB_STATEMENT_TIMEOUT_MS:-30000}
+      DB_POOL_TIMEOUT_SECONDS: ${DB_POOL_TIMEOUT_SECONDS:-5}
     depends_on:
       db:
         condition: service_healthy
@@ -61,8 +68,23 @@ services:
     # Executar uma única vez, com API parada e imagem da release escolhida.
     image: lgd-mantos-backend:${LGD_RELEASE:-local}
     profiles: [admin]
-    env_file: .env
+    environment:
+      MIGRATION_DATABASE_URL: ${MIGRATION_DATABASE_URL:?defina MIGRATION_DATABASE_URL com lgd_migrator}
     command: ["python", "init_db.py"]
+    volumes:
+      - uploads_data:/app/app/static/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  bootstrap:
+    image: lgd-mantos-backend:${LGD_RELEASE:-local}
+    profiles: [admin]
+    environment:
+      BOOTSTRAP_DATABASE_URL: ${BOOTSTRAP_DATABASE_URL:?defina BOOTSTRAP_DATABASE_URL}
+      LGD_APP_PASSWORD: ${LGD_APP_PASSWORD:?defina LGD_APP_PASSWORD}
+      LGD_MIGRATOR_PASSWORD: ${LGD_MIGRATOR_PASSWORD:?defina LGD_MIGRATOR_PASSWORD}
+    command: ["python", "bootstrap_database.py"]
     depends_on:
       db:
         condition: service_healthy

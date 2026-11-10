@@ -9,6 +9,7 @@ from app.shared.application.telemetry import emit
 from app.shared.models.common import uid
 from app.shared.models.entities import Photo, Product, Variant
 from app.shared.persistence import base as repo
+from sqlalchemy import update
 
 from .repository import file_referenced
 from .storage import PhotoStorage
@@ -42,16 +43,19 @@ async def photo_link(db, product_id, data):
         if variant.product_id != product_id:
             raise ApplicationError(422, "Foto deve apontar para variante do mesmo produto")
     if data.primary:
-        for photo in await repo.rows(db, Photo):
-            if photo.product_id == product_id:
-                photo.primary = False
+        await db.execute(
+            update(Photo)
+            .where(Photo.product_id == product_id, Photo.primary.is_(True))
+            .values(primary=False)
+        )
+        await db.flush()
 
 
 async def upload_photo(product_id: str, content: bytes, db, storage: PhotoStorage):
     """Aceita apenas imagens reconhecidas, com arquivo novo removido no rollback."""
     fmt = await asyncio.to_thread(storage.validate, content)
     control = await repo.lock(db)
-    await repo.require(db, Product, product_id)
+    product_id = (await repo.require(db, Product, product_id)).id
     existing = [p for p in await repo.rows(db, Photo) if p.product_id == product_id]
     photo = Photo(
         id=uid(),
@@ -118,7 +122,7 @@ async def replace_photo(entity_id: str, content: bytes, db, storage: PhotoStorag
     control = await repo.lock(db)
     photo = await repo.require(db, Photo, entity_id)
     filename = (
-        entity_id
+        photo.id
         + "-"
         + hashlib.sha256(content).hexdigest()[:32]
         + {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp"}[fmt]

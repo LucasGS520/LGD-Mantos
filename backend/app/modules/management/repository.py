@@ -1,13 +1,13 @@
 from app.modules.catalog.public import products as products
 from app.modules.operations.public import operations as operations
-from app.shared.models.entities import Auxiliary, Control
+from app.shared.models.entities import Category, Control
 from app.shared.persistence.base import rows as rows
 
 
 async def snapshot(db):
     """Materializa somente valores; a sessão deve estar em snapshot repetível."""
     catalog, history = await products(db), await operations(db)
-    auxiliary_names = {a.id: a.name for a in await rows(db, Auxiliary)}
+    auxiliary_names = {a.id: a.name for a in await rows(db, Category)}
     control = await db.get(Control, 1)
     return (
         catalog,

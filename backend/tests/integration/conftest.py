@@ -16,12 +16,20 @@ if not test_url or urlsplit(test_url).path != "/" + TEST_DATABASE:
         "Defina TEST_DATABASE_URL apontando exclusivamente para lgd_mantos_alignment_test"
     )
 os.environ["DATABASE_URL"] = test_url
+admin_url = os.environ.get("TEST_MIGRATION_DATABASE_URL")
+if not admin_url or urlsplit(admin_url).path != "/" + TEST_DATABASE:
+    raise RuntimeError("Defina TEST_MIGRATION_DATABASE_URL somente para a base isolada")
+os.environ["MIGRATION_DATABASE_URL"] = admin_url
 os.environ["APP_PASSWORD"] = "senha-testes"
 os.environ["APP_SECRET"] = "segredo-exclusivo-de-testes"
 
-from app.core.database import engine
+from app.shared.models.entities import Base
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
+
+admin_engine = create_async_engine(admin_url, hide_parameters=True)
+TABLES = ", ".join('"' + name + '"' for name in sorted(Base.metadata.tables))
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -40,19 +48,11 @@ async def clean_database(migrate_test_database, tmp_path):
     from app.modules.photos.infrastructure.local_storage import storage
 
     storage.root = tmp_path / "photos"
-    async with engine.begin() as conn:
-        await conn.execute(
-            text(
-                "TRUNCATE lgd_requests, lgd_revisions, lgd_movements, lgd_operations, lgd_photos, lgd_variants, lgd_products, lgd_auxiliaries, lgd_control"
-            )
-        )
+    async with admin_engine.begin() as conn:
+        await conn.execute(text("TRUNCATE " + TABLES))
     yield
-    async with engine.begin() as conn:
-        await conn.execute(
-            text(
-                "TRUNCATE lgd_requests, lgd_revisions, lgd_movements, lgd_operations, lgd_photos, lgd_variants, lgd_products, lgd_auxiliaries, lgd_control"
-            )
-        )
+    async with admin_engine.begin() as conn:
+        await conn.execute(text("TRUNCATE " + TABLES))
 
 
 @pytest_asyncio.fixture

@@ -13,7 +13,7 @@ from app.shared.persistence import base as repo
 
 from .candidate import prepare
 from .domain.ledger import RuleError, replay
-from .repository import affected_operations, operations
+from .repository import affected_operations, detail, operation_values, operations, save_children
 from .repository import receipt as find_receipt
 from .signing import digest, sign
 
@@ -35,6 +35,8 @@ def materialize(candidate, timestamp, operation_id=None):
 
 
 async def _execute(db, data, entity_id=None, preview_token=None, request_key=None):
+    if entity_id is not None:
+        entity_id = repo.identifier(entity_id)
     control = await repo.lock(db)
     fingerprint = digest({"data": data.model_dump(mode="json"), "id": entity_id})
     if request_key:
@@ -80,13 +82,14 @@ async def _execute(db, data, entity_id=None, preview_token=None, request_key=Non
     )
     if not entity_id:
         db.add(row)
-    for field in ("sequence", "kind", "version", "cancelled", "payload"):
-        setattr(row, field, computed[field])
+    for field, field_value in operation_values(computed).items():
+        setattr(row, field, field_value)
     row.effective_at = datetime.fromisoformat(computed["effective_at"])
     row.created_at = datetime.fromisoformat(computed["created_at"])
     row.updated_at = now()
     row.result = results[row.id]
     await db.flush()
+    await save_children(db, computed)
     before_effects = old["result"].get("effects", {}) if old else {}
     effects = row.result.get("effects", {})
     reason = data.reason or "Registro inicial"
@@ -109,12 +112,13 @@ async def _execute(db, data, entity_id=None, preview_token=None, request_key=Non
         "cancel" if data.cancelled else "edit" if old else "create",
         reason,
         old,
-        repo.serialize(row),
+        {**computed, "updated_at": row.updated_at.isoformat(), "result": row.result},
     )
     dependents = await affected_operations(db, [impact["id"] for impact in impacts])
+    before_by_id = {record["id"]: record for record in all_rows}
     for impact in impacts:
         dependent = dependents[impact["id"]]
-        before = repo.serialize(dependent)
+        before = before_by_id[dependent.id]
         dependent.result = impact["after"]
         dependent.version += 1
         dependent.updated_at = now()
@@ -125,7 +129,12 @@ async def _execute(db, data, entity_id=None, preview_token=None, request_key=Non
             "recalculate",
             reason + " — origem " + row.id,
             before,
-            repo.serialize(dependent),
+            {
+                **before,
+                "result": dependent.result,
+                "version": dependent.version,
+                "updated_at": dependent.updated_at.isoformat(),
+            },
         )
     for variant in variants:
         variant.stock = states[variant.id]["stock"]
@@ -133,8 +142,13 @@ async def _execute(db, data, entity_id=None, preview_token=None, request_key=Non
     if data.kind == "inventory" and control.started_at is None:
         control.started_at = row.effective_at
     control.revision += 1
-    response["operation"] = repo.serialize(row)
-    db.add(RequestReceipt(key=request_key, fingerprint=fingerprint, response=response))
+    await db.flush()
+    response["operation"] = await detail(db, row.id)
+    db.add(
+        RequestReceipt(
+            key=request_key, operation_id=row.id, fingerprint=fingerprint, response=response
+        )
+    )
     await db.flush()
     return response
 

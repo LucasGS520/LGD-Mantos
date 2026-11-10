@@ -19,8 +19,11 @@ Preencha `.env` no servidor, sem versioná-lo:
 | Variável | Finalidade |
 |---|---|
 | `DOMAIN` | Domínio atendido pelo Caddy |
-| `POSTGRES_PASSWORD` | Senha do banco |
-| `DATABASE_URL` | Conexão `postgresql+asyncpg` com host `db`, banco `lgd_mantos` |
+| `POSTGRES_PASSWORD` | Senha administrativa PostgreSQL; somente banco/bootstrap |
+| `DATABASE_URL` | Conexão `postgresql+asyncpg` de `lgd_app`, host `db`, banco `lgd_mantos` |
+| `MIGRATION_DATABASE_URL` | Conexão de `lgd_migrator`; somente processo administrativo |
+| `BOOTSTRAP_DATABASE_URL` | Conexão administrativa postgres para provisionar permissões |
+| `LGD_APP_PASSWORD` / `LGD_MIGRATOR_PASSWORD` | Senhas distintas correspondentes às URLs; somente bootstrap |
 | `APP_PASSWORD` | Senha exclusiva do dono |
 | `APP_SECRET` | Segredo de assinatura de tokens e prévias |
 | `CORS_ORIGINS` | Origem HTTPS da aplicação |
@@ -35,6 +38,7 @@ Na instalação nova, com base vazia e API ainda parada:
 export LGD_RELEASE=sha-da-release
 docker compose -f docker-compose.prod.yml build backend web
 docker compose -f docker-compose.prod.yml up -d db
+docker compose -f docker-compose.prod.yml run --rm bootstrap
 docker compose -f docker-compose.prod.yml run --rm migrate
 docker compose -f docker-compose.prod.yml up -d backend web
 ```
@@ -54,13 +58,26 @@ execução e `npm ci` para o frontend. Ferramentas de testes ficam separadas.
 
 ## Transição da versão antiga
 
-O esquema novo começa na migração 0006. Sua aplicação cria tabelas novas e mantém
-o legado intacto até o procedimento administrativo de transição.
+O schema definitivo é a baseline independente `0007`, sem ancestral, com 15
+tabelas de negócio e `alembic_version`. A cadeia anterior permanece no Git.
+`init_db.py` aceita base vazia ou `0007`; recusa bases antigas, sem stamp,
+conversão presumida ou limpeza automática.
 
 A limpeza da base escolhida deve ser executada separadamente, depois da validação
 em ambiente isolado, com o backend parado. Use os comandos do README com
 `-f docker-compose.prod.yml` quando o destino for produção. A ferramenta confere o
-nome do banco, o host e todas as tabelas presentes antes de apagar registros.
+nome do banco e host antes de remover o schema `public`. O serviço `migrate`
+monta o mesmo volume de fotos da API para remover os arquivos gerenciados.
+Não executar primeiro `init_db.py` em uma base antiga: use bootstrap,
+`migrate python reset_operation.py --database lgd_mantos --host db --confirm
+"RECRIAR lgd_mantos"` e então `migrate`. Esse procedimento elimina os dados
+LGD, conforme a decisão de base limpa; não é manutenção rotineira.
+
+`lgd_migrator` possui o schema e herda acesso de `lgd_app` para o diagnóstico;
+a associação inversa não existe. A API recebe apenas sua URL e configurações
+de execução. Não tem CREATE/TEMP no banco, DDL/TRUNCATE, DELETE de
+operações/cadastros ou UPDATE/DELETE de movimentos, revisões e recibos. Filhos
+substituídos e fotos são excluídos explicitamente na transação. FKs são RESTRICT.
 
 Não copie dados de teste, não invente recebimentos e não confirme automaticamente
 o inventário inicial. Depois da transição, o dono inicia o controle pelas quantidades
@@ -71,7 +88,7 @@ físicas conhecidas. Nenhuma limpeza ocorre em inicializações futuras.
 `pgdata` contém o banco e `uploads_data` contém as fotos. `caddy_data` e
 `caddy_config` preservam o estado da borda HTTPS.
 
-`/api/v1/health` verifica banco/revisão Alembic esperada e informa versão/horário.
+`/api/v1/health` verifica banco/revisão Alembic esperada e a role `lgd_app`, e informa versão/horário.
 Retorna 200 com `database=ok` e 503 com `status=error` se não estiver pronto.
 Não expõe detalhes da conexão. `/` verifica somente o processo HTTP.
 
@@ -95,6 +112,8 @@ criptografia, retenção e agendamento devem ser configurados pelo operador.
 
 Para ensaiar uma cópia em ambiente separado, provisione PostgreSQL 16 vazio com
 o banco `lgd_mantos_alignment_test` e label Docker `com.lgd.purpose=restore-drill`.
+Antes da restauração, execute `bootstrap_database.py` nesse destino para criar
+as roles e permissões; não execute `init_db.py`, pois as tabelas devem estar vazias.
 Use um diretório de fotos novo:
 
 ```sh
@@ -103,9 +122,10 @@ python3 deploy/verify_backup.py --source /backup-copiado --database-container co
 
 Esse comando é exclusivo de ensaio: recusa banco com tabelas, label ausente,
 hash divergente, destinos existentes e membros de tar inseguros. Restaura no
-banco de teste, confere as nove contagens e referências de fotos. Execute depois
+banco de teste como `lgd_migrator`, preservando ACLs, e confere as 15 contagens
+e referências de fotos. Execute depois
 `backend/verify_restored.py` com configuração apontando exclusivamente para essa
-base e `PHOTO_ROOT` para `products` restaurado: verifica replay, projeções,
+base com `lgd_app` e `PHOTO_ROOT` para `products` restaurado: verifica replay, projeções,
 movimentos, recibos e conteúdo das imagens. Não apontar a API pública para a base
 de ensaio. Contagens não substituem essa conferência de consistência.
 
@@ -115,9 +135,42 @@ da implantação. Não há script que sobrescreva automaticamente o banco real.
 Preserve a origem para investigação. Um rollback de imagem não recupera registros
 apagados nem desfaz migração incompatível.
 
-O ensaio sintético está no [resultado de Arquitetura](QUALIDADE_ARQUITETURA_RESULTADO.md).
-RPO/RTO reais ainda devem ser acordados; 1,76 s de restore de fixture pequena não
-é RTO do servidor. A aplicação não oferece exportação como backup.
+O ensaio atual da baseline 0007 está no [resultado de Banco](QUALIDADE_BANCO_RESULTADO.md)
+e no [registro de recuperação](database-recovery-evidence.json). O ensaio anterior
+permanece no resultado de Arquitetura como evidência histórica. RPO/RTO reais
+ainda devem ser acordados; restore de fixture pequena não é RTO do servidor.
+A aplicação não oferece exportação como backup.
+
+## Diagnóstico e manutenção do banco
+
+Com a configuração administrativa da instalação, execute somente leitura:
+
+```sh
+docker compose -f docker-compose.prod.yml run --rm migrate python database_inspect.py
+```
+
+O relatório confere tabelas, tipos/defaults/índices comparados ao ORM, nomes e
+definições dos checks, ACLs, tamanhos de relações/índices/documentos, conexões,
+transações longas e estatísticas de autovacuum. Não imprime corpos de operações,
+senhas ou SQL das sessões. Não altera parâmetros nem remove dados. Live/dead
+tuples são estimativas; combine crescimento e latência ao avaliar capacidade.
+Histórico e recibos não têm TTL. Mantenha autovacuum ativo e o pool existente;
+tuning exige evidência. Não executar VACUUM FULL como manutenção rotineira.
+
+Para repetir medições, use exclusivamente uma base isolada limpa, após bootstrap
+e `init_db.py`, sem outras suítes/API conectadas à mesma base:
+
+```sh
+python backend/database_index_benchmark.py --replace-test-data lgd_mantos_alignment_test --output planos.json
+```
+
+O comparador altera índices de candidatos e substitui os dados sintéticos; após
+esse ensaio, reconstrua a base isolada e aplique 0007 antes de rodar carga/API.
+Com `TEST_DATABASE_URL`/`TEST_MIGRATION_DATABASE_URL` definidos, execute:
+
+```sh
+python backend/architecture_benchmark.py --replace-test-data lgd_mantos_alignment_test --sizes 1000 10000 50000 --samples 3 --label banco --presentation --impact --output medidas.json
+```
 
 ## Sinais, erros e acesso
 
@@ -166,8 +219,8 @@ deploy real validado. O acompanhamento está no [registro central](QUALIDADE_SIT
   recuperação de release em ambiente apropriado.
 - OPS-03: configurar e comprovar coleta/alertas dos sinais implementados no servidor.
 
-Esses itens reais continuam abertos apesar do ensaio sintético. A avaliação de
-Banco também deve conferir o schema efetivamente implantado e sua manutenção;
+Esses itens reais continuam abertos apesar do ensaio sintético. A validação do
+servidor também deve conferir o schema efetivamente implantado e sua manutenção;
 a existência dos arquivos de migração não comprova o estado do servidor.
 
 O [Plano de Arquitetura](PLANO_MELHORIAS_ARQUITETURA.md) detalha sinais de

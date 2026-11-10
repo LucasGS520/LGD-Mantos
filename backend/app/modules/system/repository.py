@@ -10,7 +10,8 @@ from app.core.version import SCHEMA_REVISION
 async def database_status(db):
     try:
         revision = await asyncio.wait_for(
-            db.scalar(text("SELECT version_num FROM alembic_version")), timeout=3.0
+            db.scalar(text("SELECT version_num FROM alembic_version WHERE current_user='lgd_app'")),
+            timeout=3.0,
         )
         return "ok" if revision == SCHEMA_REVISION else "error"
     except Exception:

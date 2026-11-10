@@ -1,21 +1,23 @@
 from datetime import datetime, time, timezone
 
 from app.modules.auxiliaries.public import auxiliary
+from app.modules.catalog.public import variant_context
 from app.shared.application.errors import ApplicationError
 from app.shared.application.time import LOCAL
 from app.shared.application.versioning import check_version
 from app.shared.models.common import now
-from app.shared.models.entities import Auxiliary, Operation, Product, Variant
+from app.shared.models.entities import Operation
 from app.shared.persistence import base as repo
 
 from .domain.ledger import amount
 from .payments import prepare_payments
+from .repository import detail
 
 
 async def prepare(db, data, entity_id, control):
     """Monta candidato sem escrever, preservando referências e instantes antigos."""
     old_row = await repo.require(db, Operation, entity_id) if entity_id else None
-    old = repo.serialize(old_row)
+    old = await detail(db, entity_id) if old_row else None
     if old_row:
         check_version(old_row, data)
         if old_row.kind != data.kind or old_row.cancelled:
@@ -41,16 +43,21 @@ async def prepare(db, data, entity_id, control):
             else ref.name
         )
     seen = set()
+    variants, products, categories = await variant_context(
+        db, [item.variant_id for item in data.items]
+    )
     for item in data.items:
         if item.variant_id in seen:
             raise ApplicationError(422, "Agrupe a quantidade de cada variante em uma única linha")
         seen.add(item.variant_id)
-        variant = await repo.require(db, Variant, item.variant_id)
-        product = await repo.require(db, Product, variant.product_id)
+        variant = variants.get(item.variant_id)
+        if variant is None:
+            raise ApplicationError(404, "Registro não encontrado")
+        product = products[variant.product_id]
         prior = previous.get("snapshots", {}).get(variant.id)
         if (not product.active or not variant.active) and prior is None:
             raise ApplicationError(422, "Produto ou variante desativado")
-        category = await db.get(Auxiliary, product.category_id) if product.category_id else None
+        category = categories.get(product.category_id)
         payload["snapshots"][variant.id] = prior or {
             "product_id": product.id,
             "product_name": product.name,

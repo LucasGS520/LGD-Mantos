@@ -1,5 +1,5 @@
 # Somente ensaio sintético; nenhuma configuração ou volume de produção.
-name: lgd-architecture-drill
+name: lgd-bank-drill
 services:
   db:
     image: postgres:16-alpine
@@ -12,9 +12,9 @@ services:
       timeout: 2s
       retries: 20
   backend:
-    image: lgd-architecture-backend:verification
-    environment: &configuration
-      DATABASE_URL: postgresql+asyncpg://postgres:isolated-drill-only@db:5432/lgd_mantos_alignment_test
+    image: lgd-bank-backend:verification
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lgd_app:isolated-app-only@db:5432/lgd_mantos_alignment_test
       APP_PASSWORD: isolated-drill-only
       APP_SECRET: isolated-drill-secret-not-production
     depends_on:
@@ -23,10 +23,23 @@ services:
     ports: ["127.0.0.1:8002:8000"]
     volumes: ["drill_uploads:/app/app/static/uploads"]
   migrate:
-    image: lgd-architecture-backend:verification
+    image: lgd-bank-backend:verification
     profiles: [admin]
-    environment: *configuration
+    environment:
+      MIGRATION_DATABASE_URL: postgresql+asyncpg://lgd_migrator:isolated-migration-only@db:5432/lgd_mantos_alignment_test
     command: [python, init_db.py]
+    volumes: ["drill_uploads:/app/app/static/uploads"]
+    depends_on:
+      db:
+        condition: service_healthy
+  bootstrap:
+    image: lgd-bank-backend:verification
+    profiles: [admin]
+    environment:
+      BOOTSTRAP_DATABASE_URL: postgresql+asyncpg://postgres:isolated-drill-only@db:5432/lgd_mantos_alignment_test
+      LGD_APP_PASSWORD: isolated-app-only
+      LGD_MIGRATOR_PASSWORD: isolated-migration-only
+    command: [python, bootstrap_database.py]
     depends_on:
       db:
         condition: service_healthy

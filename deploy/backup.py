@@ -11,6 +11,29 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
+TABLES = {
+    "receipts": "requests",
+    **{
+        name: name
+        for name in (
+            "operations",
+            "operation_items",
+            "sale_payments",
+            "revisions",
+            "movements",
+            "photos",
+            "products",
+            "variants",
+            "suppliers",
+            "categories",
+            "purchase_channels",
+            "sale_channels",
+            "payment_methods",
+            "control",
+        )
+    },
+}
+
 
 def capture(compose, destination, database="lgd_mantos"):
     if database not in {"lgd_mantos", "lgd_mantos_alignment_test"}:
@@ -56,12 +79,19 @@ def capture(compose, destination, database="lgd_mantos"):
                     "-d",
                     database,
                     "-Atc",
-                    "SELECT json_build_object('operations',(SELECT count(*) FROM lgd_operations),'revisions',(SELECT count(*) FROM lgd_revisions),'movements',(SELECT count(*) FROM lgd_movements),'receipts',(SELECT count(*) FROM lgd_requests),'photos',(SELECT count(*) FROM lgd_photos),'products',(SELECT count(*) FROM lgd_products),'variants',(SELECT count(*) FROM lgd_variants),'auxiliaries',(SELECT count(*) FROM lgd_auxiliaries),'control',(SELECT count(*) FROM lgd_control))",
+                    "SELECT json_build_object("
+                    + ",".join(
+                        "'" + key + "',(SELECT count(*) FROM lgd_" + table + ")"
+                        for key, table in TABLES.items()
+                    )
+                    + ")",
                 ],
                 text=True,
             )
         )
         manifest = {
+            "format_version": 2,
+            "schema_revision": "0007",
             "created_at": datetime.now(timezone.utc).isoformat(),
             "backend_image": state["Image"],
             "writes_suspended": True,

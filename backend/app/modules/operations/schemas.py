@@ -1,30 +1,30 @@
 from datetime import date
 from typing import Literal
 
-from app.shared.application.contracts import Input, Money, Name, PositiveMoney, Quantity
+from app.shared.application.contracts import EntityId, Input, Money, Name, PositiveMoney, Quantity
 from pydantic import Field, model_validator
 
 from .policies import POLICIES
 
 
 class ItemIn(Input):
-    variant_id: str
+    variant_id: EntityId
     quantity: Quantity
     unit_cost: Money | None = None
     unit_price: Money | None = None
 
 
 class PaymentIn(Input):
-    id: str | None = None
+    id: EntityId | None = None
     amount: PositiveMoney
-    method_id: str
+    method_id: EntityId
 
 
 class OperationIn(Input):
     kind: Literal["inventory", "purchase", "sale", "adjustment"]
     purchase_date: date | None = None
-    supplier_id: str | None = None
-    channel_id: str | None = None
+    supplier_id: EntityId | None = None
+    channel_id: EntityId | None = None
     direction: Literal["in", "out"] | None = None
     items: list[ItemIn] = Field(default_factory=list)
     payments: list[PaymentIn] = Field(default_factory=list)

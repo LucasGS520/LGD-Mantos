@@ -4,20 +4,24 @@ A fonte normativa é `docs/PRODUTO_E_OBJETIVO.md`. Consulte também
 `docs/ALINHAMENTO_IMPLEMENTADO.md` para contratos, decisões técnicas e testes.
 O registro central de pendências é `docs/QUALIDADE_SITUACAO_ATUAL.md`.
 Código (C0–C8) e a implementação da arquitetura de aplicação estão verificados;
-as próximas decisões são de Banco, perfil real de capacidade e preparação operacional.
+Banco foi implementado conforme `docs/PLANO_MELHORIAS_BANCO.md`; o resultado está
+em `docs/QUALIDADE_BANCO_RESULTADO.md`. As próximas decisões são de perfil real
+de capacidade e preparação operacional.
 Atualize os itens com evidência ao avançar e não trate
-alternativas condicionais (UUID, JSONB, checkpoints ou roteador) como mudanças já aprovadas.
+alternativas condicionais (checkpoints ou roteador) como mudanças já aprovadas.
 O plano de Arquitetura está em `docs/PLANO_MELHORIAS_ARQUITETURA.md` (A0–A9):
 execução registrada em `docs/QUALIDADE_ARQUITETURA_RESULTADO.md` e `docs/decisions/`.
 Preserve suas garantias transacionais e registre decisões antes de otimizações
-condicionais. O plano de Banco continua pendente.
+condicionais. Banco usa baseline independente `0007`, sem conversão de dados antigos.
 
 ## Estrutura atual
 
-- Backend modular FastAPI/SQLAlchemy em `backend/app/modules`; modelos ORM em `backend/app/shared/models/entities.py`.
+- Backend modular FastAPI/SQLAlchemy em `backend/app/modules`; modelos por responsabilidade em `backend/app/shared/models/`, exportados por `entities.py`; metadata independente da autenticação.
 - Catálogo, inventário inicial, compras, estoque, vendas e recebimentos.
 - Frontend React/TypeScript em `frontend/src/modules`, infraestrutura em `shared` e composição em `app`.
-- PostgreSQL 16 e migrações Alembic preservadas em `backend/migrations`.
+- PostgreSQL 16, 15 tabelas de negócio e baseline Alembic `0007`; migrações anteriores recuperáveis pelo Git.
+- Núcleo relacional canônico, UUID nativo e documentos históricos JSONB versionados. Payload HTTP reconstruído pelo repositório.
+- API usa `lgd_app`; migrações usam `lgd_migrator`. Nunca passar credenciais administrativas ao container da API.
 - Acesso único do dono; gestão baseada em evidências dos registros operacionais.
 
 ## Regras de manutenção
@@ -44,6 +48,8 @@ condicionais. O plano de Banco continua pendente.
 ## Verificação
 
 `python backend/check.py` executa os testes de backend em PostgreSQL isolado.
+Defina `TEST_DATABASE_URL` com `lgd_app` e `TEST_MIGRATION_DATABASE_URL` com
+`lgd_migrator` no mesmo banco de teste. Provisione as roles antes da suíte.
 Execute também `python -m ruff check backend` e `python backend/check_boundaries.py`.
 No frontend: `npm run build`, `npm run lint`, `npm run check:boundaries`, `npm test`;
 depois da suíte backend, rode a API isolada e `npm run test:e2e`.

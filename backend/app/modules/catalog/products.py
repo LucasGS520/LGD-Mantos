@@ -14,6 +14,8 @@ from .variants import create_variant
 
 
 async def save_product(db, data, entity_id=None):
+    if entity_id is not None:
+        entity_id = repo.identifier(entity_id)
     control = await repo.lock(db)
     row = await repo.require(db, Product, entity_id) if entity_id else None
     if row:

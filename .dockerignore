@@ -12,6 +12,10 @@ frontend/test-results
 frontend/playwright-report
 frontend_pwa
 graphify-out
+.verification
+*.log
+frontend/.cache
+frontend/.npm-cache
 .auxiliares_docs
 .superpowers
 backend/app/static/uploads

@@ -4,13 +4,14 @@ import time
 from contextlib import asynccontextmanager
 
 from sqlalchemy import event, text
-from sqlalchemy.exc import DBAPIError, TimeoutError
+from sqlalchemy.exc import DBAPIError, IntegrityError, TimeoutError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, Session
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.shared.application.errors import ApplicationError
 from app.shared.application.telemetry import emit
+from app.shared.models.metadata import Base as Base
 
 engine = create_async_engine(
     settings.DATABASE_URL,
@@ -20,6 +21,7 @@ engine = create_async_engine(
     pool_timeout=settings.DB_POOL_TIMEOUT_SECONDS,
     connect_args={
         "server_settings": {
+            "application_name": "lgd_api",
             "lock_timeout": str(settings.DB_LOCK_TIMEOUT_MS),
             "statement_timeout": str(settings.DB_STATEMENT_TIMEOUT_MS),
         }
@@ -36,12 +38,6 @@ def transaction_ended(session, transaction):
             emit("lock_released", duration_ms=round((time.perf_counter() - started) * 1000, 2))
 
 
-class Base(DeclarativeBase):
-    """Classe base usada por todos os modelos ORM do projeto."""
-
-    pass
-
-
 @asynccontextmanager
 async def session_scope():
     """Entrega uma sessão de banco por requisição e controla commit/rollback."""
@@ -50,6 +46,16 @@ async def session_scope():
         try:
             yield session
             await session.commit()
+        except IntegrityError as exc:
+            await session.rollback()
+            state = getattr(exc.orig, "sqlstate", None)
+            if state == "23505":
+                raise ApplicationError(409, "Registro duplicado ou conflito de unicidade") from exc
+            if state in {"23503", "23514", "23502"}:
+                raise ApplicationError(
+                    422, "Referência ou valor incompatível com o registro"
+                ) from exc
+            raise
         except (DBAPIError, TimeoutError) as exc:
             await session.rollback()
             state = getattr(exc.orig, "sqlstate", None) if isinstance(exc, DBAPIError) else None

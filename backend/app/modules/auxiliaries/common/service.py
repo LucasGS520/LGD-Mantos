@@ -3,15 +3,19 @@ from app.shared.application.errors import ApplicationError
 from app.shared.application.normalization import normalize
 from app.shared.application.versioning import check_version
 from app.shared.models.common import uid
-from app.shared.models.entities import Auxiliary
+from app.shared.models.entities import AUXILIARY_MODELS
 from app.shared.persistence import base as repo
 
 from .repository import duplicate as find_duplicate
+from .repository import require_kind
 
 
 async def save(db, data, entity_id=None):
+    if entity_id is not None:
+        entity_id = repo.identifier(entity_id)
     control = await repo.lock(db)
-    row = await repo.require(db, Auxiliary, entity_id) if entity_id else None
+    model = AUXILIARY_MODELS[data.kind]
+    row = await require_kind(db, entity_id, data.kind) if entity_id else None
     if row:
         check_version(row, data)
         if data.kind != row.kind:
@@ -21,7 +25,7 @@ async def save(db, data, entity_id=None):
         raise ApplicationError(409, "Nome já cadastrado após normalização")
     before = repo.serialize(row)
     if row is None:
-        row = Auxiliary(id=uid(), kind=data.kind, version=1)
+        row = model(id=uid(), version=1)
         db.add(row)
     else:
         row.version += 1

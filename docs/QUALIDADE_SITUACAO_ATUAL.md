@@ -1,6 +1,7 @@
 # Qualidade e situação atual — pendências
 
-Atualizado em 2026-11-09. Código: `6d8b98c`; execução de Arquitetura a partir de `f67c59e`, registrada no commit desta entrega.
+Atualizado em 2026-11-10. Código: `6d8b98c`; Arquitetura: `960c07d`;
+Banco implementado nesta sessão a partir dessa baseline.
 
 Este é o registro central das pendências de qualidade. A fonte de regras de negócio continua sendo [Produto e objetivo](PRODUTO_E_OBJETIVO.md); este documento não aprova mudanças funcionais, de arquitetura ou de schema antecipadamente.
 
@@ -10,12 +11,22 @@ Este é o registro central das pendências de qualidade. A fonte de regras de ne
 |---|---|---|
 | Código | Plano C0–C8 concluído | Modularização, recuperação de falhas, contratos e gates descritos no [resultado da implementação](QUALIDADE_CODIGO_RESULTADO.md). Não é uma declaração de ausência de qualquer defeito futuro |
 | Arquitetura | Aplicação implementada e verificada; limites de capacidade documentados | [Resultado de Arquitetura](QUALIDADE_ARQUITETURA_RESULTADO.md): snapshots, consultas, transações, fotos, fronteiras e medidas; preparação real de infraestrutura permanece separada |
-| Banco | Avaliação e plano de execução pendentes | Schema preservado na refatoração; modelagem, invariantes e comportamento com volume ainda precisam de avaliação |
+| Banco | Plano B0–B6 implementado e verificado no ambiente isolado | [Resultado](QUALIDADE_BANCO_RESULTADO.md): baseline 0007, 15 tabelas, constraints, ACLs, restauração e medidas; servidor real permanece em OPS |
 | Operação e disponibilidade | Ferramentas e ensaio sintético entregues; implantação real pendente | Backup/restauração e indisponibilidade foram ensaiados localmente; falta destino externo, política de RPO/RTO, coleta/alertas e ensaio do servidor real |
 
 Na execução de Arquitetura passaram 84 testes backend no Python 3.12, 19 testes frontend, cinco jornadas Playwright, build, lint e fronteiras. Há medidas exploratórias em três escalas e ensaio de restauração sintética; detalhes e limites estão no resultado. Isso não mede disponibilidade de produção.
 
-O pipeline baseline `f67c59e` foi consultado e passou ([execução](https://github.com/LucasGS520/LGD-Mantos/actions/runs/42282745014)). O resultado remoto da entrega de Arquitetura deve ser conferido após sua publicação. Dados operacionais, backups e implantação real não foram inspecionados ou alterados.
+Na entrega de Banco passaram 124 testes backend em Python 3.12/Linux, 19 testes
+frontend, cinco jornadas Playwright, build, lint e fronteiras. Instalação,
+reconstrução, permissões e restauração do schema 0007 foram comprovadas na base
+isolada. As três escalas foram medidas; correção extensa em 50 mil levou cerca
+de 36 s e duas de quatro prévias concorrentes retornaram 503 recuperável. O
+[resultado de Banco](QUALIDADE_BANCO_RESULTADO.md) registra as evidências completas.
+
+O pipeline baseline de Arquitetura `960c07d` foi consultado e passou
+([execução](https://github.com/LucasGS520/LGD-Mantos/actions/runs/42688125615)).
+O CI remoto das mudanças de Banco depende de sua publicação; os gates locais
+constam no resultado. O banco operacional não foi usado nos ensaios.
 
 ## Como ler as prioridades
 
@@ -49,20 +60,28 @@ Snapshot transacional de leitura foi implementado; não é checkpoint do ledger.
 
 ## Banco de dados
 
-As fontes de schema são [modelos ORM](../backend/app/shared/models/entities.py) e [migração 0006](../backend/migrations/versions/0006_nucleo_confiavel.py). A inspeção dos modelos não substitui uma conferência do banco efetivamente implantado.
+As fontes são os [modelos ORM](../backend/app/shared/models/entities.py) e a
+[baseline 0007](../backend/migrations/versions/0007_banco_canonico.py). O
+[plano](PLANO_MELHORIAS_BANCO.md) contém dicionário e matriz de invariantes; o
+[resultado](QUALIDADE_BANCO_RESULTADO.md) reúne evidências físicas e limitações.
+BD-01–08 foram encerrados no escopo da aplicação e do ensaio sintético. A
+verificação do banco implantado permanece explicitamente em OPS-02/03.
 
 | ID | Prioridade / estado | Fato atual | Trabalho pendente | Critério de encerramento |
 |---|---|---|---|---|
-| BD-01 | P1 / Aberta | Existem constraints de unicidade, saldo e referências monetárias; outras invariantes dependem da aplicação | Inventariar invariantes e avaliar checks de tipos/ações, versões/sequências positivas, custo médio não negativo, posição e unicidade de foto principal, além do vínculo produto/variante | Matriz regra → camada responsável; testes de violação e migrações somente das proteções escolhidas, após conferir dados existentes |
-| BD-02 | P1 / Aberta | `payload`, `result`, revisões e recibos armazenam JSON; itens/pagamentos pertencem atomicamente à operação | Avaliar consultas necessárias, referências internas e validação/versionamento desses documentos; comparar manutenção do agregado com normalização seletiva | Decisão documentada com efeitos sobre snapshots, auditoria, atomicidade, consultas e migração; preservar o agregado continua sendo uma opção válida |
-| BD-03 | P1 / Aberta | Há índices básicos, mas as consultas carregam muitos registros antes de filtrar | Levantar cardinalidades, tamanhos e padrões reais; coletar estatísticas e planos das consultas relevantes com `EXPLAIN (ANALYZE, BUFFERS)` em ambiente adequado | Relatório de planos/tempos e decisão para cada ajuste; nenhum índice criado apenas por suposição |
-| BD-04 | P2 / Condicional | Identificadores são `String(36)`, não UUID nativo | Avaliar benefício, custo de migração de PK/FK e compatibilidade dos IDs em JSON e contratos | Decisão de manter ou migrar, com estratégia de validação e reversão quando aplicável; não classificar o tipo textual como falha de integridade comprovada |
-| BD-05 | P2 / Condicional | Os documentos do núcleo usam `JSON`, não `JSONB` | Relacionar operações de consulta/índice necessárias aos documentos e medir alternativas | Escolha fundamentada pelo workload; mudar para JSONB sem mudar o padrão de leitura integral não comprova melhoria de desempenho |
-| BD-06 | P1 / Aberta | Foreign keys não declaram políticas `ondelete`; aplicação usa desativação para cadastros | Documentar exclusão/restrição por relacionamento, inclusive fotos e histórico; distinguir comportamento padrão do banco de decisão intencional | Política explícita e testes; alterar FK somente se necessário, preservando referências históricas |
-| BD-07 | P1 / Aberta | Operações, revisões, movimentos e recibos idempotentes podem crescer continuamente; recibos guardam respostas estruturadas | Medir crescimento, tamanho dos documentos e necessidade de manutenção; definir duração da garantia de repetição antes de discutir retenção de recibos | Projeção de crescimento e política documentada, sem expiração arbitrária de recibos nem remoção de histórico necessário ao replay/auditoria |
-| BD-08 | P1 / Aberta | Há SQLAlchemy assíncrono e PostgreSQL; o estado operacional não foi diagnosticado | Conferir conexões/pool, estatísticas de uso, autovacuum, dead tuples e capacidade de armazenamento; verificar correspondência entre migrações e schema implantado | Diagnóstico registrado com contexto de carga e ações necessárias; configurações adicionais de pool/manutenção só quando justificadas |
+| BD-01 | P1 / Concluída | Matriz regra/camada, constraints nomeadas, inventário único e FK composta de fotos | Preservar regras no ledger | Rejeições SQL diretas e correspondência ORM/baseline verificadas |
+| BD-02 | P1 / Concluída | Operações, itens e pagamentos relacionais; payload reconstruído em lote | Acompanhar custo de replay em ARQ-11 | Ordem, IDs, nomes/preços históricos, correções e atomicidade verificados |
+| BD-03 | P1 / Concluída no cenário medido | Quatro candidatos comparados por EXPLAIN; três incorporados | Reavaliar consultas com perfil real | [Planos antes/depois](database-index-plans.json), sem GIN ou índices redundantes |
+| BD-04 | P2 / Concluída | UUID nativo nas PKs/FKs, strings no HTTP | Manter validação antes do SQL | UUID canônico, referências inválidas e contratos testados |
+| BD-05 | P2 / Concluída | Documentos históricos JSONB com versão explícita; desconhecida recusada | Sem otimização preventiva dos documentos | Estrutura object, versões e restauração verificados; JSONB não resolve replay |
+| BD-06 | P1 / Concluída | Todas as FKs RESTRICT; histórico append-only por privilégios | Manter exclusões explícitas de filhos | ACLs efetivas e tentativas proibidas testadas com lgd_app |
+| BD-07 | P1 / Concluída com acompanhamento | Crescimento após correções extensas medido em três escalas; sem expiração | Acompanhar armazenamento real em OPS-03 | [Medições](database-benchmark.json), recibos datados/vinculados e política sem TTL |
+| BD-08 | P1 / Concluída no ensaio | Diagnóstico read-only de schema/ACL, conexões, tamanhos, documentos e autovacuum | Executar diagnóstico no servidor em OPS-02/03 | [Schema restaurado](database-restored-schema.json); pool/autovacuum mantidos sem tuning especulativo |
 
-Uma FK não garante, por si, que uma categoria tenha `kind=category` ou que uma variante de foto pertença ao mesmo produto. A matriz BD-01 deve explicitar essas regras e decidir onde protegê-las. As referências dentro de JSON também não recebem automaticamente a mesma integridade de uma FK relacional.
+Os cadastros separados protegem o tipo da referência; a FK composta protege o
+produto da variante da foto. Snapshots históricos JSONB preservam fatos do
+passado e não são substituídos pelo cadastro atual. Disponibilidade histórica,
+soma de pagamentos e normalização Unicode continuam na aplicação/ledger.
 
 ## Operação, disponibilidade e confirmação das evidências
 
@@ -71,17 +90,17 @@ Uma FK não garante, por si, que uma categoria tenha `kind=category` ou que uma 
 | OPS-01 | P0 / Parcial, implantação aberta | Ferramentas e restauração sintética verificadas; falta política e captura real | Acordar RPO/RTO, frequência, retenção, destino externo e responsável; restaurar backup da implantação em ambiente separado, conferindo registros/fotos |
 | OPS-02 | P1 / Parcial, implantação aberta | Migração separada, imagem e reinício sintético verificados; falta servidor real | Executar checklist da release escolhida, HTTPS/DNS/segredos/volumes, recuperação e compatibilidade de schema; rollback de imagem não reverte dados |
 | OPS-03 | P1 / Parcial, implantação aberta | Telemetria JSON, fases, locks, timeouts e prontidão implementados e testados | Configurar coleta/retenção/alertas no servidor e comprovar recebimento de sinais sem dados sensíveis; medir perfil real |
-| VER-01 | P1 / Baseline concluída; release atual pendente | Pipeline de `f67c59e` confirmado com sucesso; resultado remoto da entrega de Arquitetura ainda não conferido | Após publicação, conferir jobs/artefatos do SHA final; sucesso da baseline não equivale a CI das mudanças atuais |
+| VER-01 | P1 / Baseline concluída; release atual pendente | Pipeline de `960c07d` confirmado com sucesso; gates locais de Banco registrados | Após publicação, conferir jobs/artefatos do SHA final; sucesso da baseline não equivale a CI das mudanças atuais |
 
 [Deploy](DEPLOY.md) descreve a topologia e os volumes. Ter volumes persistentes e um health endpoint não comprova que existe backup restaurável, monitoramento ou prontidão operacional. Esses itens são infraestrutura; não criam funcionalidades de exportação, caixa ou gestão financeira na interface.
 
 ## Ordem recomendada para as próximas tarefas
 
 1. Se já houver dados reais, resolver OPS-01 imediatamente: o ensaio sintético não é backup da loja.
-2. Preparar o plano da dimensão Banco a partir de BD-01–08, usando as consultas/medidas da Arquitetura como insumo; manter UUID/JSONB/normalização condicionais.
+2. Na instalação escolhida, executar bootstrap e reconstrução explícita da baseline 0007 conforme Deploy; nunca usar a base operacional para testes.
 3. Definir perfil real quando houver histórico de uso e acompanhar ARQ-11. Reconsiderar capacidade antes de depender de correções extensas ou do cenário de 50 mil com várias abas.
 4. Finalizar configuração/ensaio do servidor em OPS-01/02/03 e validar CI do SHA final após publicação autorizada.
-5. Para mudanças de Banco, planejar validação dos registros, backup e recuperação antes da migração, preservando o ledger e as garantias entregues. Atualizar este registro por evidência.
+5. Preservar as evidências de Banco e as garantias do ledger em evoluções futuras. Atualizar este registro por evidência.
 
 Não há estimativa de prazo ou promessa de capacidade antes do diagnóstico. O banco operacional não deve ser alterado para testar; a primeira rodada de medidas deve usar `lgd_mantos_alignment_test` e dados sintéticos representativos. Qualquer necessidade de inspeção de produção deve ser definida explicitamente, com escopo de leitura e proteção dos dados.
 

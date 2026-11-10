@@ -10,6 +10,8 @@ from .repository import duplicate_variant
 
 
 async def create_variant(db, product, data, entity_id=None):
+    if entity_id is not None:
+        entity_id = repo.identifier(entity_id)
     row = await repo.require(db, Variant, entity_id) if entity_id else None
     if row:
         if row.product_id != product.id:

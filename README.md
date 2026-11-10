@@ -37,12 +37,17 @@ recomendadas para compras aguardam uma regra validada com histórico real.
 
 ## Ambiente local
 
-Preencha `.env` a partir de `.env.example`: `DATABASE_URL`, `POSTGRES_PASSWORD`,
-`APP_PASSWORD` e `APP_SECRET`. No Docker, use host `db` na conexão PostgreSQL.
+Preencha `.env` a partir de `.env.example`, incluindo as conexões e senhas
+separadas de `lgd_app`, `lgd_migrator` e bootstrap, além de `APP_PASSWORD` e
+`APP_SECRET`. No Docker, use host `db` na conexão PostgreSQL.
 Nenhum segredo tem padrão de produção.
 
 ```sh
-docker compose up -d --build
+docker compose build backend migrate bootstrap
+docker compose up -d db
+docker compose run --rm bootstrap
+docker compose run --rm migrate
+docker compose up -d backend frontend
 ```
 
 Interface: `http://localhost:5173`. API: `http://localhost:8000/api/v1`.
@@ -51,15 +56,18 @@ Documentação técnica HTTP: `http://localhost:8000/api/docs`.
 As dependências do frontend ficam no volume Docker `frontend_node_modules`,
 separadas dos arquivos locais e dos dados persistentes da loja.
 
-No desenvolvimento, o comando Compose aplica migrações antes do reload. Em
-produção, a migração é administrativa e antecede a API, conforme [Deploy](docs/DEPLOY.md).
-Nenhuma dessas rotinas apaga operações ou cria inventário.
-A migração 0006 cria o núcleo novo sem converter nem apagar registros legados.
+A migração é administrativa e antecede a API em desenvolvimento e produção,
+conforme [Deploy](docs/DEPLOY.md). A baseline independente `0007` instala 15
+tabelas de negócio. Bases antigas são recusadas e exigem reconstrução explícita.
+A inicialização não apaga dados nem confirma inventário. A API usa `lgd_app`,
+sem DDL, TRUNCATE ou alteração de auditoria/recibos.
 
 ## Verificação
 
-As credenciais do banco de verificação vêm de `TEST_DATABASE_URL` ou de `.env`,
-sempre com banco `lgd_mantos_alignment_test`. Nenhum teste usa a base operacional.
+Defina `TEST_DATABASE_URL` com `lgd_app` e `TEST_MIGRATION_DATABASE_URL` com
+`lgd_migrator`, ambas no banco `lgd_mantos_alignment_test`. Provisione esse banco
+e suas roles com `bootstrap_database.py`, usando `BOOTSTRAP_DATABASE_URL`
+específica do teste. Nenhum teste usa a base operacional.
 
 ```sh
 docker exec lgd_db psql -U postgres -d postgres -c "CREATE DATABASE lgd_mantos_alignment_test"
@@ -110,7 +118,9 @@ Veja o [plano executado](docs/PLANO_MELHORIAS_CODIGO.md) e o
 A dimensão Código teve o plano C0–C8 implementado e verificado. A arquitetura
 de aplicação também foi implementada e verificada. As próximas
 pendências estão no [registro central de qualidade](docs/QUALIDADE_SITUACAO_ATUAL.md):
-Banco, acompanhamento de capacidade real e preparação operacional. O registro distingue investigações
+acompanhamento de capacidade real e preparação operacional. A dimensão Banco
+foi implementada conforme o [plano B0–B6](docs/PLANO_MELHORIAS_BANCO.md) e o
+[resultado verificado](docs/QUALIDADE_BANCO_RESULTADO.md). O registro distingue investigações
 obrigatórias de mudanças condicionadas a medição ou decisão, com prioridades,
 fontes no código e critérios de encerramento. A conclusão de Código não equivale
 a uma validação de capacidade ou disponibilidade em produção.
@@ -125,17 +135,19 @@ continuam pendentes. O resultado local não comprova prontidão de produção.
 ## Limpeza para início real
 
 A limpeza autorizada é administrativa, irreversível e separada da aplicação.
-Pare o backend; aplique as migrações em um processo administrativo e execute:
+Pare o backend e todos os escritores. Confira as conexões do `.env`, execute o
+bootstrap de permissões e reconstrua o destino explicitamente:
 
 ```sh
 docker compose stop backend
-docker compose run --rm --no-deps backend python init_db.py
-docker compose run --rm --no-deps backend python reset_operation.py --database lgd_mantos --host db --confirm "LIMPAR lgd_mantos"
+docker compose run --rm bootstrap
+docker compose run --rm migrate python reset_operation.py --database lgd_mantos --host db --confirm "RECRIAR lgd_mantos"
+docker compose run --rm migrate
 docker compose up -d backend
 ```
 
-O procedimento confere banco, host e tabelas reconhecidas; limpa os registros e
-fotos associadas do projeto. Não confirma o inventário: o dono deve informar o
+O procedimento confere banco e host, recusa sessões ativas da API e remove o
+schema `public` LGD e seus arquivos gerenciados de fotos. Não confirma o inventário: o dono deve informar o
 estoque físico conhecido. Não use esse procedimento como manutenção rotineira.
 
 Backup, retenção e recuperação pertencem à infraestrutura e não têm fluxo na interface.

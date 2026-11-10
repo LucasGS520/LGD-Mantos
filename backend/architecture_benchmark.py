@@ -17,6 +17,8 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from uuid import NAMESPACE_URL, uuid5
 
+from sqlalchemy.ext.asyncio import create_async_engine
+
 
 def identity(value):
     return str(uuid5(NAMESPACE_URL, "lgd-benchmark/" + str(value)))
@@ -59,7 +61,7 @@ def dataset(count, variant_count):
         stamp = (start + timedelta(seconds=n)).isoformat()
         payload = {
             "kind": kind,
-            "items": items,
+            "items": [{"unit_cost": None, "unit_price": None, **item} for item in items],
             "payments": [],
             "snapshots": {i["variant_id"]: snapshots[i["variant_id"]] for i in items},
             "labels": {},
@@ -108,10 +110,24 @@ async def run(args):
     os.environ.update(
         DATABASE_URL=url, APP_PASSWORD="senha-testes", APP_SECRET="segredo-exclusivo-de-testes"
     )
+    admin_url = os.environ.get("TEST_MIGRATION_DATABASE_URL", "")
+    if urlsplit(admin_url).path != "/lgd_mantos_alignment_test":
+        raise RuntimeError("Defina TEST_MIGRATION_DATABASE_URL para a mesma base isolada")
+    admin_engine = create_async_engine(admin_url, hide_parameters=True)
     import main
     from app.core.database import AsyncSessionLocal, engine
     from app.modules.operations.domain.ledger import replay
-    from app.shared.models.entities import Auxiliary, Control, Operation, Product, Variant
+    from app.modules.operations.repository import item_values, operation_values, payment_values
+    from app.shared.models.entities import (
+        AUXILIARY_MODELS,
+        Base,
+        Control,
+        Operation,
+        OperationItem,
+        Product,
+        SalePayment,
+        Variant,
+    )
     from httpx import ASGITransport, AsyncClient
     from sqlalchemy import insert, text
 
@@ -139,19 +155,17 @@ async def run(args):
         replay_ms = (time.perf_counter() - replay_started) * 1000
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
-        async with engine.begin() as conn:
+        async with admin_engine.begin() as conn:
             await conn.execute(
                 text(
-                    "TRUNCATE lgd_requests, lgd_revisions, lgd_movements, lgd_operations, lgd_photos, lgd_variants, lgd_products, lgd_auxiliaries, lgd_control"
+                    "TRUNCATE "
+                    + ", ".join('"' + table + '"' for table in sorted(Base.metadata.tables))
                 )
             )
-            await conn.execute(
-                insert(Auxiliary),
-                [
-                    {"id": identity(k), "kind": k, "name": k, "normalized_name": k}
-                    for k in ("supplier", "purchase_channel", "sale_channel", "payment_method")
-                ],
-            )
+            for kind, model in AUXILIARY_MODELS.items():
+                await conn.execute(
+                    insert(model), [{"id": identity(kind), "name": kind, "normalized_name": kind}]
+                )
             await conn.execute(
                 insert(Product),
                 [{"id": identity("product"), "name": "Peça sintética", "print_name": "Benchmark"}],
@@ -189,14 +203,33 @@ async def run(args):
                     insert(Operation),
                     [
                         {
-                            **op,
-                            "effective_at": datetime.fromisoformat(op["effective_at"]),
-                            "created_at": datetime.fromisoformat(op["created_at"]),
+                            **operation_values(op),
                             "result": results[op["id"]],
                         }
                         for op in history[offset : offset + 500]
                     ],
                 )
+                for model, prepare in ((OperationItem, item_values), (SalePayment, payment_values)):
+                    children = [
+                        child for op in history[offset : offset + 500] for child in prepare(op)
+                    ]
+                    if children:
+                        await conn.execute(insert(model), children)
+            await conn.execute(text("ANALYZE"))
+
+        async def storage_sizes():
+            async with admin_engine.connect() as connection:
+                return [
+                    dict(row)
+                    for row in (
+                        await connection.execute(
+                            text(
+                                "SELECT relname, pg_total_relation_size(relid) AS total_bytes, n_live_tup AS estimated_live_rows, n_dead_tup AS estimated_dead_rows FROM pg_stat_user_tables WHERE schemaname='public' ORDER BY relname"
+                            )
+                        )
+                    ).mappings()
+                ]
+
         async with AsyncClient(
             transport=ASGITransport(app=main.app), base_url="http://benchmark"
         ) as client:
@@ -210,6 +243,7 @@ async def run(args):
                 "replay_traced_ms": round(replay_ms, 2),
                 "replay_peak_mib": round(peak / 1024 / 1024, 2),
                 "requests": {},
+                "relations_before": await storage_sizes(),
             }
 
             async def measure(name, method, path, **kwargs):
@@ -218,6 +252,10 @@ async def run(args):
                     started = time.perf_counter()
                     response = await client.request(method, "/api/v1" + path, **kwargs)
                     elapsed = (time.perf_counter() - started) * 1000
+                    if elapsed > 300000:
+                        raise RuntimeError(
+                            "Amostra excedeu cinco minutos; verifique suspensão do ambiente e repita o cenário"
+                        )
                     response.raise_for_status()
                     if iteration:
                         samples.append(elapsed)
@@ -323,6 +361,7 @@ async def run(args):
                 scenario["four_concurrent_previews"] = await asyncio.gather(
                     *(simultaneous_preview() for _ in range(4))
                 )
+            scenario["relations_after"] = await storage_sizes()
             output["scenarios"].append(scenario)
             print(json.dumps(scenario, ensure_ascii=False), flush=True)
         async with AsyncSessionLocal() as session:
@@ -331,6 +370,7 @@ async def run(args):
             json.dumps(output, indent=2, ensure_ascii=False), encoding="utf-8"
         )
     await engine.dispose()
+    await admin_engine.dispose()
 
 
 if __name__ == "__main__":
