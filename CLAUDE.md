@@ -1,58 +1,24 @@
-# Contexto do LGD Mantos
+# Contexto de manutenção
 
-A fonte normativa é `docs/PRODUTO_E_OBJETIVO.md`. Consulte também
-`docs/ALINHAMENTO_IMPLEMENTADO.md` para contratos, decisões técnicas e testes.
-O registro central de pendências é `docs/QUALIDADE_SITUACAO_ATUAL.md`.
-Código (C0–C8) e a implementação da arquitetura de aplicação estão verificados;
-Banco foi implementado conforme `docs/PLANO_MELHORIAS_BANCO.md`; o resultado está
-em `docs/QUALIDADE_BANCO_RESULTADO.md`. As próximas decisões são de perfil real
-de capacidade e preparação operacional.
-Atualize os itens com evidência ao avançar e não trate
-alternativas condicionais (checkpoints ou roteador) como mudanças já aprovadas.
-O plano de Arquitetura está em `docs/PLANO_MELHORIAS_ARQUITETURA.md` (A0–A9):
-execução registrada em `docs/QUALIDADE_ARQUITETURA_RESULTADO.md` e `docs/decisions/`.
-Preserve suas garantias transacionais e registre decisões antes de otimizações
-condicionais. Banco usa baseline independente `0007`, sem conversão de dados antigos.
+- Monólito modular FastAPI/React, PostgreSQL 16, 15 tabelas e baseline independente 0007.
+- Backend em `app/modules`; ORM por responsabilidade em `app/shared/models`.
+  Metadata independente de autenticação; payload reconstruído do núcleo relacional.
+- Frontend em `src/modules`, infraestrutura em `src/shared`, composição em `src/app`.
+- Acesso único do dono. Respeitar fronteiras do produto, sem acrescentar capacidades
+  externas ou financeiras por inferência.
+- Ledger puro; confirmação em uma transação; preservar motivo, prévia, revisão,
+  auditoria, idempotência e custo desconhecido distinto de zero.
+- Rotas não executam SQL, commit ou disco. Colaborações backend usam `public.py`;
+  frontend usa `api`/`contracts`/`index`. Preservar gates de fronteiras/ciclos.
+- Catálogo/Gestão usam snapshot read-only. Gestão encerra a sessão antes do cálculo
+  puro; não compartilhar sessão ORM com threads.
+- API usa `lgd_app`, migração `lgd_migrator`. Não entregar segredos administrativos à API.
+- Migração/reconstrução é administrativa, com escritores parados; nunca limpar no startup.
+- Ensaios usam somente `lgd_mantos_alignment_test`; nunca testar no banco operacional.
+- Compensação de foto em commit incerto exige provar ausência de referência antes de apagar.
+- Comentários/docstrings explicativos em português. Não versionar segredos, uploads,
+  dependências, caches, builds, grafos, logs ou saídas brutas de ensaios.
+- Atualizar as cinco referências ativas, sem recriar planos/relatórios concluídos.
 
-## Estrutura atual
-
-- Backend modular FastAPI/SQLAlchemy em `backend/app/modules`; modelos por responsabilidade em `backend/app/shared/models/`, exportados por `entities.py`; metadata independente da autenticação.
-- Catálogo, inventário inicial, compras, estoque, vendas e recebimentos.
-- Frontend React/TypeScript em `frontend/src/modules`, infraestrutura em `shared` e composição em `app`.
-- PostgreSQL 16, 15 tabelas de negócio e baseline Alembic `0007`; migrações anteriores recuperáveis pelo Git.
-- Núcleo relacional canônico, UUID nativo e documentos históricos JSONB versionados. Payload HTTP reconstruído pelo repositório.
-- API usa `lgd_app`; migrações usam `lgd_migrator`. Nunca passar credenciais administrativas ao container da API.
-- Acesso único do dono; gestão baseada em evidências dos registros operacionais.
-
-## Regras de manutenção
-
-- Não reintroduzir despesas, DRE, lucro líquido, metas, taxas, exportações,
-  marketing, motores de agentes ou integrações externas sem nova decisão de produto.
-- Saldo só muda por inventário, compra, venda ou ajuste; nunca pelo cadastro.
-- Dinheiro usa Decimal no backend; ausência de custo ou preço não significa zero.
-- Correções exigem motivo, prévia de impacto, confirmação e histórico preservado.
-- Comentários e docstrings devem ser explicativos e em português.
-- Não versionar segredos, dependências instaladas, grafos, caches ou builds.
-- Não alterar o banco operacional para testar. Use apenas o banco isolado
-  `lgd_mantos_alignment_test`, conforme as instruções do README.
-- Nunca executar limpeza de dados no startup ou como manutenção rotineira.
-- Cada cadastro auxiliar tem contratos e entradas próprios; compartilhar apenas mecânica comum.
-- Rotas não contêm SQL, commit, disco ou regras de negócio. Serviços de aplicação usam erros próprios.
-- O ledger permanece puro e a confirmação de operações permanece uma única transação.
-- Catálogo/Gestão usam snapshot read-only; Gestão encerra a sessão antes do cálculo puro. Nunca compartilhar a sessão com a thread de cálculo.
-- Imports entre capacidades backend passam por `public.py` conforme a matriz de `check_boundaries.py`; compartilhado frontend não importa módulos de negócio.
-- Em produção, aplicar migrações com API parada antes de iniciar a release; imagem não migra no startup.
-- Reconciliação de fotos é somente leitura. Commit incerto exige prova de ausência de referência antes de remover arquivo.
-- Consumir interfaces públicas (`api`, `contracts`, `index`) ao cruzar módulos frontend; não importar páginas internas.
-
-## Verificação
-
-`python backend/check.py` executa os testes de backend em PostgreSQL isolado.
-Defina `TEST_DATABASE_URL` com `lgd_app` e `TEST_MIGRATION_DATABASE_URL` com
-`lgd_migrator` no mesmo banco de teste. Provisione as roles antes da suíte.
-Execute também `python -m ruff check backend` e `python backend/check_boundaries.py`.
-No frontend: `npm run build`, `npm run lint`, `npm run check:boundaries`, `npm test`;
-depois da suíte backend, rode a API isolada e `npm run test:e2e`.
-O README descreve build, jornada Playwright e execução por Docker Compose.
-Com o ambiente Docker ativo, `docker compose exec frontend npm run build`
-verifica a interface sem instalar dependências no host.
+Verificação e variáveis estão no [README](README.md). Rodar gates proporcionais
+à alteração; dados operacionais e testes com banco exigem os procedimentos descritos.

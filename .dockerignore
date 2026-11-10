@@ -6,10 +6,13 @@ venv
 .venv
 **/__pycache__
 **/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
 frontend/node_modules
 frontend/dist
 frontend/test-results
 frontend/playwright-report
+frontend/*.tsbuildinfo
 frontend_pwa
 graphify-out
 .verification
